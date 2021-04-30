@@ -91,13 +91,15 @@ async def on_raw_reaction_add(payload=None):
 	if payload is not None:
 		if payload.message_id == msgID:
 			if str(payload.emoji) == "✅":
+
 				channel = client.get_channel(835200388965728276)
 				await payload.member.add_roles(roleMember)
 				print ('Added role Member to user', (payload.member))
-
+				
+				#	Sends message in channel before removing the permission for it
 				await channel.send((str ("Welcome, ")) + (str (payload.member.mention)) + (str ("! You have been verified! Maybe check out <#759861456761258045> now?")))
 				print("Sent message")
-				
+
 				await payload.member.remove_roles(roleUnverified)
 				print ('Removed role Unverified from user', (payload.member))
 				time.sleep(5)
