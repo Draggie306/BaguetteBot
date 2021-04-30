@@ -1,4 +1,4 @@
-DraggieBot_version = "v0.9.9b"
+DraggieBot_version = "v0.9.9d"
 
 import discord #                        CMD Prequisite: py -3 -m pip install -U discord.py
 print ('>>> Discord API imported!')
@@ -91,10 +91,17 @@ async def on_raw_reaction_add(payload=None):
 	if payload is not None:
 		if payload.message_id == msgID:
 			if str(payload.emoji) == "✅":
+				channel = client.get_channel(835200388965728276)
 				await payload.member.add_roles(roleMember)
 				print ('Added role Member to user', (payload.member))
+
+				await channel.send((str ("Welcome, ")) + (str (payload.member.mention)) + (str ("! You have been verified! Maybe check out <#759861456761258045> now?")))
+				print("Sent message")
+				
 				await payload.member.remove_roles(roleUnverified)
 				print ('Removed role Unverified from user', (payload.member))
+				time.sleep(5)
+				await channel.purge(limit=1)
 
 @client.event
 async def on_message(message):
@@ -284,6 +291,8 @@ async def on_message(message):
 	if len(s) == 1:
 		if message.channel.id == 825470734453047297:
 			return
+		if message.channel.id == 759861456761258045:
+			return
 
 		user = message.author
 		role = discord.utils.find(lambda r: r.name == 'DraggieBot Whitelisted', user.roles)
@@ -315,7 +324,7 @@ async def on_message(message):
 		if message.content == ("⠀"):#space braiile
 			return
 
-		await message.channel.purge(limit=1)
+		#await message.channel.purge(limit=1)
 		randWord = random.randint(1,13)
 		if randWord == 1:
 			await message.channel.send((str ("You just got peace control kyle'd, ") + (str (person.mention))))
