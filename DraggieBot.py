@@ -1,4 +1,4 @@
-DraggieBot_version = "v0.9.9d"
+DraggieBot_version = "v0.9.9g"
 
 import discord #                        CMD Prequisite: py -3 -m pip install -U discord.py
 print ('>>> Discord API imported!')
@@ -72,7 +72,7 @@ async def on_ready():
 	global ready_start_time
 	ready_start_time = time.time()
 
-	channel = client.get_channel(833802347678531665)
+	channel = client.get_channel(838107252115374151)
 	await channel.send((str ("Online at ")) + (str (datetime.now())))
 
 	f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Logs\\log4.txt", "a")
@@ -161,10 +161,8 @@ async def on_message(message):
 	filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Levels\\Coins\\")) + (str (serverName)) + (str ("\\")) + (str (authorID)) + (str (".txt"))
 	serverdir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Levels\\Coins\\")) + (str (serverName)))
 
-
 	if not os.path.exists(serverdir):
 		os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Levels\\Coins\\")) + (str (serverName)))
-
 
 	try:
 		f = open(filedir, 'r')
@@ -173,7 +171,7 @@ async def on_message(message):
 		f.close()
 
 		f = open(filedir, 'w+')
-		coins = (int (str (coins))) + 2
+		coins = (int (str (coins))) + 1
 		f.close()
 		#print ((str ("new coins = ")) + (str (coins)))
 
@@ -184,9 +182,9 @@ async def on_message(message):
 
 	except FileNotFoundError:   #   User not found
 		with open(filedir, 'a') as f:
-			print ((str ("set coin value to 1, new user.")))
+			print ((str ("\n\nset coin value to 1, new user.")))
+			channel = discord.utils.get(message.guild.channels, name="general", type=discord.ChannelType.text)
 			try:
-				channel = discord.utils.get(message.guild.channels, name="general")
 				print(channel)
 				await channel.send((str ("Hello ")) + (str (person.mention)) + (str (", welcome to **")) + (str (serverName)) + (str ("**! Enjoy your time here!")))
 
@@ -195,9 +193,20 @@ async def on_message(message):
 			except Exception:
 				f.write('1')
 				f.close()
+		try:
+			bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+
+			embed = discord.Embed(title="User Joined Server", 
+			description=((str (person.mention)) + (str (" has joined the server."))), colour=0x00ff00)
+			await bbLogChnlId.send(embed=embed)
+		except Exception:
+			print("Unable to send that a new user has joined. This server doesn't have a text channel called 'event-log-baguette'.")
+
 	except ValueError:
 		f.write('1')
 		f.close()
+	
+
 
 
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
@@ -226,6 +235,16 @@ async def on_message(message):
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 		# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS  # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
+
+	user = message.author
+	if message.content == ('.'):
+		roledot = discord.utils.find(lambda r: r.name == 'Dots', user.roles)
+		if roledot in user.roles:
+			print("Not deleting message")
+			return
+		else:
+			await message.delete()
+			return
 
 #   Blacklist
 
@@ -295,12 +314,14 @@ async def on_message(message):
 			return
 		if message.channel.id == 759861456761258045:
 			return
-
-		user = message.author
+		if message.channel.id == 837759175786364979:
+			return
+		
 		role = discord.utils.find(lambda r: r.name == 'DraggieBot Whitelisted', user.roles)
 		if role in user.roles:
 			print("Not deleting message")
 			return
+
 		if message.author.id == '382784106984898560':
 			return
 		if message.content == ('😂'):#              Whitelist 😂
@@ -326,8 +347,9 @@ async def on_message(message):
 		if message.content == ("⠀"):#space braiile
 			return
 
-		#await message.channel.purge(limit=1)
+		await message.channel.purge(limit=1)
 		randWord = random.randint(1,13)
+
 		if randWord == 1:
 			await message.channel.send((str ("You just got peace control kyle'd, ") + (str (person.mention))))
 		if randWord == 2:
@@ -361,14 +383,11 @@ async def on_message(message):
 		if randWord == 16:
 			await message.channel.send((str ("You're not allowed to say that, ") + (str (person.mention)) + (str ("!"))))
 		person = message.author
+	
 		f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Logs\\log4.txt", "a", encoding="utf8")
 		f.write((str ("\nINFO: 1 character message! Are they whitelisted? Message: '")) + (str(message.content)) + (str ("' from ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
 		print((str ("\nINFO: 1 character message! Are they whitelisted? Message: '")) + (str(message.content)) + (str ("' from ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
 		f.close()
-
-
-
-		#await message.channel.purge(limit=1)
 
 	#print (len(s))
 
@@ -1840,6 +1859,7 @@ async def leave(ctx):#  Leaves
 
 
 @client.command(pass_context=True)
+@commands.has_any_role('Admin')
 async def exit(ctx):
 	try:
 		await ctx.channel.send("Quit successfully")
