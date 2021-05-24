@@ -1,4 +1,4 @@
-DraggieBot_version = "v0.9.9g"
+DraggieBot_version = "v0.9.9h"
 
 import discord #                        CMD Prequisite: py -3 -m pip install -U discord.py
 print ('>>> Discord API imported!')
@@ -91,7 +91,6 @@ async def on_raw_reaction_add(payload=None):
 	if payload is not None:
 		if payload.message_id == msgID:
 			if str(payload.emoji) == "✅":
-
 				channel = client.get_channel(835200388965728276)
 				await payload.member.add_roles(roleMember)
 				print ('Added role Member to user', (payload.member))
@@ -144,6 +143,16 @@ async def on_message(message):
 			await channel.send(str (sp1))
 			return
 
+	serverName = message.guild.name
+	channelName = message.channel.name
+
+#	if serverName == 'Baguette Brigaders':
+#		emoji = client.get_emoji(786177817993805844)
+#		await message.add_reaction(emoji)
+
+	if channelName == 'nolwennium-138':
+		emoji = client.get_emoji(786177817993805844)
+		await message.add_reaction(emoji)
 
 	current_time = time.time()
 	currentSecs = int(round(current_time - ready_start_time))
@@ -154,7 +163,6 @@ async def on_message(message):
 
 	person = message.author
 	authorID = message.author.id
-	serverName = message.guild.name
 
 	global filedir
 
@@ -236,16 +244,6 @@ async def on_message(message):
 		# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS  # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 
-	user = message.author
-	if message.content == ('.'):
-		roledot = discord.utils.find(lambda r: r.name == 'Dots', user.roles)
-		if roledot in user.roles:
-			print("Not deleting message")
-			return
-		else:
-			await message.delete()
-			return
-
 #   Blacklist
 
 	with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\blacklist.json", "r", encoding="utf8") as file:
@@ -259,7 +257,7 @@ async def on_message(message):
 						print("Not deleting message")
 						return
 
-					await message.channel.purge(limit=1)
+					#await message.channel.purge(limit=1)
 					randWord = random.randint(1,13)
 					if randWord == 1:
 						await message.channel.send((str ("You just got peace control kyle'd, ") + (str (person.mention))))
@@ -300,7 +298,7 @@ async def on_message(message):
 					print ((str ("\nINFO: ")) + (str ("Message deleted from ")) + (str (message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(message.channel.name))) + (str (" at ") + (str (datetime.now()))))
 					return
 			except:
-				await message.channel.purge(limit=1)
+				#await message.channel.purge(limit=1)
 				f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Logs\\log4.txt", "a", encoding="utf8")
 				f.write((str ("\nINFO: Message deleted (after OG couldn't be found) from ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
 				f.close()
@@ -310,11 +308,15 @@ async def on_message(message):
 
 	s = (str (message.content))
 	if len(s) == 1:
+		user = message.author
+		
 		if message.channel.id == 825470734453047297:
 			return
 		if message.channel.id == 759861456761258045:
 			return
 		if message.channel.id == 837759175786364979:
+			return
+		if message.channel.id == 842824088913313823:
 			return
 		
 		role = discord.utils.find(lambda r: r.name == 'DraggieBot Whitelisted', user.roles)
@@ -347,7 +349,7 @@ async def on_message(message):
 		if message.content == ("⠀"):#space braiile
 			return
 
-		await message.channel.purge(limit=1)
+		#await message.channel.purge(limit=1)
 		randWord = random.randint(1,13)
 
 		if randWord == 1:
@@ -1022,21 +1024,19 @@ async def buy(ctx):
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
 
-
 	if determiner == 'knight':
 
 		hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
 		if hasKnight in member.roles:
 			await ctx.send("You can't buy Knight, you already have it!")
 			return
-		coinBalTest = (int (str (coinBal))) - 100
+		coinBalTest = (int (str (coinBal))) - 250
 
 		if coinBalTest < 0:
 			await ctx.send("You do not have enough Coins to buy Knight.")
 			return
 
-
-		coinBal = (int (str (coinBal))) - 100
+		coinBal = (int (str (coinBal))) - 250
 
 		f = open(filedir, 'w+')
 		f.close()
@@ -1056,12 +1056,12 @@ async def buy(ctx):
 		if hasPrince in member.roles:
 			await ctx.send("You can't buy Prince, you already have it!")
 			return
-		coinBalTest = (int (str (coinBal))) - 250
+		coinBalTest = (int (str (coinBal))) - 500
 
 		if coinBalTest < 0:
 			await ctx.send("You do not have enough Coins to buy Prince.")
 			return
-		coinBal = (int (str (coinBal))) - 250
+		coinBal = (int (str (coinBal))) - 500
 
 		f = open(filedir, 'w+')
 		f.close()
@@ -1235,6 +1235,20 @@ async def setdelay(ctx):
 	f.write((str ("\nCOMMAND RAN -> '.setdelay {seconds}' ran by ")) + (str (ctx.message.author)) + (str (" in channel ")) + (str (ctx.channel.mention)) + (str (" at ") + (str (datetime.now()))))
 	f.close()
 	print((str ("\nCOMMAND RAN -> '.setdelay {seconds}' ran by ")) + (str (ctx.message.author)) + (str (" in channel ")) + (str (ctx.channel.mention)) + (str (" at ") + (str (datetime.now()))))
+
+#	hehe
+
+@client.command(help="Plays random Brawl Stars music.", brief="Plays Brawl Stars music", pass_context=True)
+async def BrawlMus(ctx):
+    channel = ctx.author.voice.channel
+    try:
+        await channel.connect()
+    except:
+        voice = ctx.guild.voice_client
+        randomnumber = random.randint(1,69)
+        musicDir = ((str("D:\\App Files\\Brawl Music\\py\\music_")) + (str(randomnumber)) + (str ('.ogg')))
+        voice.stop()
+        voice.play(discord.FFmpegPCMAudio(musicDir))
 
 #   vbuck calc
 
