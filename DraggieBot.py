@@ -1,4 +1,4 @@
-DraggieBot_version = "v0.9.9h"
+DraggieBot_version = "v0.9.9i"
 
 import discord #                        CMD Prequisite: py -3 -m pip install -U discord.py
 print ('>>> Discord API imported!')
@@ -86,6 +86,7 @@ async def on_raw_reaction_add(payload=None):
 	msgID = 835227251695288391
 	guild = discord.utils.get(client.guilds, name='Baguette Brigaders')
 	roleMember = discord.utils.get(guild.roles, name='Member')
+	roleNew = discord.utils.get(guild.roles, name='New Baguette')
 	roleUnverified = discord.utils.get(guild.roles, name='Unverified')
 
 	if payload is not None:
@@ -93,6 +94,7 @@ async def on_raw_reaction_add(payload=None):
 			if str(payload.emoji) == "✅":
 				channel = client.get_channel(835200388965728276)
 				await payload.member.add_roles(roleMember)
+				await payload.member.add_roles(roleNew)
 				print ('Added role Member to user', (payload.member))
 				
 				#	Sends message in channel before removing the permission for it
@@ -232,10 +234,10 @@ async def on_message(message):
 		os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Logs\\")) + (str (serverName)))
 
 
-	logAllMessages = open((str (filedir)) + (str ("MessageLog.txt")), "a", encoding='utf-8')
-	logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(message.channel.name))) + (str (" at ") + (str (datetime.now()))))
-	logAllMessages.close()
-	print((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(message.channel.name))) + (str (" at ") + (str (datetime.now()))))
+	with open((str (filedir)) + (str ("MessageLog2.txt")), "a", encoding='utf-8') as logAllMessages:
+		logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(message.channel.name))) + (str (" at ") + (str (datetime.now()))))
+		logAllMessages.close()
+		print((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(message.channel.name))) + (str (" at ") + (str (datetime.now()))))
 
 	if message.channel.name == 'draggiebotv1-testing':
 		return
@@ -244,6 +246,10 @@ async def on_message(message):
 		# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS  # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 
+	if serverName == 'Baguette Brigaders':
+		await client.process_commands(message)
+		return
+		
 #   Blacklist
 
 	with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\blacklist.json", "r", encoding="utf8") as file:
@@ -256,8 +262,12 @@ async def on_message(message):
 					if role in person.roles:
 						print("Not deleting message")
 						return
+					role = discord.utils.find(lambda r: r.name == 'Admin', person.roles)
+					if role in person.roles:
+						print("Not deleting message")
+						return
 
-					#await message.channel.purge(limit=1)
+					await message.channel.purge(limit=1)
 					randWord = random.randint(1,13)
 					if randWord == 1:
 						await message.channel.send((str ("You just got peace control kyle'd, ") + (str (person.mention))))
@@ -349,7 +359,7 @@ async def on_message(message):
 		if message.content == ("⠀"):#space braiile
 			return
 
-		#await message.channel.purge(limit=1)
+		await message.channel.purge(limit=1)
 		randWord = random.randint(1,13)
 
 		if randWord == 1:
@@ -947,40 +957,40 @@ async def coins(ctx):
 					citizenPurchasable = '\nCitizen: *🔓 Unlocked!*'
 
 				else:
-					citizenPurchasable = 'Citizen: 0<:C:825765780515455037>'
+					citizenPurchasable = 'Citizen: 0 <:Coins:852664685270663194>'
 
 			if int (str (coinBal)) > 250:
 				if hasKnight in user.roles:
 					knightPurchasable = '\nKnight:*🔓 Unlocked!*'
 
 				else:
-					knightPurchasable = '\nKnight: 100<:C:825765780515455037>'
+					knightPurchasable = '\nKnight: 100 <:Coins:852664685270663194>'
 
 			if int (str (coinBal)) > 500:
 				if hasPrince in user.roles:
 					princePurchasable = '\nPrince:*🔓 Unlocked!*'
 
 				else:
-					princePurchasable = '\nPrince: 500<:C:825765780515455037>'
+					princePurchasable = '\nPrince: 500 <:Coins:852664685270663194>'
 
 			if int (str (coinBal)) > 1000:
 				if hasKing in user.roles:
 					kingPurchasable = '\nKing:*🔓 Unlocked!*'
 
 				else:
-					kingPurchasable = '\nKing: 1,000<:C:825765780515455037>'
+					kingPurchasable = '\nKing: 1,000 <:Coins:852664685270663194>'
 
 			if int (str (coinBal)) > 100000:
 				if hasAdmin in user.roles:
 					adminPurchasable = '\nAdmin:*🔓 Unlocked!*'
 
 				else:
-					adminPurchasable = '\nAdmin: 100,000<:C:825765780515455037>'
+					adminPurchasable = '\nAdmin: 100,000 <:Coins:852664685270663194>'
 
 #    else:
 #        citizenPurchasable = 'Nothing yet!'
 
-	embed = discord.Embed(title="User Coin Balance", description=((str ("You have ")) + (str (coinBal)) + (str ("<:C:825765780515455037>coins available to spend."))), colour=0xFFD700)
+	embed = discord.Embed(title="User Coin Balance", description=((str ("You have ")) + (str (coinBal)) + (str (" <:Coins:852664685270663194> coins available to spend."))), colour=0xFFD700)
 	embed.add_field(
 	name="Items currently available to .buy",
 	value=(citizenPurchasable) + (knightPurchasable) + (princePurchasable) + (kingPurchasable) + (adminPurchasable),
@@ -1019,7 +1029,7 @@ async def buy(ctx):
 			f.write(str (coinBal))
 			f.close()
 
-		embed = discord.Embed(title="The Shop", description=("You've just bought Citizen for free! Remaining balance: {}<:C:825765780515455037>".format(coinBal)), colour=0xFFD700)
+		embed = discord.Embed(title="The Shop", description=("You've just bought Citizen for free! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
 		role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
@@ -1045,7 +1055,7 @@ async def buy(ctx):
 			f.write(str (coinBal))
 			f.close()
 
-		embed = discord.Embed(title="The Shop", description=("You've just bought Knight for 100<:C:825765780515455037>! Remaining balance: {}<:C:825765780515455037>".format(coinBal)), colour=0xFFD700)
+		embed = discord.Embed(title="The Shop", description=("You've just bought Knight for 100 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
 		role = discord.utils.get(ctx.message.guild.roles, name="Knight")
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
@@ -1070,7 +1080,7 @@ async def buy(ctx):
 			f.write(str (coinBal))
 			f.close()
 
-		embed = discord.Embed(title="The Shop", description=("You've just bought Prince for 100<:C:825765780515455037>! Remaining balance: {}<:C:825765780515455037>".format(coinBal)), colour=0xFFD700)
+		embed = discord.Embed(title="The Shop", description=("You've just bought Prince for 100 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
 		role = discord.utils.get(ctx.message.guild.roles, name="Prince")
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
@@ -1097,7 +1107,7 @@ async def buy(ctx):
 			f.write(str (coinBal))
 			f.close()
 
-		embed = discord.Embed(title="The Shop", description=("You've just bought King for 1000<:C:825765780515455037>! Remaining balance: {}<:C:825765780515455037>".format(coinBal)), colour=0xFFD700)
+		embed = discord.Embed(title="The Shop", description=("You've just bought King for 1000 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
 		role = discord.utils.get(ctx.message.guild.roles, name="King")
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
@@ -1123,7 +1133,7 @@ async def buy(ctx):
 			f.write(str (coinBal))
 			f.close()
 
-		embed = discord.Embed(title="The Shop", description=("You've just bought Admin for 100,000<:C:825765780515455037>! Remaining balance: {}<:C:825765780515455037>".format(coinBal)), colour=0xFFD700)
+		embed = discord.Embed(title="The Shop", description=("You've just bought Admin for 100,000 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
 		role = discord.utils.get(ctx.message.guild.roles, name="Admin")
 		await member.add_roles(role)
 		await ctx.send(embed=embed)
@@ -1606,7 +1616,7 @@ async def download(ctx, url: str):
 	text = ctx.message.content
 	sp1 = text.split(' ', 1)[-1]
 	ydl_opts = {
-		'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio',
+		'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo/bestaudio',
 		'merge-output-format': 'mp4',
 		'default_search': 'ytsearch',
 		'quiet': True,
@@ -1954,12 +1964,9 @@ async def chnick(ctx):
 async def bs(ctx):
 	txt = ctx.message.content
 	x = txt.split()
-	print(x[1])
 	playerTag = (x[1])
-	print((str ('playerTag = ') + (str (playerTag))))
 	if (x[2]) == 'brawlers':
 		url = ((str ('https://api.brawlstars.com/v1/players/%23')) + (str (playerTag)))
-		print((str ('url = ') )+ (str (url)))
 
 		headers = {
 		'Accept': 'application/json',
