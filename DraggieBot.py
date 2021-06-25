@@ -1,4 +1,4 @@
-DraggieBot_version = "v0.9.9i"
+DraggieBot_version = "v0.9.9j"
 
 import discord #                        CMD Prequisite: py -3 -m pip install -U discord.py
 print ('>>> Discord API imported!')
@@ -1185,6 +1185,13 @@ async def deploy(ctx):
 #    embed = discord.Embed
 #    embed=discord.Embed(title="Edited channel info!", description=(f"Set the slowmode delay in this channel to {sp1} seconds!"), colour=0x228B22)
 #    await ctx.send(embed=embed)
+
+#   offline status for replit
+
+@client.command(help="Turns status to offline/invisible", brief="[Status] Turns invisible")
+async def offline(ctx):
+    await client.change_presence(status=discord.Status.invisible)
+    await ctx.send("Status set to invisible/offline.")
 
 #   yn
 
