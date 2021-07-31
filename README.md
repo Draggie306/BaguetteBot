@@ -1,6 +1,9 @@
 # BaguetteBot
 BaguetteBot/DraggieBot is a Discord bot.
 
+
+Read v1's patch notes [here](https://www.ibaguette.com/baguettebot-v1-patch-notes)!
+
 I'd like to make it more publicly accessible in the future with more controls on a server-level basis.
 
 If there's an issue with it in Discord or a blindingly obvious issue in the code, please add it as an issue! This will help so much :)
