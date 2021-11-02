@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.1"
+DraggieBot_version = "v1.11"
 
 print("Importing all modules...\n")
 from ctypes import WinError
@@ -541,9 +541,22 @@ async def on_message(message):
     if not os.path.exists(filedir):
         os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Logs\\")))
 
-    with open((str (filedir)) + (str ("MessageLog.txt")), "a", encoding='utf-8') as logAllMessages:
-        logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
-        logAllMessages.close()
+    try:
+        with open((str (filedir)) + (str ("MessageLog.txt")), "a", encoding='utf-8') as logAllMessages:
+            logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
+            logAllMessages.close()
+    except Exception as e:
+        errorMsg = str(f"\nError!!!! Logging file corruption has occured!!! cc: <@382784106984898560> \n\n{e}")
+        print(errorMsg)
+        #await message.channel.send(errorMsg)
+        try:
+            with open((str (filedir)) + (str ("MessageLog1.txt")), "a", encoding='utf-8') as logAllMessages:
+                logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
+                logAllMessages.close()
+        except Exception as e:
+                errorMsg = str(f"\nCRITICAL ERROR!!!! Server file corruption has occured!!! cc: <@382784106984898560>, server ID is {serverID} / {channelID}\nDM Draggie#3060 if this does not get resolved in 10 minutes\nError: {e}")
+                print(errorMsg)
+                await message.channel.send(errorMsg)
 
     print((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
 
@@ -618,10 +631,6 @@ async def on_message(message):
     boosterRole = discord.utils.find(lambda r: r.name == 'Server Booster', person.roles)
     if boosterRole in person.roles:
         nolwenniumDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
-        serverNolwenniumDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")))
-    
-        if not os.path.exists(serverNolwenniumDir):
-            os.makedirs(serverNolwenniumDir)
 
     global currentMinute
     global coinDir
@@ -1167,7 +1176,7 @@ async def convert(ctx):
     help="Shows coin balance. If above a threshold, shows items to buy", 
     brief="Shows your balance, and available to buy items.", 
     pass_context=True,
-    aliases=['shop', 'rank', 'points', 'balance', 'bal', 'coin'])
+    aliases=['shop', 'rank', 'points', 'balance', 'bal', 'coin', 'nolly', 'nolwennium', 'nolwenn', 'score'])
 async def coins(ctx):
     authorID = ctx.message.author.id
     #await ctx.send("Coins earned before 30/07/2021 are not available to use. This is a known bug and will be fixed later. You have not lost any Coins, but you cannot buy anything with your old balance. New Coins will be added to your old Coins.")
@@ -1182,16 +1191,12 @@ async def coins(ctx):
     coinBal = f.read()
     f.close()
 
-    nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
-    nolwenniumDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")))
+    nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
     my_file = Path(nolwenniumUserDir)
-
-    if not os.path.exists(nolwenniumDir):
-        os.makedirs(nolwenniumDir)
 
     if not my_file.is_file():
         with open(nolwenniumUserDir, 'a') as f:
-            print ((str ("\n\nset Nolwennium value to 1, new user.")))
+            print ((str ("\n\nset Nolwennium value to 0, new user.")))
             try:
                 f.write('0')
                 f.close()
@@ -1258,6 +1263,20 @@ async def coins(ctx):
                 nc.close()
 
                 await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                return
+        if word1.lower() == 'lookup':
+            if ctx.message.author.guild_permissions.administrator == True:
+                userID = (str (x[2]))
+
+                usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
+                oc = open(usersCoins, 'r')
+                coinAmount = oc.read()
+                oc.close()
+
+                nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
+                my_file = Path(nolwenniumUserDir)
+
+                await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
                 return
         else:
             await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`")
@@ -1340,7 +1359,8 @@ async def coins(ctx):
         name="Items available to .buy",
         value=(citizenPurchasable) + (knightPurchasable) + (princePurchasable) + (kingPurchasable) + (adminPurchasable),
         inline=False)
-        embed.set_footer(text=("What can I do with these?\nYou can buy roles for Coins, and use Nolwennium to run commands for the bot."))
+        if serverID == 759861456300015657:
+            embed.set_footer(text=("What can I do with these?\nYou can buy roles for Coins (this server only), and use Nolwennium to run commands for the bot (across all servers)."))
         await ctx.send(embed=embed)
 
 #   buy
@@ -3089,6 +3109,26 @@ async def ship(ctx):
     f.close()
     print ((str ("\nCOMMAND RAN -> '.ship' ran by ")) + (str (ctx.message.author)))
 
+#   broadcast
+
+@client.command(pass_context=True)
+async def broadcast(ctx, *, msg):
+    if ctx.message.author.id == 382784106984898560:
+        for guild in client.guilds:
+            print(f"Locating channel in {guild}...")
+            for channel in guild.text_channels:
+                if channel.name == "event-log-baguette":
+                    try:
+                        await channel.send(msg)
+                        print(f"Successfully sent message in {guild} / {channel}!")
+                    except Exception as e:
+                        print(f"Exception {e}")
+                        continue
+                    else:
+                        break
+    else:
+        await ctx.send("You do not have permission to run this command.")
+
 #   Command template
 
 @client.command(help="Lots of help goes here", brief="[template command]", pass_context=True)
@@ -3109,22 +3149,19 @@ async def mine(ctx):
     global address
     channelName = ctx.message.channel.name
     channelID = ctx.message.channel.id
-    
-    if channelID != 785620979300302869:
-    	await ctx.send("You can't do that here! Try <#785620979300302869>.")
-    	return
+    serverID = ctx.message.guild.id
+
+    if serverID == 759861456300015657:
+        if channelID != 785620979300302869:
+            await ctx.send("You can't do that here! Try <#785620979300302869>.")
+            return
 
     authorID = ctx.message.author.id
     person = ctx.message.author
-    serverID = ctx.message.guild.id
     address = authorID
-
-    filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
-    serverdir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")))
+    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\
+    filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
     
-    if not os.path.exists(serverdir):
-        os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium")))
-
     try:
         e = open(filedir, 'r')
         balance = (float (e.read()))
