@@ -217,8 +217,6 @@ async def _SelectClass(ctx, name: str):
                     choices=[create_choice(name="Wattson",value="Wattson"),
                             create_choice(name="Chun-Li", value="Chun-Li")])]
                             )
-
-
 async def nsfw(ctx, character: str):
     global debugMode
     global amount
@@ -1738,7 +1736,6 @@ async def BrawlStars(ctx):
 
 @client.command(help="Searches log for term. Syntax .log [term]", brief="Searches server's message log for term.", pass_context=True)
 async def log(ctx):
-
     message = ctx.message.content
     searchTerm = message.split(' ', 1)[-1]
     searchTerm = searchTerm.lower()
@@ -1776,9 +1773,9 @@ async def stats(ctx):
     else:
         pingColour = (0x990000)
 
-    fileSizeBytes = os.path.getsize('D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\BaguetteBot.py')
+    fileSizeBytes = os.path.getsize('D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py')
 
-    num_lines = sum(1 for line in open ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
 
     global secsOrMins1
     global secsOrMins2
