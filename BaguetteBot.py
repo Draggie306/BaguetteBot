@@ -1,10 +1,8 @@
 DraggieBot_version = "v1.12"
 
 print("Importing all modules...\n")
-from ctypes import WinError
-from attr import attr
 import      discord
-from discord import emoji
+from        discord import emoji
 from        discord.flags import Intents
 from        discord_slash import SlashCommand, SlashContext
 from        discord_slash.dpy_overrides import send_message
@@ -52,6 +50,8 @@ from        discord_slash import *
 import      difflib
 import      termcolor
 from        termcolor import cprint
+from        ctypes import WinError
+from        attr import attr
 
 """   
     To do:
