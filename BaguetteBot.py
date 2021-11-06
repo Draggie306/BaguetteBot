@@ -437,6 +437,10 @@ async def on_message_edit(before, after):
         embed.add_field(name='User', value=after.author.mention)
         embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
         embed.add_field(name='Time', value=tighem)
+        if before.content == '' and after.content == '':
+            embed.add_field(name= "Data", value='<attachment sent>', inline=False)
+            await LoggingChannel.send(embed=embed)
+            return
         embed.add_field(name= "Message before", value=before.content, inline=False)
         embed.add_field(name= "Message after", value=after.content, inline=False)
         await LoggingChannel.send(embed=embed)
