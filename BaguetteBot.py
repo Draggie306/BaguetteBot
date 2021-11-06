@@ -1,7 +1,8 @@
-DraggieBot_version = "v1.11"
+DraggieBot_version = "v1.12"
 
 print("Importing all modules...\n")
 from ctypes import WinError
+from attr import attr
 import      discord
 from discord import emoji
 from        discord.flags import Intents
@@ -15,7 +16,8 @@ from        discord import ext
 from        discord.errors import ClientException, NotFound #       CMD Prequisite: py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv #                             CMD Prequisite: py -3 -m pip install -U python-dotenv
 import      os#                                                     PIP:            python -m ensurepip  
-import      os.path#                                                UPDATE PIP:     python -m pip install --upgrade pip
+import      os.path
+from        requests import api#                                                UPDATE PIP:     python -m pip install --upgrade pip
 import      youtube_dl
 from        youtube_search import YoutubeSearch
 import      time
@@ -47,6 +49,9 @@ from        discord_slash import SlashCommand, SlashContext
 import      uuid
 from        discord_slash.utils import *
 from        discord_slash import *
+import      difflib
+import      termcolor
+from        termcolor import cprint
 
 """   
     To do:
@@ -234,6 +239,29 @@ async def nsfw(ctx, character: str):
     
     await beanery()
 
+@slash.slash(name="revision",
+            description="Get a random exam question from the chosen subject and topic.",
+            guild_ids = tester_guilds,
+            options=[create_option(
+                    name="subject",
+                    description="Select a subject.",
+                    option_type=3,
+                    required=True,
+                    choices=[create_choice(name="English",value="English"),
+                            create_choice(name="Maths", value="Maths"),
+                            create_choice(name="Science: Biology", value="Biology"),
+                            create_choice(name="Science: Chemistry", value="Chemistry"),
+                            create_choice(name="Science: Physics", value="Physics"),
+                            create_choice(name="Computer Science", value="CmpSci")
+                            ])])
+async def _revision(ctx, subject: str):
+    if subject == "English":
+        await ctx.send("English selected")
+    if subject == "Maths":
+        await ctx.send("Maths selected")
+    else:
+        await ctx.send("This feature is not out yet")
+
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
@@ -315,12 +343,12 @@ async def test(ctx: SlashContext):
 
 @client.event
 async def on_member_join(member):
-    channel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
     await channel.send(member, "has joined the server")
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
     await channel.send(member, "has left the server")
 
 @client.event
@@ -375,21 +403,74 @@ async def on_guild_remove(guild):
     channel = client.get_channel(838107252115374151)  # notification channel
     await channel.send(f"DEV MODE: removed from guild {guild}")
 
-#   status change
+#   Client evenys
+
+@client.event
+async def on_message_delete(message):
+    now = datetime.now()
+    tighem = now.strftime("%Y-%m-%d %H:%M:%S")
+    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+    if os.path.isfile(sendLogsDir):
+        LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+        embed = discord.Embed(title=f"User's message deleted")
+        embed.add_field(name="User's message", value=message.author.mention)
+        embed.add_field(name='Channel', value=f"<#{message.channel.id}>")
+        embed.add_field(name='Time', value=tighem)
+        await LoggingChannel.send(embed=embed)
+    print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
+    if message.author.id is not 792850689533542420:
+        await message.channel.send(f"{message.author.mention} has *redacted* a message.")
+
+    user = client.get_user(int(message.author.id))
+    await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
+
+@client.event
+async def on_message_edit(before, after):
+    now = datetime.now()
+    tighem = now.strftime("%Y-%m-%d %H:%M:%S")
+    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
+    print(f"Message updated >>> '{before.content}' changed to '{after.content}' in {after.guild.name}/{after.guild.name}")
+
+    LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+    if os.path.isfile(sendLogsDir):
+        embed = discord.Embed(title=f"Message edited")
+        embed.add_field(name='User', value=after.author.mention)
+        embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
+        embed.add_field(name='Time', value=tighem)
+        embed.add_field(name= "Message before", value=before.content, inline=False)
+        embed.add_field(name= "Message after", value=after.content, inline=False)
+        await LoggingChannel.send(embed=embed)
+        return
+    if before == after:
+        embed = discord.Embed(title=f"Message state changed")
+        embed.add_field(name='User', value=after.author.mention)
+        embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
+        embed.add_field(name='Time', value=tighem)
+        case_a = str(before)
+        case_b = str(after)
+        output_list = [li for li in difflib.ndiff(case_a, case_b) if li[0] != ' ']
+        embed.add_field(name='Modified strings (beta)', value=output_list, inline=False)
+        await LoggingChannel.send(embed=embed)
+        return
+    
+@client.event
+async def on_typing(channel, user, when):
+    now = datetime.now()
+    tighem = now.strftime("%Y-%m-%d %H:%M:%S")
+    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
+    if os.path.isfile(sendLogsDir):
+        LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+        embed = discord.Embed(title=f"User typing")
+        embed.add_field(name='User', value=user.mention)
+        embed.add_field(name='Channel', value=f"<#{channel.id}>")
+        embed.add_field(name='Time', value=tighem)
+        await LoggingChannel.send(embed=embed)
+    print(f"TYPING >>> {user.name} started typing in {channel.name} at {tighem}/{when} in {channel.guild.name}")
 
 @client.event
 async def on_member_update(before, after):
-    #print(before.status, after.status)
-    #print(before.nick, after.nick)
-    #print(before.roles, after.roles)
-    #print(before.avatar, after.avatar)
-    #print(before.name, after.name)
-    #print(before.discriminator, after.discriminator)
-
     #print(f"Member updated - BEFORE = {before} AFTER = {after} - {datetime.now()}")
-
     send = False
-
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -486,7 +567,7 @@ async def on_message(message):
     #print(message)
     #print(message.content)
     if "UUID of player EmileTigger is d0b393de-e783-45b6-9d13-19ba56c5451e" in message.content:
-        print("Emile joined")
+        termcolor.cprint("Emile joined", 'red', attrs=['blink'])
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
         await channel.send("French detected!")
@@ -494,6 +575,7 @@ async def on_message(message):
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
         await channel.send("hello oliver")
+        termcolor.cprint("Oliver joined", 'red', attrs=['blink'])
     if "EmileTigger lost connection" in message.content:
         channel = client.get_channel(863339644169879562)
         await channel.send("Au revoir!")
@@ -1151,10 +1233,13 @@ async def convert(ctx):
     url = 'https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=1&symbol=ETH'
     #await ctx.send("IDE detected! Unable to run command. Aborting.")
     #return
+    with open("D:\\OneDrive - Sapientia Education Trust\\api_file.bin", encoding="utf-8") as f:
+        api_key = f.read()
+
     parameters = {}
     headers = {
     'Accepts': 'application/json',
-    'X-CMC_PRO_API_KEY': 'e32f979c-fbe7-44f1-8b5b-a0b2c8ff2ea4',
+    'X-CMC_PRO_API_KEY': api_key,
     }
 
     try:
@@ -2457,6 +2542,7 @@ async def yt(ctx, url: str):
                 await ctx.send("An error occured.")
     
 #   Grave key: `
+#   Bullet point: • 
 
 #   ytstream
 
@@ -2714,13 +2800,17 @@ async def bs(ctx):
         playerTag = playerTag.upper()
 
         print((str ('playerTag = ') + (str (playerTag))))
+
         if (x[2]) == 'brawlers':
             url = ((str ('https://api.brawlstars.com/v1/players/%23')) + (str (playerTag)))
             print((str ('url = ') )+ (str (url)))
+            with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+                api_key = f.read()
 
+            
             headers = {
             'Accept': 'application/json',
-            'authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6IjhhYzA0YjgxLWZkMzctNDU0My1iNTVlLWJmZjRjOGVhMzJhMiIsImlhdCI6MTYxNTcyMjA0OCwic3ViIjoiZGV2ZWxvcGVyL2EwNzQ5Zjk3LTA5MTYtNDNmZC00NzRkLWQxMWJjOWYwOTZkNCIsInNjb3BlcyI6WyJicmF3bHN0YXJzIl0sImxpbWl0cyI6W3sidGllciI6ImRldmVsb3Blci9zaWx2ZXIiLCJ0eXBlIjoidGhyb3R0bGluZyJ9LHsiY2lkcnMiOlsiMzEuMTI1LjE5OS4xMDEiXSwidHlwZSI6ImNsaWVudCJ9XX0.u3RGk5QmvXWz1pfUoDwcc9U-0JUDGaundRqd_bScjFnOdRMfbxfu4T-b_WLQ0DWA5vNdA4L6N0aUXpcCOozt-g',
+            'authorization': api_key,
             }
             brawlerRequest = requests.get(url, headers=headers)
             brawlerRequestStr = (str (brawlerRequest))
@@ -2747,6 +2837,34 @@ async def bs(ctx):
             f.write((str (brawlerRequest.json())))
             f.close()
 
+            try:
+                await ctx.send((str ('Recieved this response from Supercell Servers:\n\n' )) + (str (brawlerRequest.json())))
+            except:
+                await ctx.send(file=discord.File(path))
+
+        if (x[2]) == 'battles':
+            url = ((str (f'https://api.brawlstars.com/v1/players/%23{playerTag}/battlelog')))
+
+            with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+                api_key = f.read()
+            headers = {
+            'Accept': 'application/json',
+            'authorization': api_key,
+            }
+            brawlerRequest = requests.get(url, headers=headers)
+            brawlerRequestStr = (str (brawlerRequest))
+            brawlerRequestStatusCode = brawlerRequest.status_code
+            print(brawlerRequestStr)
+            path = ((str ("Z:\\#"))+(str(playerTag)) + (str(".json")))
+            #print(brawlerRequest.json())
+
+            if os.path.isfile(path):
+                f = open(path, "w+")
+                f.close()
+        
+            f = open(path, "w", encoding="UTF-8")
+            f.write((str (brawlerRequest.json())))
+            f.close()
             try:
                 await ctx.send((str ('Recieved this response from Supercell Servers:\n\n' )) + (str (brawlerRequest.json())))
             except:
@@ -3114,18 +3232,24 @@ async def ship(ctx):
 @client.command(pass_context=True)
 async def broadcast(ctx, *, msg):
     if ctx.message.author.id == 382784106984898560:
+        beans = 0
+        fails = 0
         for guild in client.guilds:
             print(f"Locating channel in {guild}...")
             for channel in guild.text_channels:
                 if channel.name == "event-log-baguette":
                     try:
                         await channel.send(msg)
+                        beans = beans + 1
                         print(f"Successfully sent message in {guild} / {channel}!")
+                        print (f"Sent in {beans} servers.")
                     except Exception as e:
                         print(f"Exception {e}")
+                        fails = fails + 1
                         continue
                     else:
                         break
+        await ctx.send(f"Done! Broadcasted message to {beans} servers, with {fails} failures.")
     else:
         await ctx.send("You do not have permission to run this command.")
 
@@ -3676,6 +3800,26 @@ class Music(commands.Cog):
 client.add_cog(Music(bot))
 
 #   ON ERROR
+
+@client.event
+async def on_slash_command_error(ctx, error):
+    randomCry = random.randint(1,7)
+    if randomCry == 1:
+        cry = '<:AmberCry:828577834146594856>'
+    if randomCry == 2:
+        cry = '<:BibiByeBye:828683852939395072>'
+    if randomCry == 3:
+        cry = '<:ColetteCry:828683829631516732>'
+    if randomCry == 4:
+        cry = '<:JessieCry:828683805861740654>'
+    if randomCry == 5:
+        cry = '<:SpikeCry:828683779206807622>'
+    if randomCry == 6:
+        cry = '<:SurgeCry:828683755694063667>'
+    if randomCry == 7:
+        cry = '<:TaraCry:828683724286853151>'                    
+    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    await ctx.send(embed=embed)
 
 @client.event
 async def on_command_error(ctx, error):
