@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.12"
+DraggieBot_version = "v1.13"
 
 print("Importing all modules...\n")
 import      discord
@@ -15,7 +15,8 @@ from        discord.errors import ClientException, NotFound #       CMD Prequisi
 from        dotenv import load_dotenv #                             CMD Prequisite: py -3 -m pip install -U python-dotenv
 import      os#                                                     PIP:            python -m ensurepip  
 import      os.path
-from        requests import api#                                                UPDATE PIP:     python -m pip install --upgrade pip
+from        requests import api
+from        requests import auth#                                                UPDATE PIP:     python -m pip install --upgrade pip
 import      youtube_dl
 from        youtube_search import YoutubeSearch
 import      time
@@ -52,6 +53,8 @@ import      termcolor
 from        termcolor import cprint
 from        ctypes import WinError
 from        attr import attr
+from        discord_slash.context import MenuContext
+from        discord_slash.model import ContextMenuType
 
 """   
     To do:
@@ -88,19 +91,12 @@ slash = SlashCommand(client, sync_commands=True)
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
 
-buttons = [
-            manage_components.create_button(
-                style=ButtonStyle.green,
-                label="A Green Button"
-            ),
-          ]
+print("Done!\nSlash commands initialising...")
 
-print("Done!\nSlash commands initialising Bot...")
+tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489] # Server IDs where I'm an admin so can change stuff before it reaches other servers
 
-tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489] # Put your server ID in this array.
-
-@slash.slash(name="Ping")
-async def _ping(ctx): # Normal usage.
+@slash.slash(name="Ping", description="Shows bot latency do Discord's servers.")
+async def _ping(ctx):
     print("ping'd")
     if round(client.latency * 1000) <= 100:
         embed=discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0x44ff44)
@@ -116,7 +112,7 @@ async def _ping(ctx): # Normal usage.
     f.close()
 
 @slash.slash(name="log",
-    description="Disable member update logs",
+    description="Enables/disables member update logs in this server.",
     options=[create_option(
             name="switch",
             description="Select y/n.",
@@ -126,6 +122,7 @@ async def _ping(ctx): # Normal usage.
                     create_choice(name="Disable", value="disabled")
                     ])])
 async def _log(ctx, switch: str):
+    print("Someone ran log command")
     Admin = discord.utils.get(ctx.guild.roles, name="Admin")
     if Admin in ctx.author.roles:
         if switch == "enabled":
@@ -262,6 +259,33 @@ async def _revision(ctx, subject: str):
     else:
         await ctx.send("This feature is not out yet")
 
+@slash.slash(name="CodeSearch",
+            description="Search the bot's code for a term.",
+            guild_ids = tester_guilds,
+            options=[create_option(
+                    name="term",
+                    description="Type in a term to search for. Returns an integer value.",
+                    option_type=3,
+                    required=True)])
+async def _CodeSearch(ctx, term: str):
+    await ctx.defer()
+    message = term
+    searchTerm = message.lower()
+    file=open(((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py"))),encoding="UTF-8").read().lower()
+    num_chars = sum(1 for line in file)
+    num_lines = sum(1 for line in open ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
+
+    count=file.count(searchTerm)
+    embed = discord.Embed()
+    embed.add_field(name=f"Occurences of '**{searchTerm}**' in code:", value=f"{count}", inline=False)
+    embed.set_footer(text=((str (f"Searching {num_chars} characters in {num_lines} lines of code. Requested by {ctx.author}"))))
+    await ctx.send(embed=embed)
+
+    f = open(GlobalLogDir, "a")
+    f.write((str (f"\nSLASH COMMAND RAN -> '/CodeSearch' ran by {ctx.author} at {str (datetime.now())}")))
+    f.close()
+
+
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
@@ -304,6 +328,8 @@ with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\
     josephTighe = loads(file.read())
 with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\CharlieMention.json", "r", encoding="utf8") as file:
     charlieSewards = loads(file.read())
+with open("D:\\BaguetteBot\\JSONs\\names.json", "r", encoding="utf8") as file:
+    protectedNames = loads(file.read())
 
 @client.event
 async def on_ready():
@@ -367,10 +393,19 @@ async def on_raw_reaction_add(payload=None):
             if payload.message_id == msgID:
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
+                    authorName = (str (payload.member.name))
+                    authorName = (authorName.lower())
+                    for word in protectedNames:
+                        if word in authorName:
+                            await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity (a photo is perfect) in <#842046293504819200>.")
+                            await asyncio.sleep(8)
+                            await channel.purge(limit=1)
+                            return
                     await payload.member.add_roles(roleMember)
+                    await payload.member.add_roles(roleNew)
                     await channel.send((str ("Welcome, ")) + (str (payload.member.mention)) + (str ("! You have been verified! Maybe check out <#759861456761258045> now?")))
                     print("Sent message")
-                    
+                
                     await LoggingChannel.send((str (payload.member)) + (str (" has been verified.")))
                     await payload.member.remove_roles(roleUnverified)
                     await asyncio.sleep(5)
@@ -382,21 +417,10 @@ async def on_raw_reaction_add(payload=None):
                 if str(payload.emoji) == "✅":
                     await payload.member.add_roles(roleVaccinated)
                     await LoggingChannel.send((str (payload.member)) + (str (" has been granted vaccination status.")))
-        
-        #if payload.channel_id == 785620979300302869:#   == 786178591268274176 or payload.channel_id == 809112184902778890 or payload.channel_id 
-        #    print ("Channel  correct")
-        #    if payload.emoji.name == "downvote":
-        #        print ("Channel reaction correct")
-        #        channel = client.get_channel(785620979300302869)
-        #        print ("Got channel")
-        #        message = await channel.fetch_message(payload.message_id)
-        #        print ("Channel reaction correct")
-        #        f = payload.emoji.name
-#
-#                reaction = get(message.reactions, name="downvote")
-#
-#                if reaction and reaction.count > 1:
-#                    await message.delete()
+    if payload.guild_id == 384403250172133387:#     Must, while reaction roles are not available for all servers.
+        if payload.message_id == 907318418712170538:
+            channel = client.get_channel(907318241498656850)
+
 
 async def on_guild_remove(guild):
     print(f"Removed from guild {guild}")
@@ -418,11 +442,10 @@ async def on_message_delete(message):
         embed.add_field(name='Time', value=tighem)
         await LoggingChannel.send(embed=embed)
     print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
-    if message.author.id is not 792850689533542420:
+    if message.author.id != 792850689533542420:
         await message.channel.send(f"{message.author.mention} has *redacted* a message.")
-
-    user = client.get_user(int(message.author.id))
-    await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
+        user = client.get_user(int(message.author.id))
+        await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
 
 @client.event
 async def on_message_edit(before, after):
@@ -575,6 +598,12 @@ async def on_message(message):
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
         await channel.send("French detected!")
+    if "UUID of player TrulySpeechless is 382e7f56-2f64-487a-a6c8-7443be8988b7" in message.content:
+        channel = client.get_channel(863339644169879562)
+        await asyncio.sleep(3)
+        await channel.send("Oh no! Greek letters are broken!")
+        await asyncio.sleep(2)
+        await channel.send("Anyway...")
     if "UUID of player Dragonmaster306 is 89c08bcb-dbf7-4422-8ac6-d06de2a98370" in message.content:
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
@@ -3210,16 +3239,16 @@ async def ship(ctx):
         print("True - Ism z")
     if y == "sam":
         if z == "jack":
-                shipMaths = 100
-                embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
-                await ctx.send(embed=embed)
-                return
+            shipMaths = 100
+            embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
+            await ctx.send(embed=embed)
+            return
     if y == "jack":
         if z == "sam":
-                shipMaths = 100
-                embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
-                await ctx.send(embed=embed)
-                return
+            shipMaths = 100
+            embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
+            await ctx.send(embed=embed)
+            return
 
     #   LONG STRING
 
