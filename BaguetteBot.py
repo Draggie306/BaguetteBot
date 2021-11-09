@@ -370,7 +370,7 @@ async def test(ctx: SlashContext):
 @client.event
 async def on_member_join(member):
     channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-    await channel.send(member, "has joined the server")
+    await channel.send(f"{member} has joined the server")
 
 @client.event
 async def on_member_remove(member):
@@ -487,7 +487,7 @@ async def on_typing(channel, user, when):
     sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-        embed = discord.Embed(title=f"User typing")
+        embed = discord.Embed(title=f"User typing", colour=0x00ff00)
         embed.add_field(name='User', value=user.mention)
         embed.add_field(name='Channel', value=f"<#{channel.id}>")
         embed.add_field(name='Time', value=tighem)
@@ -502,7 +502,7 @@ async def on_member_update(before, after):
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
 
     if before.status != after.status:  # to only run on status
-        embed = discord.Embed(title=f"Status updated")
+        embed = discord.Embed(title=f"Status updated", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.status)
         embed.add_field(name='After', value=after.status)
@@ -511,7 +511,7 @@ async def on_member_update(before, after):
         print(f"OP WATCHDOG: STATUS of {after} has been updated FROM {before.status} TO {after.status} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.nick != after.nick:  # to only run on status
-        embed = discord.Embed(title=f"Changed nick")
+        embed = discord.Embed(title=f"Changed nick", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.nick)
         embed.add_field(name='After', value=after.nick)
@@ -521,7 +521,7 @@ async def on_member_update(before, after):
 
     elif len(before.roles) < len(after.roles):
         new_role = next(role for role in after.roles if role not in before.roles)
-        embed = discord.Embed(title=f"Changed roles")
+        embed = discord.Embed(title=f"Changed roles", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Role added', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
@@ -530,7 +530,7 @@ async def on_member_update(before, after):
 
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
-        embed = discord.Embed(title=f"Changed roles")
+        embed = discord.Embed(title=f"Changed roles", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Role removed', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
@@ -538,7 +538,7 @@ async def on_member_update(before, after):
         print(f"OP WATCHDOG: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.name != after.name:  # to only run on status
-        embed = discord.Embed(title=f"Changed name")
+        embed = discord.Embed(title=f"Changed name", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.name)
         embed.add_field(name='After', value=after.name)
@@ -547,7 +547,7 @@ async def on_member_update(before, after):
         print(f"OP WATCHDOG: NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.discriminator != after.discriminator:  # to only run on status
-        embed = discord.Embed(title=f"Changed discriminator")
+        embed = discord.Embed(title=f"Changed discriminator", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.discriminator)
         embed.add_field(name='After', value=after.discriminator)
@@ -742,11 +742,7 @@ async def on_message(message):
 
     authorID = message.author.id
     person = message.author
-
     boosterRole = discord.utils.find(lambda r: r.name == 'Server Booster', person.roles)
-    if boosterRole in person.roles:
-        nolwenniumDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
-
     global currentMinute
     global coinDir
     
@@ -1397,7 +1393,7 @@ async def coins(ctx):
                 await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
                 return
         else:
-            await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`")
+            await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
 
     except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
         global citizenPurchasable
