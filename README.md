@@ -8,8 +8,11 @@ Features:
 -   Music playing with .play
 -   Slash Commands
 -   And more! .help
+Read what else the bot can do [here](https://ibaguette.com/b)
 
 Read v1's patch notes [here](https://www.ibaguette.com/p/baguettebot-v1-patch-notes.html)!
+
+# Note: 'versions' are only major versions, the bot runs on the versions published in main, which include minor/patch versions
 
 I'd like to make it more publicly accessible in the future with more controls on a server-level basis.
 
