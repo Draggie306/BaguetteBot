@@ -1,7 +1,5 @@
 # BaguetteBot
 
-# NOTICE 27/09/2021: Only major versions will be published from now on as updating the git page every minor version is slightly annoying
-
 BaguetteBot/DraggieBot is a Discord bot.
 
 Features:
