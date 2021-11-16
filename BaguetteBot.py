@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.13"
+DraggieBot_version = "v1.14"
 
 print("Importing all modules...\n")
 import      discord
@@ -72,9 +72,9 @@ print("Done!\nInitialising Bot...")
 sys.setrecursionlimit(99999999)
 
 global voiceVolume
-voiceVolume = 0.3
-
+global draggie
 global start_time
+voiceVolume = 0.3
 start_time = time.time()
 
 PYTHONIOENCODING="utf-8"
@@ -95,7 +95,27 @@ print("Done!\nSlash commands initialising...")
 
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489] # Server IDs where I'm an admin so can change stuff before it reaches other servers
 
-@slash.slash(name="Ping", description="Shows bot latency do Discord's servers.")
+
+@slash.slash(name="debug", guild_ids=tester_guilds, description="Spits out debug info for debugging bugs")
+async def test(ctx):
+    nolwenniumUserDir = f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{ctx.author.id}.txt"
+    my_file = Path(nolwenniumUserDir)
+    if not my_file.is_file():
+        nolwenniumBal = "null"
+        nolly = nolwenniumBal
+    else:
+        f = open(nolwenniumUserDir, 'r')
+        nolwenniumBal = f.read()
+        f.close()
+        nolly = str(nolwenniumBal) + str(" <:NolwenniumCoin:846464419503931443>")
+    x = False
+    Admin = discord.utils.get(ctx.guild.roles, name="Admin")
+    if Admin in ctx.author.roles:
+        x = True
+    shard_id = ctx.guild.shard_id
+    await ctx.send(f"Debug info: S: {ctx.guild.id} in C: {ctx.channel.id} - A: {ctx.author.id}, hA: {x}, Nolwennium: {nolly} + l:{client.latency}s, iID: {uuid.uuid4()}, sO: {ctx.guild.owner.id}, bbPremium = False, usesEmilite: False, sID: {shard_id}")#\n<a:HmmThinkSpin:857307788572098610> *Unsure what this is?* These are just guild/channel ids, send this to Draggie#3060 if you have issues")
+
+@slash.slash(name="Ping", description="Shows bot latency to Discord's servers, using Discord WebSocket protocol.")
 async def _ping(ctx):
     print("ping'd")
     if round(client.latency * 1000) <= 100:
@@ -350,22 +370,8 @@ async def on_ready():
     f.write(' - Logged in as {0.user}'.format(client))
     f.close()
     await client.change_presence(activity=discord.Game(name=("{} | .help".format(DraggieBot_version))))
-
-@slash.slash(name="test")
-async def test(ctx: SlashContext):
-    select = create_select(
-        options=[
-            create_select_option("Lab Coat", value="coat", emoji="🥼"),
-            create_select_option("Test Tube", value="tube", emoji="🧪"),
-            create_select_option("Petri Dish", value="dish", emoji="🧫")
-        ],
-        placeholder="Choose your option",
-        min_values=1, # the minimum number of options a user must select
-        max_values=2 # the maximum number of options a user can select
-    )
-    action_row = create_actionrow(select)
-
-    await ctx.send(components=[action_row])
+    global draggie
+    draggie = client.get_user(382784106984898560)
 
 @client.event
 async def on_member_join(member):
@@ -436,16 +442,19 @@ async def on_message_delete(message):
     sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-        embed = discord.Embed(title=f"User's message deleted")
-        embed.add_field(name="User's message", value=message.author.mention)
+        embed = discord.Embed(title=f"User's message deleted", colour=0xFF0000)
+        embed.add_field(name="User", value=message.author.mention)
         embed.add_field(name='Channel', value=f"<#{message.channel.id}>")
         embed.add_field(name='Time', value=tighem)
         await LoggingChannel.send(embed=embed)
-    print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
-    if message.author.id != 792850689533542420:
-        await message.channel.send(f"{message.author.mention} has *redacted* a message.")
-        user = client.get_user(int(message.author.id))
-        await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
+        print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
+        if message.author.id != 792850689533542420:
+            await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
+            user = client.get_user(int(message.author.id))
+            try:
+                await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
+            except Exception as e:
+                await LoggingChannel.send(f"Unable to DM {message.author} that their message has been redacted \nError: {e}.")
 
 @client.event
 async def on_message_edit(before, after):
@@ -486,6 +495,34 @@ async def on_typing(channel, user, when):
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
+        if channel.guild.id == 759861456300015657:
+            croissant = discord.utils.get(channel.guild.roles, name='Croissant')
+            baguette = discord.utils.get(channel.guild.roles, name='Baguette')
+            trigger = "high profile role [Croissant]"
+            if croissant in user.roles:
+                #print("Croissant detected")
+                embed = discord.Embed(title=f"HIGH PROFILE typing", colour=0xc27c0e)
+                embed.add_field(name='User', value=user.mention)
+                embed.add_field(name='Before', value=user.status)
+                embed.add_field(name='After', value=user.status)
+                embed.add_field(name='Trigger', value=trigger)
+                embed.add_field(name='Date/Time', value=tighem)
+                LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await LoggingChannel.send(embed=embed)
+                await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")
+                return
+            if baguette in user.roles:
+                print("Baguette detected")
+                embed = discord.Embed(title=f"HIGH PROFILE typing", colour=0x00acff)
+                embed.add_field(name='User', value=user.mention)
+                embed.add_field(name='Before', value=user.status)
+                embed.add_field(name='After', value=user.status)
+                embed.add_field(name='Trigger', value="high profile role [Baguette]")
+                embed.add_field(name='Date/Time', value=tighem)
+                LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await LoggingChannel.send(embed=embed)
+                await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by [BAGUETTE]: `{tighem}`")
+                return
         LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         embed = discord.Embed(title=f"User typing", colour=0x00ff00)
         embed.add_field(name='User', value=user.mention)
@@ -500,8 +537,35 @@ async def on_member_update(before, after):
     send = False
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
+    guild = after.guild
 
     if before.status != after.status:  # to only run on status
+        if guild.id == 759861456300015657:
+            croissant = discord.utils.get(after.guild.roles, name='Croissant')
+            baguette = discord.utils.get(after.guild.roles, name='Baguette')
+            if croissant in after.roles:
+                embed = discord.Embed(title=f"HIGH PROFILE status update", colour=0xc27c0e)
+                embed.add_field(name='User', value=before.mention)
+                embed.add_field(name='Before', value=before.status)
+                embed.add_field(name='After', value=after.status)
+                embed.add_field(name='Trigger', value="high profile role [Croissant]")
+                embed.add_field(name='Date/Time', value=tighem)
+                LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
+                await LoggingChannel.send(embed=embed)
+                return
+            if baguette in after.roles:
+                embed = discord.Embed(title=f"HIGH PROFILE status update", colour=0x00acff)
+                embed.add_field(name='User', value=before.mention)
+                embed.add_field(name='Before', value=before.status)
+                embed.add_field(name='After', value=after.status)
+                embed.add_field(name='Trigger', value="high profile role [Baguette]")
+                embed.add_field(name='Date/Time', value=tighem)
+                LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [BAGUETTE]: `{tighem}`")
+                await LoggingChannel.send(embed=embed)
+                return
+
         embed = discord.Embed(title=f"Status updated", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.status)
@@ -591,19 +655,11 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_message(message):
-    #print(message)
-    #print(message.content)
     if "UUID of player EmileTigger is d0b393de-e783-45b6-9d13-19ba56c5451e" in message.content:
         termcolor.cprint("Emile joined", 'red', attrs=['blink'])
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
         await channel.send("French detected!")
-    if "UUID of player TrulySpeechless is 382e7f56-2f64-487a-a6c8-7443be8988b7" in message.content:
-        channel = client.get_channel(863339644169879562)
-        await asyncio.sleep(3)
-        await channel.send("Oh no! Greek letters are broken!")
-        await asyncio.sleep(2)
-        await channel.send("Anyway...")
     if "UUID of player Dragonmaster306 is 89c08bcb-dbf7-4422-8ac6-d06de2a98370" in message.content:
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
@@ -999,7 +1055,8 @@ async def on_message(message):
                 if integer == 1:
                     await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
                 if integer == 2:
-                    await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2
+                    await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
+                return  #   Don't want it triggering multiple times if the phrases are mentioned several times in a message, e.g hmm not sure about this would add 3 reactions and throw an error.
         for word in charlieSewards:
             if word in message.content.lower():
                 person = message.author
@@ -1008,6 +1065,7 @@ async def on_message(message):
                     await message.add_reaction("<:charlie:903324276147499041>")
                 if integer == 2:
                     await message.add_reaction("<:CharlieUwU:857907947371495424>")
+                return  #   Don't want it triggering multiple times if person is mentioned.
 
     #  here we can do global server ones because its funny
 
@@ -3495,6 +3553,7 @@ class Song:
                  .add_field(name='Requested by', value=self.requester.mention)
                  .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
                  .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
+                 .add_field(name='KNOWN ISSUES', value='You **MUST** type .leave BEFORE playing another video or the bot will get stuck in a non-reading loop! ')
                  .set_thumbnail(url=self.source.thumbnail))
 
         return embed
