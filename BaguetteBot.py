@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.14"
+DraggieBot_version = "v1.15"
 
 print("Importing all modules...\n")
 import      discord
@@ -94,7 +94,7 @@ slash = SlashCommand(client, sync_commands=True)
 print("Done!\nSlash commands initialising...")
 
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489] # Server IDs where I'm an admin so can change stuff before it reaches other servers
-
+brigaders = [759861456300015657]
 
 @slash.slash(name="debug", guild_ids=tester_guilds, description="Spits out debug info for debugging bugs")
 async def test(ctx):
@@ -131,21 +131,82 @@ async def _ping(ctx):
     f.write((str ("\nCOMMAND RAN -> '.ping' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
     f.close()
 
-@slash.slash(name="log",
-    description="Enables/disables member update logs in this server.",
+@slash.slash(name="whitelist",
+            description="MC Server Whitelist Command.",
+            guild_ids = brigaders,
+            options=[create_option(
+                    name="add",
+                    description="Add a username to the whitelist.",
+                    option_type=3,
+                    required=True)])
+async def _whitelist(ctx, add:str):
+    message=(f"whitelist add {add}")
+    console = client.get_channel(863170713236930600)
+    await console.send(message)
+    await ctx.send(f"Forwarded the command **/whitelist add {add}** to the console. Please try and rejoin again.")
+
+@slash.slash(name="cuisine",
+            description="Cuisine.",
+            guild_ids = brigaders,
+            options=[create_option(
+                    name="country",
+                    description="Add a username to the whitelist.",
+                    option_type=3,
+                    required=True,
+                    choices=[
+                        create_choice(name="France",value="france"),
+                        create_choice(name="Italy", value="italy")])])
+async def _cuisine(ctx, country:str):
+    await ctx.send(f"You chose {country}.")
+
+
+@slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = brigaders)
+async def _cuisine(ctx):
+    rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
+    admin = discord.utils.get(ctx.guild.roles, name="Admin")
+    mod = discord.utils.get(ctx.guild.roles, name="Mod")
+    print(f"RGB ran by {ctx.author.name}")
+    if rgb or mod or admin in ctx.author.roles:
+        guild=ctx.guild
+        colour = discord.Color.random()
+        role = discord.utils.get(guild.roles, name="RGB Advisor")
+        await role.edit(server=guild, role=role, colour=colour)
+        await ctx.send(f"RGB Advisor updated to {colour}")
+    else:
+        await ctx.send("no")
+    
+@slash.slash(name="components",
+    description="Enables/disables specified BaguetteBot components.",
+    guild_ids=tester_guilds,
     options=[create_option(
-            name="switch",
-            description="Select y/n.",
+            name="logging",
+            description="Select y/n for enabling the logging channel",
             option_type=3,
             required=True,
-            choices=[create_choice(name="Enable",value="enabled"),
-                    create_choice(name="Disable", value="disabled")
+            choices=[create_choice(name="Enable",value="logEnabled"),
+                    create_choice(name="Disable", value="logDisabled")]),
+            create_option(
+            name="rolegrants",
+            description="Select y/n for DMing users for role modifications",
+            option_type=3,
+            required=True,
+            choices=[create_choice(name="Enable",value="roleDMEnabled"),
+                    create_choice(name="Disable", value="roleDMDisabled")
+                    ]),
+            create_option(
+            name="redactions",
+            description="Select y/n for DMing users, for message deletions only.",
+            option_type=3,
+            required=True,
+            choices=[create_choice(name="Enable",value="redactedEnabled"),
+                    create_choice(name="Disable", value="redactedDisabled")
                     ])])
-async def _log(ctx, switch: str):
+async def _components(ctx, logging:str, rolegrants:str, redactions:str, ):
+    print(logging)
     print("Someone ran log command")
     Admin = discord.utils.get(ctx.guild.roles, name="Admin")
     if Admin in ctx.author.roles:
-        if switch == "enabled":
+        if logging == "logEnabled":
             try:
                 LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 print(f"Logging Channel {LoggingChannel}")
@@ -172,13 +233,27 @@ async def _log(ctx, switch: str):
                     print(e)
                     await ctx.send(f"Option name: `'switch'` already set to value `'Enabled'`!")
             
-        if switch == "disabled":
+        if logging == "logDisabled":
             try:
                 sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
                 os.remove(sendLogsDir)
                 await ctx.send(f"Disabled sending logs for server {ctx.guild.id}")
             except Exception as e:
                 await ctx.send(f"Option name: `'switch'` already set to value `'Disabled'`!")
+
+        if rolegrants == "roleDMEnabled":
+            await ctx.send("Role Grant Enabled Notification Dialogue")
+            #do stuff here
+        if rolegrants == "roleDMDisabled":
+            await ctx.send("Role Grant Disabled Notification Dialogue")
+            #delete file here
+
+        if redactions == "redactedEnabled":
+            await ctx.send("Message Removal Enabled Notification Dialogue")
+            #do stuff here
+        if redactions == "redactedDisabled":
+            await ctx.send("Message Removal Disabled Notification Dialogue")
+            #delete file here
     else:
         await ctx.send("You are not admin, or do not have Admin as an assigned role")
 
@@ -369,9 +444,18 @@ async def on_ready():
     f.write((str ("\n\nREADY at ")) + (str (datetime.now())))
     f.write(' - Logged in as {0.user}'.format(client))
     f.close()
-    await client.change_presence(activity=discord.Game(name=("{} | .help".format(DraggieBot_version))))
+    servers = len(client.guilds)
+    members = 0
+    for guild in client.guilds:
+        members += guild.member_count - 1
+    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     global draggie
     draggie = client.get_user(382784106984898560)
+    guild = client.get_guild(759861456300015657)
+    colour = discord.Color.random()
+    role = discord.utils.get(guild.roles, name="RGB Advisor")
+    await role.edit(server=guild, role=role, colour=colour)
+
 
 @client.event
 async def on_member_join(member):
@@ -388,12 +472,32 @@ async def on_raw_reaction_add(payload=None):
     if payload.guild_id == 759861456300015657:#     Must, while reaction roles are not available for all servers.
         msgID = 835227251695288391
         vaccinatedID = 895386703144034364
+        smp2ID = 912012054414630973
         guild = discord.utils.get(client.guilds, name='Baguette Brigaders')
         roleMember = discord.utils.get(guild.roles, name='Member')
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
         roleUnverified = discord.utils.get(guild.roles, name='Unverified')
+        roleSMP2 = discord.utils.get(guild.roles, name='SMP Season 2')
         roleNew = discord.utils.get(guild.roles, name='New Baguette')
         LoggingChannel = discord.utils.get(payload.member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+
+        if payload is not None:
+            if payload.channel_id == 809112184902778890:
+                if payload.emoji.name == "downvote":
+                    channel = client.get_channel(809112184902778890)
+                    message = await channel.fetch_message(payload.message_id)
+                    reaction = discord.utils.get(message.reactions, emoji=payload.emoji)
+                    count = reaction.count
+                    if count > 3:
+                        await channel.send(f"{message.author.mention}'s meme has been removed.")
+                        await message.delete()
+
+        if payload is not None:
+            if payload.message_id == smp2ID:
+                await payload.member.add_roles(roleSMP2)
+                print(f"Added role to {roleMember.name}")
+                await payload.member.send(f"{payload.member.mention}, you've been granted SMP Season 2 role in Baguette Brigaders! Enjoy your time on the server.")
+                print(f"Sent DM to {payload.member.name}")
 
         if payload is not None:
             if payload.message_id == msgID:
@@ -456,6 +560,16 @@ async def on_message_delete(message):
             except Exception as e:
                 await LoggingChannel.send(f"Unable to DM {message.author} that their message has been redacted \nError: {e}.")
 
+@client.command(pass_context=True)
+async def dm(ctx):
+    message = ctx.message.content
+    x = message.split()
+    sp1 = message.split(' ', 2)[-1]
+    userID = (x[1])
+    user = client.get_user(int (userID))
+    await user.send(f"{sp1}")
+    await draggie.send(f"{sp1}")
+
 @client.event
 async def on_message_edit(before, after):
     now = datetime.now()
@@ -493,7 +607,13 @@ async def on_message_edit(before, after):
 async def on_typing(channel, user, when):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
+    try:
+        sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
+    except Exception as e:
+        print(e)
+        await draggie.send(f"{user.mention} ({user}) is DMing me")
+        print(f"{user.name} is DMing")
+        return
     if os.path.isfile(sendLogsDir):
         if channel.guild.id == 759861456300015657:
             croissant = discord.utils.get(channel.guild.roles, name='Croissant')
@@ -776,7 +896,7 @@ async def on_message(message):
         emoji = client.get_emoji(786177817993805844)
         await message.add_reaction(emoji)
         
-    if message.channel.id == 809112184902778890:
+    if message.channel.id == 809112184902778890 or message.channel.id == 911968267881574441:
         upvote = client.get_emoji(803578918488768552)
         await message.add_reaction(upvote)
         downvote = client.get_emoji(803578918464258068)
@@ -1949,9 +2069,7 @@ async def log(ctx):
     f.write((str ("\nCOMMAND RAN -> '.log' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
     f.close()
 
-#   lines
-
-@client.command(help="l i n e s", brief="A whole bunch of useful statistics", pass_context=True)
+@slash.slash(name="stats", description="Useful bot statistics.")
 async def stats(ctx):
     YTAPI_Status = "Enabled"
     SCAPI_Status = "Mixed results"  
@@ -3889,25 +4007,25 @@ client.add_cog(Music(bot))
 
 #   ON ERROR
 
-@client.event
-async def on_slash_command_error(ctx, error):
-    randomCry = random.randint(1,7)
-    if randomCry == 1:
-        cry = '<:AmberCry:828577834146594856>'
-    if randomCry == 2:
-        cry = '<:BibiByeBye:828683852939395072>'
-    if randomCry == 3:
-        cry = '<:ColetteCry:828683829631516732>'
-    if randomCry == 4:
-        cry = '<:JessieCry:828683805861740654>'
-    if randomCry == 5:
-        cry = '<:SpikeCry:828683779206807622>'
-    if randomCry == 6:
-        cry = '<:SurgeCry:828683755694063667>'
-    if randomCry == 7:
-        cry = '<:TaraCry:828683724286853151>'                    
-    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
-    await ctx.send(embed=embed)
+#@client.event
+#async def on_slash_command_error(ctx, error):
+#    randomCry = random.randint(1,7)
+#    if randomCry == 1:
+#        cry = '<:AmberCry:828577834146594856>'
+#    if randomCry == 2:
+#        cry = '<:BibiByeBye:828683852939395072>'
+#    if randomCry == 3:
+#        cry = '<:ColetteCry:828683829631516732>'
+#    if randomCry == 4:
+#        cry = '<:JessieCry:828683805861740654>'
+#    if randomCry == 5:
+#        cry = '<:SpikeCry:828683779206807622>'
+#    if randomCry == 6:
+#        cry = '<:SurgeCry:828683755694063667>'
+#    if randomCry == 7:
+#        cry = '<:TaraCry:828683724286853151>'                    
+#    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+#    await ctx.send(embed=embed)
 
 @client.event
 async def on_command_error(ctx, error):
