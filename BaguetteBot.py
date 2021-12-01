@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.15"
+DraggieBot_version = "v1.16"
 
 print("Importing all modules...\n")
 import      discord
@@ -161,14 +161,15 @@ async def _cuisine(ctx, country:str):
 
 
 @slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = brigaders)
-async def _cuisine(ctx):
+async def _rgb(ctx):
     rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
     admin = discord.utils.get(ctx.guild.roles, name="Admin")
     mod = discord.utils.get(ctx.guild.roles, name="Mod")
     print(f"RGB ran by {ctx.author.name}")
     if rgb or mod or admin in ctx.author.roles:
         guild=ctx.guild
-        colour = discord.Color.random()
+        colour = random.randint(1000,16777215)
+        colour = discord.Color(colour)
         role = discord.utils.get(guild.roles, name="RGB Advisor")
         await role.edit(server=guild, role=role, colour=colour)
         await ctx.send(f"RGB Advisor updated to {colour}")
@@ -179,34 +180,32 @@ async def _cuisine(ctx):
     description="Enables/disables specified BaguetteBot components.",
     guild_ids=tester_guilds,
     options=[create_option(
-            name="logging",
-            description="Select y/n for enabling the logging channel",
+            name="enable",
+            description="Select components to enable",
             option_type=3,
             required=True,
-            choices=[create_choice(name="Enable",value="logEnabled"),
-                    create_choice(name="Disable", value="logDisabled")]),
+            choices=[create_choice(name="Logging",value="log"),
+                    create_choice(name="Role Grant DMs", value="rolegrants"),
+                    create_choice(name="DMs", value="dms"),
+                    create_choice(name="Redacted Messages", value="redactions"),
+                    create_choice(name="-", value="nothing")]),
             create_option(
-            name="rolegrants",
-            description="Select y/n for DMing users for role modifications",
+            name="disable",
+            description="Select components to disable",
             option_type=3,
             required=True,
-            choices=[create_choice(name="Enable",value="roleDMEnabled"),
-                    create_choice(name="Disable", value="roleDMDisabled")
-                    ]),
-            create_option(
-            name="redactions",
-            description="Select y/n for DMing users, for message deletions only.",
-            option_type=3,
-            required=True,
-            choices=[create_choice(name="Enable",value="redactedEnabled"),
-                    create_choice(name="Disable", value="redactedDisabled")
+            choices=[create_choice(name="Logging",value="log"),
+                    create_choice(name="Role Grant DMs", value="rolegrants"),
+                    create_choice(name="DMs", value="dms"),
+                    create_choice(name="Redacted Messages", value="redactions"),
+                    create_choice(name="-", value="nothing")
                     ])])
-async def _components(ctx, logging:str, rolegrants:str, redactions:str, ):
-    print(logging)
+async def _components(ctx, enable:str, disable:str):
+    print(enable, disable)
     print("Someone ran log command")
     Admin = discord.utils.get(ctx.guild.roles, name="Admin")
     if Admin in ctx.author.roles:
-        if logging == "logEnabled":
+        if "log" in enable:
             try:
                 LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 print(f"Logging Channel {LoggingChannel}")
@@ -233,7 +232,7 @@ async def _components(ctx, logging:str, rolegrants:str, redactions:str, ):
                     print(e)
                     await ctx.send(f"Option name: `'switch'` already set to value `'Enabled'`!")
             
-        if logging == "logDisabled":
+        if "log" in disable:
             try:
                 sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
                 os.remove(sendLogsDir)
@@ -241,19 +240,27 @@ async def _components(ctx, logging:str, rolegrants:str, redactions:str, ):
             except Exception as e:
                 await ctx.send(f"Option name: `'switch'` already set to value `'Disabled'`!")
 
-        if rolegrants == "roleDMEnabled":
+        if "rolegrants" in enable:
             await ctx.send("Role Grant Enabled Notification Dialogue")
-            #do stuff here
-        if rolegrants == "roleDMDisabled":
+        if "rolegrants" in disable:
             await ctx.send("Role Grant Disabled Notification Dialogue")
             #delete file here
 
-        if redactions == "redactedEnabled":
-            await ctx.send("Message Removal Enabled Notification Dialogue")
-            #do stuff here
-        if redactions == "redactedDisabled":
-            await ctx.send("Message Removal Disabled Notification Dialogue")
-            #delete file here
+        if "redactions" in enable:
+            sendRedactions = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+            x = open(sendRedactions, "a", encoding='utf-8')
+            x.close()
+            await ctx.send("Redacted messages have been enabled. Announcements showing a message's deletion will be sent in DMs and broadcasted in the channel.")
+        if "redactions" in disable:
+            try:
+                sendRedactions = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+                os.remove(sendRedactions)
+                x = "enabled" if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt") else "disabled"
+                await ctx.send(f"Redacted messages have been disabled. Messages will not be sent in the channel or to DMs. Logging is {x}.")
+            except Exception:
+                await ctx.send("Cannot perform that function. `sendRedactions` is `disabled`")
+        if "nothing" in enable and disable:
+            await ctx.send("Nothing was changed.")
     else:
         await ctx.send("You are not admin, or do not have Admin as an assigned role")
 
@@ -452,11 +459,11 @@ async def on_ready():
     global draggie
     draggie = client.get_user(382784106984898560)
     guild = client.get_guild(759861456300015657)
-    colour = discord.Color.random()
+    colour = random.randint(1000,16777215)
+    colour = discord.Color(colour)
     role = discord.utils.get(guild.roles, name="RGB Advisor")
     await role.edit(server=guild, role=role, colour=colour)
-
-
+    
 @client.event
 async def on_member_join(member):
     channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -473,6 +480,7 @@ async def on_raw_reaction_add(payload=None):
         msgID = 835227251695288391
         vaccinatedID = 895386703144034364
         smp2ID = 912012054414630973
+        birthdayID = 892114380005715978
         guild = discord.utils.get(client.guilds, name='Baguette Brigaders')
         roleMember = discord.utils.get(guild.roles, name='Member')
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
@@ -491,6 +499,10 @@ async def on_raw_reaction_add(payload=None):
                     if count > 3:
                         await channel.send(f"{message.author.mention}'s meme has been removed.")
                         await message.delete()
+
+        if payload is not None:
+            if payload.message_id == birthdayID:
+                await payload.member.send("You are too late to claim the birthday role, sorry. More exclusive roles will be given in the future!")
 
         if payload is not None:
             if payload.message_id == smp2ID:
@@ -543,22 +555,23 @@ async def on_guild_remove(guild):
 async def on_message_delete(message):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
-    if os.path.isfile(sendLogsDir):
+    sendRedactionsInChannel = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
+    print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
+    if message.channel.id == 825470734453047297:
+        await message.channel.send(f"Stop deleting your messages in here, we're literally adding numbers, {message.author.mention}. *Their message was {message.content}*")
+        return 
+    if os.path.isfile(sendRedactionsInChannel):
+        if message.author.id != 792850689533542420:
+            await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
+            user = client.get_user(int(message.author.id))
+            await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
+    if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
         LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         embed = discord.Embed(title=f"User's message deleted", colour=0xFF0000)
         embed.add_field(name="User", value=message.author.mention)
         embed.add_field(name='Channel', value=f"<#{message.channel.id}>")
         embed.add_field(name='Time', value=tighem)
         await LoggingChannel.send(embed=embed)
-        print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
-        if message.author.id != 792850689533542420:
-            await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
-            user = client.get_user(int(message.author.id))
-            try:
-                await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
-            except Exception as e:
-                await LoggingChannel.send(f"Unable to DM {message.author} that their message has been redacted \nError: {e}.")
 
 @client.command(pass_context=True)
 async def dm(ctx):
@@ -1470,6 +1483,13 @@ async def convert(ctx):
     pass_context=True,
     aliases=['shop', 'rank', 'points', 'balance', 'bal', 'coin', 'nolly', 'nolwennium', 'nolwenn', 'score'])
 async def coins(ctx):
+    testForToggles = ctx.message.content
+    silent = False
+    if ("/s") in testForToggles.lower():
+        if ctx.message.author.guild_permissions.administrator == True:
+            silent = True
+        else:
+            await ctx.send("Your server administrator has disabled the option to use the silent toggle.")
     authorID = ctx.message.author.id
     #await ctx.send("Coins earned before 30/07/2021 are not available to use. This is a known bug and will be fixed later. You have not lost any Coins, but you cannot buy anything with your old balance. New Coins will be added to your old Coins.")
     userID = authorID
@@ -1526,8 +1546,12 @@ async def coins(ctx):
                 nc = open(usersCoins, 'r')
                 newCoins = nc.read()
                 nc.close()
-
-                await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                
+                if silent == False:
+                    await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                if silent == True:
+                    print(f"Old coins: {oldCoins} -----> New coins: {newCoins}")
+                    await ctx.message.add_reaction('✅')
                 return
         
         if word1.lower() == 'add':
@@ -1554,7 +1578,11 @@ async def coins(ctx):
                 newCoins = nc.read()
                 nc.close()
 
-                await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                if silent == False:
+                    await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                if silent == True:
+                    print(f"{userID}:       Old coins: {oldCoins} -----> New coins: {newCoins}")
+                    await ctx.message.add_reaction('✅')
                 return
         if word1.lower() == 'lookup':
             if ctx.message.author.guild_permissions.administrator == True:
@@ -1567,8 +1595,11 @@ async def coins(ctx):
 
                 nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
                 my_file = Path(nolwenniumUserDir)
-
-                await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
+                if silent == False:
+                    await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
+                if silent == True:
+                    print(f"{userID}:       Coins: {coinAmount} -----> Nolwennium: {nolwenniumBal}")
+                    await ctx.message.add_reaction('✅')
                 return
         else:
             await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
@@ -3517,8 +3548,10 @@ async def mine(ctx):
 
     roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
 
+    Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
+
     embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
-    embed.add_field(name="**Fees Paid**", value=fee, inline=False)
+    embed.add_field(name="**Fees Paid**", value=f"{fee} to <@{random.choice(Croissants)}>", inline=False)
     
     balance = balance + newNumberAfterFee
 
@@ -3537,6 +3570,28 @@ async def mine(ctx):
 
     f = open(GlobalLogDir, "a")
     f.write((str ("\nCOMMAND RAN -> '.mine' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.close()
+
+    #   Pay the fees
+
+    randomcroissant = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{random.choice(Croissants)}.txt")
+    try:
+        e = open(randomcroissant, 'r')
+        balance = (float (e.read()))
+        e.close()
+    except:
+        e = open(randomcroissant, 'w+')
+        e.write(str (0))
+        e.close()
+
+        e = open(randomcroissant, 'r')
+        balance = (float (e.read()))
+        e.close()
+
+    balance = balance + fee
+
+    f = open(randomcroissant, 'w+')
+    f.write((str (balance)))
     f.close()
 
 #   YouTube audio EPIC VERSION
@@ -4007,25 +4062,25 @@ client.add_cog(Music(bot))
 
 #   ON ERROR
 
-#@client.event
-#async def on_slash_command_error(ctx, error):
-#    randomCry = random.randint(1,7)
-#    if randomCry == 1:
-#        cry = '<:AmberCry:828577834146594856>'
-#    if randomCry == 2:
-#        cry = '<:BibiByeBye:828683852939395072>'
-#    if randomCry == 3:
-#        cry = '<:ColetteCry:828683829631516732>'
-#    if randomCry == 4:
-#        cry = '<:JessieCry:828683805861740654>'
-#    if randomCry == 5:
-#        cry = '<:SpikeCry:828683779206807622>'
-#    if randomCry == 6:
-#        cry = '<:SurgeCry:828683755694063667>'
-#    if randomCry == 7:
-#        cry = '<:TaraCry:828683724286853151>'                    
-#    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
-#    await ctx.send(embed=embed)
+@client.event
+async def on_slash_command_error(ctx, error):
+    randomCry = random.randint(1,7)
+    if randomCry == 1:
+        cry = '<:AmberCry:828577834146594856>'
+    if randomCry == 2:
+        cry = '<:BibiByeBye:828683852939395072>'
+    if randomCry == 3:
+        cry = '<:ColetteCry:828683829631516732>'
+    if randomCry == 4:
+        cry = '<:JessieCry:828683805861740654>'
+    if randomCry == 5:
+        cry = '<:SpikeCry:828683779206807622>'
+    if randomCry == 6:
+        cry = '<:SurgeCry:828683755694063667>'
+    if randomCry == 7:
+        cry = '<:TaraCry:828683724286853151>'                    
+    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    await ctx.send(embed=embed)
 
 @client.event
 async def on_command_error(ctx, error):
