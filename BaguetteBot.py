@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.16"
+DraggieBot_version = "v1.17"
 
 print("Importing all modules...\n")
 import      discord
@@ -11,7 +11,7 @@ from        discord_slash.utils.manage_commands import create_option, create_cho
 from        discord import Embed
 from        discord.ext import commands   
 from        discord import ext
-from        discord.errors import ClientException, NotFound #       CMD Prequisite: py -3 -m pip install -U discord.py
+from        discord.errors import ClientException, Forbidden, NotFound #       CMD Prequisite: py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv #                             CMD Prequisite: py -3 -m pip install -U python-dotenv
 import      os#                                                     PIP:            python -m ensurepip  
 import      os.path
@@ -93,7 +93,7 @@ slash = SlashCommand(client, sync_commands=True)
 
 print("Done!\nSlash commands initialising...")
 
-tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489] # Server IDs where I'm an admin so can change stuff before it reaches other servers
+tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
 brigaders = [759861456300015657]
 
 @slash.slash(name="debug", guild_ids=tester_guilds, description="Spits out debug info for debugging bugs")
@@ -141,7 +141,7 @@ async def _ping(ctx):
                     required=True)])
 async def _whitelist(ctx, add:str):
     message=(f"whitelist add {add}")
-    console = client.get_channel(863170713236930600)
+    console = client.get_channel(912429726562418698)
     await console.send(message)
     await ctx.send(f"Forwarded the command **/whitelist add {add}** to the console. Please try and rejoin again.")
 
@@ -150,7 +150,7 @@ async def _whitelist(ctx, add:str):
             guild_ids = brigaders,
             options=[create_option(
                     name="country",
-                    description="Add a username to the whitelist.",
+                    description="Choose country.",
                     option_type=3,
                     required=True,
                     choices=[
@@ -236,7 +236,7 @@ async def _components(ctx, enable:str, disable:str):
             try:
                 sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
                 os.remove(sendLogsDir)
-                await ctx.send(f"Disabled sending logs for server {ctx.guild.id}")
+                await ctx.send(f"Disabled sending logs for server {ctx.guild.id}. The following messages in the log channel will not be sent:\nMessages in the log channel when a user joins, types, changes status, activity, username\nMessages deleted\nDMs to users welcoming them when they join.\n")
             except Exception as e:
                 await ctx.send(f"Option name: `'switch'` already set to value `'Disabled'`!")
 
@@ -466,13 +466,21 @@ async def on_ready():
     
 @client.event
 async def on_member_join(member):
-    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-    await channel.send(f"{member} has joined the server")
+    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    if os.path.isfile(sendLogsDir):
+        await member.send(f"Welcome to {member.guild.name}")
+        channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+        await channel.send(f"{member} has joined the server")
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-    await channel.send(member, "has left the server")
+    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    if os.path.isfile(sendLogsDir):
+        try:
+            channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+            await channel.send(f"{member} has left the server.")
+        except Forbidden:
+            await draggie.send(f"Removed from server {member.guild.name} / {member.guild.id}")
 
 @client.event
 async def on_raw_reaction_add(payload=None):
@@ -497,7 +505,7 @@ async def on_raw_reaction_add(payload=None):
                     reaction = discord.utils.get(message.reactions, emoji=payload.emoji)
                     count = reaction.count
                     if count > 3:
-                        await channel.send(f"{message.author.mention}'s meme has been removed.")
+                        await channel.send(f"{message.author.mention}'s 'epic' meme has been removed.")
                         await message.delete()
 
         if payload is not None:
@@ -519,7 +527,7 @@ async def on_raw_reaction_add(payload=None):
                     authorName = (authorName.lower())
                     for word in protectedNames:
                         if word in authorName:
-                            await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity (a photo is perfect) in <#842046293504819200>.")
+                            await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
                             await asyncio.sleep(8)
                             await channel.purge(limit=1)
                             return
@@ -539,6 +547,10 @@ async def on_raw_reaction_add(payload=None):
                 if str(payload.emoji) == "✅":
                     await payload.member.add_roles(roleVaccinated)
                     await LoggingChannel.send((str (payload.member)) + (str (" has been granted vaccination status.")))
+
+        
+        #if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
+        #    x = 1
     if payload.guild_id == 384403250172133387:#     Must, while reaction roles are not available for all servers.
         if payload.message_id == 907318418712170538:
             channel = client.get_channel(907318241498656850)
@@ -571,6 +583,7 @@ async def on_message_delete(message):
         embed.add_field(name="User", value=message.author.mention)
         embed.add_field(name='Channel', value=f"<#{message.channel.id}>")
         embed.add_field(name='Time', value=tighem)
+        embed.add_field(name='Message', value=message.content, inline=False)
         await LoggingChannel.send(embed=embed)
 
 @client.command(pass_context=True)
@@ -642,7 +655,7 @@ async def on_typing(channel, user, when):
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await LoggingChannel.send(embed=embed)
-                await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")
+                """await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")"""
                 return
             if baguette in user.roles:
                 print("Baguette detected")
@@ -684,7 +697,7 @@ async def on_member_update(before, after):
                 embed.add_field(name='Trigger', value="high profile role [Croissant]")
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
+                print(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
                 await LoggingChannel.send(embed=embed)
                 return
             if baguette in after.roles:
@@ -753,7 +766,6 @@ async def on_member_update(before, after):
         print(f"OP WATCHDOG: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
     sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
-
     if os.path.isfile(sendLogsDir):
         if send == True:
             LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -774,7 +786,11 @@ async def on_member_update(before, after):
                     return
 
                 bbLogChnlId = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it **will** cause issues, as this channel is used to point to various IDs in this server.\nPermissions have been set automatically to admin only (everyone permission denied).\n\nUse /log disable if you don't want to have logs (more functionality will be coming in a leter version)")
+                try:
+                    await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it **will** cause issues, as this channel is used to point to various IDs in this server.\nPermissions have been set automatically to admin only (everyone permission denied).\n\nUse /log disable if you don't want to have logs (more functionality will be coming in a leter version)")
+                except:
+                    print(f"unable to send message in server {guild.name} / {guild.id}")
+                    await draggie.send(f"unable to send message in server {guild.name} / {guild.id}")
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         
             await LoggingChannel.send(embed=embed)
@@ -793,11 +809,6 @@ async def on_message(message):
         channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
         await channel.send("French detected!")
-    if "UUID of player Dragonmaster306 is 89c08bcb-dbf7-4422-8ac6-d06de2a98370" in message.content:
-        channel = client.get_channel(863339644169879562)
-        await asyncio.sleep(3)
-        await channel.send("hello oliver")
-        termcolor.cprint("Oliver joined", 'red', attrs=['blink'])
     if "EmileTigger lost connection" in message.content:
         channel = client.get_channel(863339644169879562)
         await channel.send("Au revoir!")
@@ -966,24 +977,27 @@ async def on_message(message):
             except Exception:
                 f.write('1')
                 f.close()
-        try:
-            bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
-            embed = discord.Embed(title="User First Message", 
-            description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
-            await bbLogChnlId.send(embed=embed)
-        except Exception:
-            print((str ("Unable to send that a new user has joined. This server, ")) + (str (serverName)) + (str (", doesn't have a text channel called 'event-log-baguette'.")))
-            guild = message.author.guild
-            await guild.create_text_channel('event-log-baguette')
-            bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-            await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
-            await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
-            embed = discord.Embed(title="User First Message", 
-            description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
-            await bbLogChnlId.send(embed=embed)
+        sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+        my_file = Path(sendLogsDir)
+        if my_file.is_file():
+            try:
+                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+
+                embed = discord.Embed(title="User First Message", 
+                description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
+                await bbLogChnlId.send(embed=embed)
+            except Exception:
+                print((str ("Unable to send that a new user has joined. This server, ")) + (str (serverName)) + (str (", doesn't have a text channel called 'event-log-baguette'.")))
+                guild = message.author.guild
+                await guild.create_text_channel('event-log-baguette')
+                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
+                await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
+                embed = discord.Embed(title="User First Message", 
+                description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
+                await bbLogChnlId.send(embed=embed)
             
-
     except ValueError:
         f.write('1')
         f.close()
@@ -1593,8 +1607,23 @@ async def coins(ctx):
                 coinAmount = oc.read()
                 oc.close()
 
-                nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
+                nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (userID)) + (str (".txt"))
                 my_file = Path(nolwenniumUserDir)
+
+                if not my_file.is_file():
+                    with open(nolwenniumUserDir, 'a') as f:
+                        print ((str ("\n\nset Nolwennium value to 0, new user.")))
+                        try:
+                            f.write('0')
+                            f.close()
+                        except Exception:
+                            f.write('0')
+                            f.close()
+
+                f = open(nolwenniumUserDir, 'r')
+                nolwenniumBal = f.read()
+                f.close()
+
                 if silent == False:
                     await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
                 if silent == True:
@@ -2965,34 +2994,37 @@ async def links(ctx):
 @client.command(help="Purges a specified amount of messages", brief="Purges messages", pass_context=True)
 @commands.has_any_role('Admin', 'Mod', 'King')
 async def purge(ctx):
-    async with ctx.typing():
-        txt = ctx.message.content
-        x = txt.split()
-        print(x[1])
-        y = (int (x[1])) + 1
+    if ctx.message.author.id == 382784106984898560:
+        async with ctx.typing():
+            txt = ctx.message.content
+            x = txt.split()
+            print(x[1])
+            y = (int (x[1])) + 1
 
-        if (x[1]) == 1:
-            await ctx.channel.purge(limit = y)
-            await ctx.send(str ("Deleted ") + (x[1]) + (str (" message!")))
+            if (x[1]) == 1:
+                await ctx.channel.purge(limit = y)
+                await ctx.send(str ("Deleted ") + (x[1]) + (str (" message!")))
+                f = open(GlobalLogDir, "a")
+                f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+                f.close()
+                print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
+                return  
+            if y <= 21:
+                await ctx.channel.purge(limit = y)
+                await ctx.send(str ("Deleted ") + (x[1]) + (str (" messages!")))
+                f = open(GlobalLogDir, "a")
+                f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+                f.close()
+                print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
+                return
+            if (x[1]) == 69:
+                await ctx.send(str ("Nice"))  
             f = open(GlobalLogDir, "a")
             f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
             f.close()
             print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
-            return  
-        if y <= 21:
-            await ctx.channel.purge(limit = y)
-            await ctx.send(str ("Deleted ") + (x[1]) + (str (" messages!")))
-            f = open(GlobalLogDir, "a")
-            f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-            f.close()
-            print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
-            return
-        if (x[1]) == 69:
-            await ctx.send(str ("Nice"))  
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))  
+    else:
+        await ctx.send("You don't have permissions for that u sussy boi")
 
 #   i g n o r e
 
@@ -3596,469 +3628,7 @@ async def mine(ctx):
 
 #   YouTube audio EPIC VERSION
 
-youtube_dl.utils.bug_reports_message = lambda: ''
-
-class VoiceError(Exception):
-    pass
-class YTDLError(Exception):
-    pass
-class YTDLSource(discord.PCMVolumeTransformer):
-    YTDL_OPTIONS = {
-        'format': 'bestaudio/best',
-        'extractaudio': True,
-        'audioformat': 'mp3',
-        'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-        'restrictfilenames': True,
-        'noplaylist': True,
-        'nocheckcertificate': True,
-        'ignoreerrors': False,
-        'logtostderr': False,
-        'quiet': True,
-        'no_warnings': True,
-        'default_search': 'auto',
-        'source_address': '0.0.0.0',
-    }
-
-    FFMPEG_OPTIONS = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn',
-    }
-
-    ytdl = youtube_dl.YoutubeDL(YTDL_OPTIONS)
-
-    def __init__(self, ctx: commands.Context, source: discord.FFmpegPCMAudio, *, data: dict, volume: float = 0.5):
-        super().__init__(source, volume)
-
-        self.requester = ctx.author
-        self.channel = ctx.channel
-        self.data = data
-
-        self.uploader = data.get('uploader')
-        self.uploader_url = data.get('uploader_url')
-        date = data.get('upload_date')
-        self.upload_date = date[6:8] + '.' + date[4:6] + '.' + date[0:4]
-        self.title = data.get('title')
-        self.thumbnail = data.get('thumbnail')
-        self.description = data.get('description')
-        self.duration = self.parse_duration(int(data.get('duration')))
-        self.tags = data.get('tags')
-        self.url = data.get('webpage_url')
-        self.views = data.get('view_count')
-        self.likes = data.get('like_count')
-        self.dislikes = data.get('dislike_count')
-        self.stream_url = data.get('url')
-
-    def __str__(self):
-        return '**{0.title}** by **{0.uploader}**'.format(self)
-
-    @classmethod
-    async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
-        loop = loop or asyncio.get_event_loop()
-
-        partial = functools.partial(cls.ytdl.extract_info, search, download=False, process=False)
-        data = await loop.run_in_executor(None, partial)
-
-        if data is None:
-            raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
-
-        if 'entries' not in data:
-            process_info = data
-        else:
-            process_info = None
-            for entry in data['entries']:
-                if entry:
-                    process_info = entry
-                    break
-
-            if process_info is None:
-                raise YTDLError('Couldn\'t find anything that matches `{}`'.format(search))
-
-        webpage_url = process_info['webpage_url']
-        partial = functools.partial(cls.ytdl.extract_info, webpage_url, download=False)
-        processed_info = await loop.run_in_executor(None, partial)
-
-        if processed_info is None:
-            raise YTDLError('Couldn\'t fetch `{}`'.format(webpage_url))
-
-        if 'entries' not in processed_info:
-            info = processed_info
-        else:
-            info = None
-            while info is None:
-                try:
-                    info = processed_info['entries'].pop(0)
-                except IndexError:
-                    raise YTDLError('Couldn\'t retrieve any matches for `{}`'.format(webpage_url))
-
-        return cls(ctx, discord.FFmpegPCMAudio(info['url'], **cls.FFMPEG_OPTIONS), data=info)
-
-    @staticmethod
-    def parse_duration(duration: int):
-        minutes, seconds = divmod(duration, 60)
-        hours, minutes = divmod(minutes, 60)
-        days, hours = divmod(hours, 24)
-
-        duration = []
-        if days > 0:
-            duration.append('{} days'.format(days))
-        if hours > 0:
-            duration.append('{} hours'.format(hours))
-        if minutes > 0:
-            duration.append('{} minutes'.format(minutes))
-        if seconds > 0:
-            duration.append('{} seconds'.format(seconds))
-
-        return ', '.join(duration)
-
-
-class Song:
-    __slots__ = ('source', 'requester')
-
-    def __init__(self, source: YTDLSource):
-        self.source = source
-        self.requester = source.requester
-
-    def create_embed(self):
-        embed = (discord.Embed(title='Now playing',
-                               description='```css\n{0.source.title}\n```'.format(self),
-                               color=discord.Color.blurple())
-                 .add_field(name='Duration', value=self.source.duration)
-                 .add_field(name='Requested by', value=self.requester.mention)
-                 .add_field(name='Uploader', value='[{0.source.uploader}]({0.source.uploader_url})'.format(self))
-                 .add_field(name='URL', value='[Click]({0.source.url})'.format(self))
-                 .add_field(name='KNOWN ISSUES', value='You **MUST** type .leave BEFORE playing another video or the bot will get stuck in a non-reading loop! ')
-                 .set_thumbnail(url=self.source.thumbnail))
-
-        return embed
-
-
-class SongQueue(asyncio.Queue):
-    def __getitem__(self, item):
-        if isinstance(item, slice):
-            return list(itertools.islice(self._queue, item.start, item.stop, item.step))
-        else:
-            return self._queue[item]
-
-    def __iter__(self):
-        return self._queue.__iter__()
-
-    def __len__(self):
-        return self.qsize()
-
-    def clear(self):
-        self._queue.clear()
-
-    def shuffle(self):
-        random.shuffle(self._queue)
-
-    def remove(self, index: int):
-        del self._queue[index]
-
-class VoiceState:
-    def __init__(self, bot: commands.Bot, ctx: commands.Context):
-        self.bot = bot
-        self._ctx = ctx
-
-        self.current = None
-        self.voice = None
-        self.next = asyncio.Event()
-        self.songs = SongQueue()
-
-        self._loop = False
-        self._volume = 0.5
-        self.skip_votes = set()
-
-        self.audio_player = client.loop.create_task(self.audio_player_task())
-
-    def __del__(self):
-        self.audio_player.cancel()
-
-    @property
-    def loop(self):
-        return self._loop
-
-    @loop.setter
-    def loop(self, value: bool):
-        self._loop = value
-
-    @property
-    def volume(self):
-        return self._volume
-
-    @volume.setter
-    def volume(self, value: float):
-        self._volume = value
-
-    @property
-    def is_playing(self):
-        return self.voice and self.current
-
-    async def audio_player_task(self):
-        while True:
-            self.next.clear()
-
-            if not self.loop:
-                # Try to get the next song within 3 minutes.
-                # If no song will be added to the queue in time,
-                # the player will disconnect due to performance
-                # reasons.
-                try:
-                    async with timeout(180):  # 3 minutes
-                        self.current = await self.songs.get()
-                except asyncio.TimeoutError:
-                    self.bot.loop.create_task(self.stop())
-                    return
-
-            self.current.source.volume = self._volume
-            self.voice.play(self.current.source, after=self.play_next_song)
-            await self.current.source.channel.send(embed=self.current.create_embed())
-
-            await self.next.wait()
-
-    def play_next_song(self, error=None):
-        if error:
-            raise VoiceError(str(error))
-
-        self.next.set()
-
-    def skip(self):
-        self.skip_votes.clear()
-
-        if self.is_playing:
-            self.voice.stop()
-
-    async def stop(self):
-        self.songs.clear()
-
-        if self.voice:
-            await self.voice.disconnect()
-            self.voice = None
-
-class Music(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-        self.voice_states = {}
-
-    def get_voice_state(self, ctx: commands.Context):
-        state = self.voice_states.get(ctx.guild.id)
-        if not state:
-            state = VoiceState(self.bot, ctx)
-            self.voice_states[ctx.guild.id] = state
-
-        return state
-
-    def cog_unload(self):
-        for state in self.voice_states.values():
-            self.bot.loop.create_task(state.stop())
-
-    def cog_check(self, ctx: commands.Context):
-        if not ctx.guild:
-            raise commands.NoPrivateMessage('This command can\'t be used in DM channels.')
-
-        return True
-
-    async def cog_before_invoke(self, ctx: commands.Context):
-        ctx.voice_state = self.get_voice_state(ctx)
-
-    async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        await ctx.send('An error occurred: {}'.format(str(error)))
-
-    @commands.command(name='join', invoke_without_subcommand=True)
-    async def _join(self, ctx: commands.Context):
-        """Joins a voice channel."""
-
-        destination = ctx.author.voice.channel
-        if ctx.voice_state.voice:
-            await ctx.voice_state.voice.move_to(destination)
-            return
-
-        ctx.voice_state.voice = await destination.connect()
-
-    @commands.command(name='summon')
-    @commands.has_permissions(manage_guild=True)
-    async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
-        """Summons the bot to a voice channel.
-
-        If no channel was specified, it joins your channel.
-        """
-
-        if not channel and not ctx.author.voice:
-            raise VoiceError('You are neither connected to a voice channel nor specified a channel to join.')
-
-        destination = channel or ctx.author.voice.channel
-        if ctx.voice_state.voice:
-            await ctx.voice_state.voice.move_to(destination)
-            return
-
-        ctx.voice_state.voice = await destination.connect()
-
-    @commands.command(name='leave', aliases=['disconnect'])
-    @commands.has_permissions(manage_guild=True)
-    async def _leave(self, ctx: commands.Context):
-        """Clears the queue and leaves the voice channel."""
-
-        if not ctx.voice_state.voice:
-            return await ctx.send('Not connected to any voice channel.')
-
-        await ctx.voice_state.stop()
-        del self.voice_states[ctx.guild.id]
-
-    @commands.command(name='volume')
-    async def _volume(self, ctx: commands.Context, *, volume: int):
-        """Sets the volume of the player."""
-
-        if not ctx.voice_state.is_playing:
-            return await ctx.send('Nothing being played at the moment.')
-
-        if 0 > volume > 100:
-            return await ctx.send('Volume must be between 0 and 100')
-
-        ctx.voice_state.volume = volume / 100
-        await ctx.send('Volume of the player set to {}%'.format(volume))
-
-    @commands.command(name='now', aliases=['current', 'playing'])
-    async def _now(self, ctx: commands.Context):
-        """Displays the currently playing song."""
-
-        await ctx.send(embed=ctx.voice_state.current.create_embed())
-
-    @commands.command(name='pause')
-    @commands.has_permissions(manage_guild=True)
-    async def _pause(self, ctx: commands.Context):
-        """Pauses the currently playing song."""
-
-        if ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
-            ctx.voice_state.voice.pause()
-            await ctx.message.add_reaction('⏯')
-
-    @commands.command(name='resume')
-    @commands.has_permissions(manage_guild=True)
-    async def _resume(self, ctx: commands.Context):
-        """Resumes a currently paused song."""
-
-        if ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
-            ctx.voice_state.voice.resume()
-            await ctx.message.add_reaction('⏯')
-
-    @commands.command(name='stop')
-    @commands.has_permissions(manage_guild=True)
-    async def _stop(self, ctx: commands.Context):
-        """Stops playing song and clears the queue."""
-
-        ctx.voice_state.songs.clear()
-
-        if ctx.voice_state.is_playing:
-            ctx.voice_state.voice.stop()
-            await ctx.message.add_reaction('⏹')
-
-    @commands.command(name='skip')
-    async def _skip(self, ctx: commands.Context):
-        """Vote to skip a song. The requester can automatically skip.
-        3 skip votes are needed for the song to be skipped.
-        """
-
-        if not ctx.voice_state.is_playing:
-            return await ctx.send('Not playing any music right now...')
-
-        voter = ctx.message.author
-
-        await ctx.message.add_reaction('⏭')
-        ctx.voice_state.skip()
-
-
-    @commands.command(name='queue')
-    async def _queue(self, ctx: commands.Context, *, page: int = 1):
-        """Shows the player's queue.
-
-        You can optionally specify the page to show. Each page contains 10 elements.
-        """
-
-        if len(ctx.voice_state.songs) == 0:
-            return await ctx.send('Empty queue.')
-
-        items_per_page = 10
-        pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
-
-        start = (page - 1) * items_per_page
-        end = start + items_per_page
-
-        queue = ''
-        for i, song in enumerate(ctx.voice_state.songs[start:end], start=start):
-            queue += '`{0}.` [**{1.source.title}**]({1.source.url})\n'.format(i + 1, song)
-
-        embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.songs), queue))
-                 .set_footer(text='Viewing page {}/{}'.format(page, pages)))
-        await ctx.send(embed=embed)
-
-    @commands.command(name='shuffle')
-    async def _shuffle(self, ctx: commands.Context):
-        """Shuffles the queue."""
-
-        if len(ctx.voice_state.songs) == 0:
-            return await ctx.send('Empty queue.')
-
-        ctx.voice_state.songs.shuffle()
-        await ctx.message.add_reaction('✅')
-
-    @commands.command(name='remove')
-    async def _remove(self, ctx: commands.Context, index: int):
-        """Removes a song from the queue at a given index."""
-
-        if len(ctx.voice_state.songs) == 0:
-            return await ctx.send('Empty queue.')
-
-        ctx.voice_state.songs.remove(index - 1)
-        await ctx.message.add_reaction('✅')
-
-    @commands.command(name='loop')
-    async def _loop(self, ctx: commands.Context):
-        """Loops the currently playing song.
-
-        Invoke this command again to unloop the song.
-        """
-
-        if not ctx.voice_state.is_playing:
-            return await ctx.send('Nothing being played at the moment.')
-
-        # Inverse boolean value to loop and unloop.
-        ctx.voice_state.loop = not ctx.voice_state.loop
-        await ctx.message.add_reaction('✅')
-
-    @commands.command(name='play')
-    async def _play(self, ctx: commands.Context, *, search: str):
-        """Plays a song.
-
-        If there are songs in the queue, this will be queued until the
-        other songs finished playing.
-
-        This command automatically searches from various sites if no URL is provided.
-        A list of these sites can be found here: https://rg3.github.io/youtube-dl/supportedsites.html
-        """
-
-        if not ctx.voice_state.voice:
-            await ctx.invoke(self._join)
-
-        
-            try:
-                source = await YTDLSource.create_source(ctx, search)#, loop=self.bot.loop)
-            except YTDLError as e:
-                await ctx.send('An error occurred while processing this request: {}'.format(str(e)))
-            else:
-                song = Song(source)
-
-                await ctx.voice_state.songs.put(song)
-                await ctx.send(f'{source} has been added to the queue')
-
-    @_join.before_invoke
-    @_play.before_invoke
-    async def ensure_voice_state(self, ctx: commands.Context):
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            raise commands.CommandError('You are not connected to any voice channel.')
-
-        if ctx.voice_client:
-            if ctx.voice_client.channel != ctx.author.voice.channel:
-                raise commands.CommandError('Bot is already in a voice channel.')
-client.add_cog(Music(bot))
+#   Temporarily removed
 
 #   ON ERROR
 
