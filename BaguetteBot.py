@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.17"
+DraggieBot_version = "v1.18"
 
 print("Importing all modules...\n")
 import      discord
@@ -55,6 +55,8 @@ from        ctypes import WinError
 from        attr import attr
 from        discord_slash.context import MenuContext
 from        discord_slash.model import ContextMenuType
+from        instadm import InstaDM
+import       threading
 
 """   
     To do:
@@ -587,7 +589,7 @@ async def on_message_delete(message):
         await LoggingChannel.send(embed=embed)
 
 @client.command(pass_context=True)
-async def dm(ctx):
+async def discorddm(ctx):
     message = ctx.message.content
     x = message.split()
     sp1 = message.split(' ', 2)[-1]
@@ -595,6 +597,40 @@ async def dm(ctx):
     user = client.get_user(int (userID))
     await user.send(f"{sp1}")
     await draggie.send(f"{sp1}")
+
+def InstaDMSend(ctx):
+    message = ctx.message.content
+    x = message.split()
+    user = (x[1])
+    msg = message.split(' ', 2)[-1]
+
+    with open("D:\\BaguetteBot\\TextValues\\password.txt", encoding="utf-8") as f:
+        password = f.read()
+
+    try:
+        if __name__ == '__main__':
+            insta = InstaDM(username='draggie306', password=password, headless=False)
+            insta.sendMessage(user=f'{user}', message=f'{msg}')
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+
+@client.command(pass_context=True)
+async def dm(ctx):
+    message = ctx.message.content
+    x = message.split()
+    user = (x[1])
+    msg = message.split(' ', 2)[-1]
+    if ctx.message.author.id == 382784106984898560:
+        accounts = ("`draggiefn`, `nolwenntighe`, `charli3_s3w`, `xxnova_smokexx`, `ismail_ahmed_06_2`, `sam_partridge._`, `b3nny_b0oze`, `_reuben_72`, `therealwillbyrne`, `unicornkid_72`, `riaz_bari_`, `drevilo.19`, `some_one_acctually`, `harrigeorg`")
+        if user not in accounts:
+            await ctx.send(f"Sorry! I can only send DMs to the following accounts: {accounts}")
+            return
+
+        await ctx.send(f"OK! Trying to send **{msg}** to Instagram user @**{user}**. This may take over 30 seconds.")
+        t1 = threading.Thread(target=InstaDMSend, args=[ctx])
+        t1.start()
+    else:
+        await ctx.send(f"you don't have permission to message {user} ")
 
 @client.event
 async def on_message_edit(before, after):
