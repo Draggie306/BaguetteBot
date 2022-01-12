@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.18"
+DraggieBot_version = "v1.19"
 
 print("Importing all modules...\n")
 import      discord
@@ -56,15 +56,11 @@ from        attr import attr
 from        discord_slash.context import MenuContext
 from        discord_slash.model import ContextMenuType
 from        instadm import InstaDM
-import       threading
+import      threading
 
 """   
     To do:
-        CharlieMention (Added v0.9.6)
-        EmileTigheMention
-        
-    Plus: 
-        Concatenate dirs/msgs/vars with f strings so it looks cleaner
+        Replace ALL dirs/msgs/vars with f strings so it looks cleaner
 """
 
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -145,7 +141,7 @@ async def _whitelist(ctx, add:str):
     message=(f"whitelist add {add}")
     console = client.get_channel(912429726562418698)
     await console.send(message)
-    await ctx.send(f"Forwarded the command **/whitelist add {add}** to the console. Please try and rejoin again.")
+    await ctx.send(f"**{add}** has been added to the whitelist. Please rejoin the Minecraft server!")
 
 @slash.slash(name="cuisine",
             description="Cuisine.",
@@ -458,8 +454,10 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
     await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
-    global draggie
+    global draggie, general, console
     draggie = client.get_user(382784106984898560)
+    general = client.get_channel(759861456761258045)
+    console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
     colour = random.randint(1000,16777215)
     colour = discord.Color(colour)
@@ -469,10 +467,14 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
-    if os.path.isfile(sendLogsDir):
-        await member.send(f"Welcome to {member.guild.name}")
-        channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-        await channel.send(f"{member} has joined the server")
+    if member.guild.id == 759861456300015657:
+        await member.send(f"Hello! Welcome to Baguette Brigaders. If you joined from the vanity link, welcome! Please verify yourself. Also, add me to your server! >> https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=8&scope=bot%20applications.commands. (for what I do, click: https://www.ibaguette.com/p/bots.html)")
+        print("Welcomed user")
+        await draggie.send(f"Welcomed user {member}")
+    #if os.path.isfile(sendLogsDir):
+    #    await member.send(f"Welcome to {member.guild.name}")
+    #    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+    #    await channel.send(f"{member} has joined the server")
 
 @client.event
 async def on_member_remove(member):
@@ -492,6 +494,7 @@ async def on_raw_reaction_add(payload=None):
         smp2ID = 912012054414630973
         birthdayID = 892114380005715978
         guild = discord.utils.get(client.guilds, name='Baguette Brigaders')
+        roleAllRandoms = discord.utils.get(guild.roles, id=930186230442905620)
         roleMember = discord.utils.get(guild.roles, name='Member')
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
         roleUnverified = discord.utils.get(guild.roles, name='Unverified')
@@ -522,27 +525,36 @@ async def on_raw_reaction_add(payload=None):
                 print(f"Sent DM to {payload.member.name}")
 
         if payload is not None:
-            if payload.message_id == msgID:
+            if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
                     authorName = (str (payload.member.name))
                     authorName = (authorName.lower())
-                    for word in protectedNames:
+                    for word in protectedNames:#            Check protected name list.
                         if word in authorName:
                             await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
                             await asyncio.sleep(8)
                             await channel.purge(limit=1)
                             return
-                    await payload.member.add_roles(roleMember)
-                    await payload.member.add_roles(roleNew)
-                    await channel.send((str ("Welcome, ")) + (str (payload.member.mention)) + (str ("! You have been verified! Maybe check out <#759861456761258045> now?")))
-                    print("Sent message")
+                    
+                    await payload.member.add_roles(roleAllRandoms)
+                    await 930186094375481434
+
+                    #await draggie.send(f"Attempting to ban user {payload.member.name}...")
+                    #await payload.member.ban(reason="Banned while i fix this code.")
+                    #await draggie.send(f"Banned user {payload.member.name} ({payload.member.mention})")
+                    #await general.send(f"Banned user {payload.member.name} ({payload.member.mention})")
+                    #return
+                    #await payload.member.add_roles(roleMember)
+                    #await payload.member.add_roles(roleNew)
+                    #await channel.send((str ("Welcome, ")) + (str (payload.member.mention)) + (str ("! You have been verified! Maybe check out <#759861456761258045> now?")))
+                    #print("Sent message")
                 
-                    await LoggingChannel.send((str (payload.member)) + (str (" has been verified.")))
-                    await payload.member.remove_roles(roleUnverified)
-                    await asyncio.sleep(5)
-                    await channel.purge(limit=1)
-                    print("And it's gone in", channel)
+                    #await LoggingChannel.send((str (payload.member)) + (str (" has been verified.")))
+                    #await payload.member.remove_roles(roleUnverified)
+                    #await asyncio.sleep(5)
+                    #await channel.purge(limit=1)
+                    #print("And it's gone in", channel)
 
         if payload is not None:
             if payload.message_id == vaccinatedID:
@@ -773,6 +785,10 @@ async def on_member_update(before, after):
         embed.add_field(name='Date/Time', value=tighem)
         send = True
         print(f"OP WATCHDOG: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        if after.guild.id == 759861456300015657:
+            await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+            await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+            print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
@@ -836,18 +852,16 @@ async def on_member_update(before, after):
 
     #print(watchdogMsg)
 
-#   on message
+#   on messagetiktok.com
 
 @client.event
 async def on_message(message):
     if "UUID of player EmileTigger is d0b393de-e783-45b6-9d13-19ba56c5451e" in message.content:
         termcolor.cprint("Emile joined", 'red', attrs=['blink'])
-        channel = client.get_channel(863339644169879562)
         await asyncio.sleep(3)
-        await channel.send("French detected!")
+        await console.send("say FRENCH Detected!!!!")
     if "EmileTigger lost connection" in message.content:
-        channel = client.get_channel(863339644169879562)
-        await channel.send("Au revoir!")
+        await console.send("say Au revoir!")
     if message.author.bot:
        return
 
@@ -1569,228 +1583,237 @@ async def coins(ctx):
     f = open(nolwenniumUserDir, 'r')
     nolwenniumBal = f.read()
     f.close()
+    
+    canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
+    if canRunCommand in user.roles:
+        try:
+            #	List of stuff BEFORE showing the user their balance
+            txt = ctx.message.content
+            x = txt.split()
+            word1 = (str (x[1]))
 
-#	List of stuff BEFORE showing the user their balance
+            if word1.lower() == 'set':
+                if ctx.message.author.guild_permissions.administrator == True:
+                    userID = (str (x[2]))
+                    amount = (str (x[3]))
+                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
+                    oc = open(usersCoins, 'r')
+                    oldCoins = oc.read()
+                    oc.close()
 
-    try:
-        txt = ctx.message.content
-        x = txt.split()
-        word1 = (str (x[1]))
+                    e = open(usersCoins, 'w+')
+                    e.close()
 
-        if word1.lower() == 'set':
-            if ctx.message.author.guild_permissions.administrator == True:
-                userID = (str (x[2]))
-                amount = (str (x[3]))
-                usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-                oc = open(usersCoins, 'r')
-                oldCoins = oc.read()
-                oc.close()
+                    with open(usersCoins, 'a') as f:
+                        f.write(str (amount))
+                        f.close()
 
-                e = open(usersCoins, 'w+')
-                e.close()
+                    nc = open(usersCoins, 'r')
+                    newCoins = nc.read()
+                    nc.close()
+                    
+                    if silent == False:
+                        await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                    if silent == True:
+                        print(f"Old coins: {oldCoins} -----> New coins: {newCoins}")
+                        await ctx.message.add_reaction('✅')
+                    return
+            
+            if word1.lower() == 'add':
+                if ctx.message.author.guild_permissions.administrator == True:
+                    userID = (str (x[2]))
+                    amountToAdd = (str (x[3]))
 
-                with open(usersCoins, 'a') as f:
-                    f.write(str (amount))
+                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
+
+                    oc = open(usersCoins, 'r')
+                    oldCoins = oc.read()
+                    oc.close()
+
+                    e = open(usersCoins, 'w+')
+                    e.close()
+
+                    newCoins = int(oldCoins) + int(amountToAdd)
+
+                    with open(usersCoins, 'a') as f:
+                        f.write(str (newCoins))
+                        f.close()
+
+                    nc = open(usersCoins, 'r')
+                    newCoins = nc.read()
+                    nc.close()
+
+                    if silent == False:
+                        await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
+                    if silent == True:
+                        print(f"{userID}:       Old coins: {oldCoins} -----> New coins: {newCoins}")
+                        await ctx.message.add_reaction('✅')
+                    return
+            if word1.lower() == 'lookup':
+                if ctx.message.author.guild_permissions.administrator == True:
+                    userID = (str (x[2]))
+
+                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
+                    oc = open(usersCoins, 'r')
+                    coinAmount = oc.read()
+                    oc.close()
+
+                    nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (userID)) + (str (".txt"))
+                    my_file = Path(nolwenniumUserDir)
+
+                    if not my_file.is_file():
+                        with open(nolwenniumUserDir, 'a') as f:
+                            print ((str ("\n\nset Nolwennium value to 0, new user.")))
+                            try:
+                                f.write('0')
+                                f.close()
+                            except Exception:
+                                f.write('0')
+                                f.close()
+
+                    f = open(nolwenniumUserDir, 'r')
+                    nolwenniumBal = f.read()
                     f.close()
 
-                nc = open(usersCoins, 'r')
-                newCoins = nc.read()
-                nc.close()
-                
-                if silent == False:
-                    await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
-                if silent == True:
-                    print(f"Old coins: {oldCoins} -----> New coins: {newCoins}")
-                    await ctx.message.add_reaction('✅')
-                return
-        
-        if word1.lower() == 'add':
-            if ctx.message.author.guild_permissions.administrator == True:
-                userID = (str (x[2]))
-                amountToAdd = (str (x[3]))
-
-                usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-
-                oc = open(usersCoins, 'r')
-                oldCoins = oc.read()
-                oc.close()
-
-                e = open(usersCoins, 'w+')
-                e.close()
-
-                newCoins = int(oldCoins) + int(amountToAdd)
-
-                with open(usersCoins, 'a') as f:
-                    f.write(str (newCoins))
-                    f.close()
-
-                nc = open(usersCoins, 'r')
-                newCoins = nc.read()
-                nc.close()
-
-                if silent == False:
-                    await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
-                if silent == True:
-                    print(f"{userID}:       Old coins: {oldCoins} -----> New coins: {newCoins}")
-                    await ctx.message.add_reaction('✅')
-                return
-        if word1.lower() == 'lookup':
-            if ctx.message.author.guild_permissions.administrator == True:
-                userID = (str (x[2]))
-
-                usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-                oc = open(usersCoins, 'r')
-                coinAmount = oc.read()
-                oc.close()
-
-                nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (userID)) + (str (".txt"))
-                my_file = Path(nolwenniumUserDir)
-
-                if not my_file.is_file():
-                    with open(nolwenniumUserDir, 'a') as f:
-                        print ((str ("\n\nset Nolwennium value to 0, new user.")))
-                        try:
-                            f.write('0')
-                            f.close()
-                        except Exception:
-                            f.write('0')
-                            f.close()
-
-                f = open(nolwenniumUserDir, 'r')
-                nolwenniumBal = f.read()
-                f.close()
-
-                if silent == False:
-                    await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
-                if silent == True:
-                    print(f"{userID}:       Coins: {coinAmount} -----> Nolwennium: {nolwenniumBal}")
-                    await ctx.message.add_reaction('✅')
-                return
-        else:
-            await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
-
-    except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
-        global citizenPurchasable
-        global knightPurchasable
-        global princePurchasable
-        global kingPurchasable
-        global adminPurchasable
-
-        citizenPurchasable = '-'
-        knightPurchasable = ' '
-        princePurchasable = ' '
-        kingPurchasable = ' '
-        adminPurchasable = ' '
-
-        hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
-        hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
-        hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
-        hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
-        hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
-
-        randomCry = random.randint(1,7)
-        global cry
-        if randomCry == 1:
-            cry = '<:AmberCry:828577834146594856>'
-        if randomCry == 2:
-            cry = '<:BibiByeBye:828683852939395072>'
-        if randomCry == 3:
-            cry = '<:ColetteCry:828683829631516732>'
-        if randomCry == 4:
-            cry = '<:JessieCry:828683805861740654>'
-        if randomCry == 5:
-            cry = '<:SpikeCry:828683779206807622>'
-        if randomCry == 6:
-            cry = '<:SurgeCry:828683755694063667>'
-        if randomCry == 7:
-            cry = '<:TaraCry:828683724286853151>'
-
-        if serverID != 759861456300015657:
-            await ctx.send("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
-        
-        if hasCitizen in user.roles:
-            citizenPurchasable = '\nCitizen: *🔓 Unlocked!*'
-        if int (str (coinBal)) > 1:
-            citizenPurchasable = 'Citizen: 0 <:Coins:852664685270663194>'
-
-        if hasKnight in user.roles:
-            knightPurchasable = '\nKnight:*🔓 Unlocked!*'
-
-        if int (str (coinBal)) > 250:
-            knightPurchasable = '\nKnight: 250 <:Coins:852664685270663194>'
-
-        if hasPrince in user.roles:
-            princePurchasable = '\nPrince:*🔓 Unlocked!*'
-
-        if int (str (coinBal)) > 1000:
-            princePurchasable = '\nPrince: 1000 <:Coins:852664685270663194>'
-
-        if hasKing in user.roles:
-            kingPurchasable = '\nKing:*🔓 Unlocked!*'
-
-        if int (str (coinBal)) > 2500:
-            kingPurchasable = '\nKing: 2,500 <:Coins:852664685270663194>'
-
-        if int (str (coinBal)) > 1000000:
-            if hasAdmin in user.roles:
-                adminPurchasable = '\nAdmin:*🔓 Unlocked!*'
-
+                    if silent == False:
+                        await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
+                    if silent == True:
+                        print(f"{userID}:       Coins: {coinAmount} -----> Nolwennium: {nolwenniumBal}")
+                        await ctx.message.add_reaction('✅')
+                    return
             else:
-                adminPurchasable = '\nAdmin: 1,000,000 <:Coins:852664685270663194>'
+                await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
 
-        f = open (nolwenniumUserDir, 'r')
-        nolwenniumBal = f.read()
-        f.close()
+        except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
+            global citizenPurchasable
+            global knightPurchasable
+            global princePurchasable
+            global kingPurchasable
+            global adminPurchasable
 
-        embed = discord.Embed(title="User Balance", description=((str ("You have ")) + (str (coinBal)) + (str (" <:Coins:852664685270663194> coins and ")) + (str (nolwenniumBal)) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium available to spend."))), colour=0xFFD700)
-        embed.add_field(
-        name="Items available to .buy",
-        value=(citizenPurchasable) + (knightPurchasable) + (princePurchasable) + (kingPurchasable) + (adminPurchasable),
-        inline=False)
-        if serverID == 759861456300015657:
-            embed.set_footer(text=("What can I do with these?\nYou can buy roles for Coins (this server only), and use Nolwennium to run commands for the bot (across all servers)."))
-        await ctx.send(embed=embed)
+            citizenPurchasable = '-'
+            knightPurchasable = ' '
+            princePurchasable = ' '
+            kingPurchasable = ' '
+            adminPurchasable = ' '
+
+            hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
+            hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
+            hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
+            hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
+            hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
+
+            randomCry = random.randint(1,7)
+            global cry
+            if randomCry == 1:
+                cry = '<:AmberCry:828577834146594856>'
+            if randomCry == 2:
+                cry = '<:BibiByeBye:828683852939395072>'
+            if randomCry == 3:
+                cry = '<:ColetteCry:828683829631516732>'
+            if randomCry == 4:
+                cry = '<:JessieCry:828683805861740654>'
+            if randomCry == 5:
+                cry = '<:SpikeCry:828683779206807622>'
+            if randomCry == 6:
+                cry = '<:SurgeCry:828683755694063667>'
+            if randomCry == 7:
+                cry = '<:TaraCry:828683724286853151>'
+
+            if serverID != 759861456300015657:
+                await ctx.send("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
+            
+            if hasCitizen in user.roles:
+                citizenPurchasable = '\nCitizen: *🔓 Unlocked!*'
+            if int (str (coinBal)) > 1:
+                citizenPurchasable = 'Citizen: 0 <:Coins:852664685270663194>'
+
+            if hasKnight in user.roles:
+                knightPurchasable = '\nKnight:*🔓 Unlocked!*'
+
+            if int (str (coinBal)) > 250:
+                knightPurchasable = '\nKnight: 250 <:Coins:852664685270663194>'
+
+            if hasPrince in user.roles:
+                princePurchasable = '\nPrince:*🔓 Unlocked!*'
+
+            if int (str (coinBal)) > 1000:
+                princePurchasable = '\nPrince: 1000 <:Coins:852664685270663194>'
+
+            if hasKing in user.roles:
+                kingPurchasable = '\nKing:*🔓 Unlocked!*'
+
+            if int (str (coinBal)) > 2500:
+                kingPurchasable = '\nKing: 2,500 <:Coins:852664685270663194>'
+
+            if int (str (coinBal)) > 1000000:
+                if hasAdmin in user.roles:
+                    adminPurchasable = '\nAdmin:*🔓 Unlocked!*'
+
+                else:
+                    adminPurchasable = '\nAdmin: 1,000,000 <:Coins:852664685270663194>'
+
+            f = open (nolwenniumUserDir, 'r')
+            nolwenniumBal = f.read()
+            f.close()
+
+            embed = discord.Embed(title="User Balance", description=((str ("You have ")) + (str (coinBal)) + (str (" <:Coins:852664685270663194> coins and ")) + (str (nolwenniumBal)) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium available to spend."))), colour=0xFFD700)
+            embed.add_field(
+            name="Items available to .buy",
+            value=(citizenPurchasable) + (knightPurchasable) + (princePurchasable) + (kingPurchasable) + (adminPurchasable),
+            inline=False)
+            if serverID == 759861456300015657:
+                embed.set_footer(text=("What can I do with these?\nYou can buy roles for Coins (this server only) by typing .buy [item], and use Nolwennium to run commands for the bot (saved across all servers)."))
+            await ctx.send(embed=embed)
+    else:
+        await ctx.send("You do not have permission to access the shop interface.")
 
 #   buy
 
 @client.command(help="Shows coin balance. If above a threshold, displays the list of roles the user can buy by typing .buy <role>", brief="Shows your balance, and available to buy items.", pass_context=True)
 async def buy(ctx):
-    async with ctx.typing():
-        member = ctx.message.author
-        authorID = ctx.message.author.id
-        text = ctx.message.content
-        serverID = ctx.message.guild.id
+    canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
+    if canRunCommand in ctx.message.author.roles:
+        async with ctx.typing():
+            member = ctx.message.author
+            authorID = ctx.message.author.id
+            text = ctx.message.content
+            serverID = ctx.message.guild.id
 
-        x = text.split()
-        determiner = (str (x[1]))
-        filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (authorID)) + (str (".txt"))
-        f = open(filedir, 'r')
-        coinBal = f.read()
-        f.close()
-
-        if determiner.lower() == 'citizen':
-
-            hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
-            if hasCitizen in member.roles:
-                await ctx.send("You can't buy Citizen, you already have it!")
+            try:
+                x = text.split()
+                determiner = (str (x[1]))
+            except Exception as e:
+                await ctx.send("Please enter an item to buy.")
                 return
-
-            coinBal = (int (str (coinBal))) - 1
-
-            f = open(filedir, 'w+')
+            filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (authorID)) + (str (".txt"))
+            f = open(filedir, 'r')
+            coinBal = f.read()
             f.close()
 
-            with open(filedir, 'a') as f:
-                f.write(str (coinBal))
-                f.close()
-            
-            role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
-            await member.add_roles(role)
+            if determiner.lower() == 'citizen':
 
-            embed = discord.Embed(title="The Shop", description=("You've just bought Citizen for free! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-            embed.add_field(name="Perks", value="• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus Nolwennium", inline=False)   
-            await ctx.send(embed=embed)
-            return
+                hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
+                if hasCitizen in member.roles:
+                    await ctx.send("You can't buy Citizen, you already have it!")
+                    return
+
+                coinBal = (int (str (coinBal))) - 1
+
+                f = open(filedir, 'w+')
+                f.close()
+
+                with open(filedir, 'a') as f:
+                    f.write(str (coinBal))
+                    f.close()
+                
+                role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
+                await member.add_roles(role)
+
+                embed = discord.Embed(title="The Shop", description=("You've just bought Citizen for free! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
+                embed.add_field(name="Perks", value="• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus Nolwennium", inline=False)   
+                await ctx.send(embed=embed)
+                return
 
     #   KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT
 
@@ -1927,6 +1950,8 @@ async def buy(ctx):
         
         else:
             await ctx.send("That's not a valid item to buy!")
+    else:
+        await ctx.send("You do not have permission to access the buy interface.")
 
 #   Voice Channel Bitrate
 
@@ -2902,9 +2927,12 @@ async def yts(ctx):
                     info = ydl.extract_info(url, download=False)
                     URL = info['formats'][0]['url']
 
-                voice_client = ctx.guild.voice_client
-                voice_client.stop()
-
+                try:
+                    voice_client = ctx.guild.voice_client
+                    voice_client.stop()
+                except Exception:
+                    channel = ctx.author.voice.channel
+                    await channel.connect()
 
                 voice_client.play(discord.FFmpegPCMAudio(URL, executable="D:\\Downloads\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\bin\\ffmpeg.exe", options=FFMPEG_OPTIONS))
                 voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
@@ -3588,12 +3616,19 @@ async def mine(ctx):
     person = ctx.message.author
     address = authorID
     #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\
-    filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
-    
+
+    filedir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{authorID}.txt")
+    newNumber = random.randint(1,10)
+    fee = newNumber/(random.randint(50,200))
+    newNumberAfterFee = newNumber - fee
+    newNumberAfterFee = round(newNumberAfterFee, 3)
+    fee = round(fee, 3)
+
     try:
         e = open(filedir, 'r')
         balance = (float (e.read()))
         e.close()
+        minedString = (f"Mined another {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
     except:
         e = open(filedir, 'w+')
         e.write(str (0))
@@ -3602,17 +3637,13 @@ async def mine(ctx):
         e = open(filedir, 'r')
         balance = (float (e.read()))
         e.close()
-        #await ctx.send("Hi! As it's your first time, I'll be gentle. Please run the command again!")
+        minedString = (f"Mined {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
         #return
     
     #await ctx.send((str ("\n\nYour address is: ")) + (str (address)))
-    newNumber = random.randint(1,10)
-    fee = newNumber/(random.randint(50,200))
-    newNumberAfterFee = newNumber - fee
-    newNumberAfterFee = round(newNumberAfterFee, 3)
-    fee = round(fee, 3)
 
-    minedString = ((str ("\nMined another ")) + (str (newNumber)) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium!")))
+    minedString_existing = (f"Mined another {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
+    minedString_new = (f"Mined {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
 
     roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
 
