@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.19"
+DraggieBot_version = "v1.19a"
 
 print("Importing all modules...\n")
 import      discord
@@ -69,7 +69,7 @@ print("Done!\nInitialising Bot...")
 
 sys.setrecursionlimit(99999999)
 
-global voiceVolume
+global voiceVolume, upvote, downvote
 global draggie
 global start_time
 voiceVolume = 0.3
@@ -434,7 +434,6 @@ with open("D:\\BaguetteBot\\JSONs\\names.json", "r", encoding="utf8") as file:
 @client.event
 async def on_ready():
     print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
-
     global ready_start_time
     ready_start_time = time.time()
 
@@ -454,11 +453,13 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
     await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
-    global draggie, general, console
+    global draggie, general, console, upvote, downvote
     draggie = client.get_user(382784106984898560)
     general = client.get_channel(759861456761258045)
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
+    upvote = client.get_emoji(803578918488768552)
+    downvote = client.get_emoji(803578918464258068)
     colour = random.randint(1000,16777215)
     colour = discord.Color(colour)
     role = discord.utils.get(guild.roles, name="RGB Advisor")
@@ -471,6 +472,11 @@ async def on_member_join(member):
         await member.send(f"Hello! Welcome to Baguette Brigaders. If you joined from the vanity link, welcome! Please verify yourself. Also, add me to your server! >> https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=8&scope=bot%20applications.commands. (for what I do, click: https://www.ibaguette.com/p/bots.html)")
         print("Welcomed user")
         await draggie.send(f"Welcomed user {member}")
+    servers = len(client.guilds)
+    members = 0
+    for guild in client.guilds:
+        members += guild.member_count - 1
+    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     #if os.path.isfile(sendLogsDir):
     #    await member.send(f"Welcome to {member.guild.name}")
     #    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -485,11 +491,17 @@ async def on_member_remove(member):
             await channel.send(f"{member} has left the server.")
         except Forbidden:
             await draggie.send(f"Removed from server {member.guild.name} / {member.guild.id}")
-
+    servers = len(client.guilds)
+    members = 0
+    for guild in client.guilds:
+        members += guild.member_count - 1
+    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+    
 @client.event
 async def on_raw_reaction_add(payload=None):
     if payload.guild_id == 759861456300015657:#     Must, while reaction roles are not available for all servers.
         msgID = 835227251695288391
+        msgRandomId = 931577920512725083
         vaccinatedID = 895386703144034364
         smp2ID = 912012054414630973
         birthdayID = 892114380005715978
@@ -500,6 +512,7 @@ async def on_raw_reaction_add(payload=None):
         roleUnverified = discord.utils.get(guild.roles, name='Unverified')
         roleSMP2 = discord.utils.get(guild.roles, name='SMP Season 2')
         roleNew = discord.utils.get(guild.roles, name='New Baguette')
+        robloxDev = discord.utils.get(guild.roles, name="Roblox Developer")
         LoggingChannel = discord.utils.get(payload.member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
         if payload is not None:
@@ -525,6 +538,45 @@ async def on_raw_reaction_add(payload=None):
                 print(f"Sent DM to {payload.member.name}")
 
         if payload is not None:
+            if payload.message_id == 936320104193474630:
+                print(f"Sent Roblox Message message to {payload.member}")
+                await payload.member.add_roles(robloxDev)
+                await payload.member.send(f"Welcome to the roblox team, {payload.member.name}.")
+                channel = client.get_channel(936317698772697118)
+                await channel.send(f"Welcome to the team, {payload.member.mention}!")
+            
+        if payload is not None:
+            if payload.message_id == msgRandomId:#     
+                channel = client.get_channel(930489645014331442)
+                authorName = (str (payload.member.name))
+                authorName = (authorName.lower())
+                #for word in protectedNames:#            Check protected name list.
+                #    if word in authorName:
+                #        await payload.member.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
+                #        return
+                if roleAllRandoms not in payload.member.roles:
+                    await payload.member.add_roles(roleAllRandoms)
+                    await payload.member.send(f"Welcome, {payload.member.mention}! You have been verified! Maybe check out <#930488896838586448> now?")
+                    print(f"Sent message to {payload.member}")     
+                    await LoggingChannel.send((str (payload.member)) + (str (" has been verified.")))
+                    await payload.member.remove_roles(roleUnverified)
+                else:
+                    print(f"{payload.member.name} already has Members role")
+
+        if payload is not None:
+            if payload.message_id == 931586778245247018:
+                authorName = (str (payload.member.name))
+                authorName = (authorName.lower())
+                choices = ["OK, you'll no longer see the other side.", "No longer seeing the other side. Enjoy your time on this side!", "Who likes the other side anyway, this side is better!"]
+                if roleAllRandoms not in payload.member.roles:
+                    await payload.member.add_roles(roleAllRandoms)
+                    await LoggingChannel.send((str (payload.member)) + (str (" has been allowed access to the other side.")))
+                else:
+                    print(f"{payload.member.name} already has Members role, removing it.")
+                    await payload.member.remove_roles(roleAllRandoms)
+                    await payload.member.send(f"{random.choice(choices)}")
+
+        if payload is not None:
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
@@ -536,9 +588,6 @@ async def on_raw_reaction_add(payload=None):
                             await asyncio.sleep(8)
                             await channel.purge(limit=1)
                             return
-                    
-                    await payload.member.add_roles(roleAllRandoms)
-                    await 930186094375481434
 
                     #await draggie.send(f"Attempting to ban user {payload.member.name}...")
                     #await payload.member.ban(reason="Banned while i fix this code.")
@@ -703,7 +752,7 @@ async def on_typing(channel, user, when):
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await LoggingChannel.send(embed=embed)
-                """await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")"""
+                await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")
                 return
             if baguette in user.roles:
                 print("Baguette detected")
@@ -745,7 +794,7 @@ async def on_member_update(before, after):
                 embed.add_field(name='Trigger', value="high profile role [Croissant]")
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                print(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
+                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
                 await LoggingChannel.send(embed=embed)
                 return
             if baguette in after.roles:
@@ -852,7 +901,7 @@ async def on_member_update(before, after):
 
     #print(watchdogMsg)
 
-#   on messagetiktok.com
+#   on message
 
 @client.event
 async def on_message(message):
@@ -884,7 +933,7 @@ async def on_message(message):
             channel = client.get_channel((int (msgchannel)))
             await channel.send(str (sp1))
             return
-
+        await draggie.send(((str ("\n'")) + (str (message)) + (str ("' DMed by ")) + (str (person)) + (str (" at ") + (str (datetime.now())))))
         print(((str ("\n'")) + (str (message)) + (str ("' DMed by ")) + (str (person)) + (str (" at ") + (str (datetime.now())))))
         dmLocation = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\DMs\\")) + (str (personID)) + (str (".txt")))
         logAllMessages = open(dmLocation, "a", encoding='utf-8')
@@ -933,6 +982,11 @@ async def on_message(message):
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
             return
         else: # If there is it gets the filename from message.attachments
+            if message.channel.id == 930494689105309777 or message.channel.id == 930496092754284576:
+                upvote = client.get_emoji(803578918488768552)
+                downvote = client.get_emoji(803578918464258068)
+                await message.add_reaction(upvote)
+                await message.add_reaction(downvote)
             attachmentsDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
             if not os.path.exists(attachmentsDir):
                 os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
@@ -952,19 +1006,16 @@ async def on_message(message):
 
     await DLstuff()
 
-    blacklistCheck = message.content.lower()
-    
-    with open("D:\\BaguetteBot\\JSONs\\antiFrench.json", "r", encoding="utf8") as file:
-        data = loads(file.read())
-        for word in data:
-            if word in blacklistCheck:
-                #if message.author.id == 382784106984898560: #Whitelist me
-                #    return
-                #if message.author.id == 606583679396872239: #Whitelist charlie
-                #    return
-                person = message.author   
-                await message.channel.send(f"Sorry but you can't say that, {person.mention}")
-                await message.delete()
+    if message.author.id == 629321969615110154:
+        blacklistCheck = message.content.lower()
+        with open("D:\\BaguetteBot\\JSONs\\antiFrench.json", "r", encoding="utf8") as file:
+            data = loads(file.read())
+            for word in data:
+                if word in blacklistCheck:
+                    person = message.author   
+                    await message.channel.send(f"Sorry but you can't say that, {person.mention}")
+                    await message.delete()
+                    print("Deleted!")
 
     if message.channel.name == 'nolwennium-138':
         emoji = client.get_emoji(786177817993805844)
@@ -1200,75 +1251,49 @@ async def on_message(message):
 
 #   Send Emoji for Face!
 
-    if message.guild.id == 759861456300015657:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
-        for word in nollyWords:
-            if word in message.content.lower():
-                person = message.author
+    if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
+        messageContent = message.content.lower()
+        for word in messageContent.split():
+            if word in nollyWords:
                 await message.add_reaction("<:nolly:786177817993805844>")
-        for word in oliverWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in oliverWords:
                 await message.add_reaction("<:oliver:790576109795409920>")
-        for word in jackWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in jackWords:
                 await message.add_reaction("<:LilJack:901155402190823434>")
-        for word in joeWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in joeWords:
                 await message.add_reaction("<:CuteJoe:897467228545503242>")
-        for word in haydnWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in haydnWords:
                 await message.add_reaction("<:haydn:786276584671412244>")
-        for word in maisyWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in maisyWords:
                 await message.add_reaction("<:maisy:786276271809101840>")
-        for word in benWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in benWords:
                 await message.add_reaction("<:bennybooze:788311580768075786>")
-        for word in floWords:
-            if word in message.content.lower():
-                person = message.author
-                await message.add_reaction("<:JacksGF:788162163289358367>")
-        for word in ishWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in ishWords:
                 await message.add_reaction("<:ish:791381704278540369>")
-        for word in mayaWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in mayaWords:
                 await message.add_reaction("<:maya:785942478448230470>") 
-        for word in samWords:
-            if word in message.content.lower():
-                person = message.author
+            if word in samWords:
                 await message.add_reaction("<:samf:785942793280815114>")
         for word in josephTighe:
-            if word in message.content.lower():
-                person = message.author
+            if word in messageContent:
                 integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
                 if integer == 1:
                     await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
                 if integer == 2:
-                    await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
-                return  #   Don't want it triggering multiple times if the phrases are mentioned several times in a message, e.g hmm not sure about this would add 3 reactions and throw an error.
+                        await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
         for word in charlieSewards:
-            if word in message.content.lower():
-                person = message.author
+            if word in messageContent:
                 integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
                 if integer == 1:
                     await message.add_reaction("<:charlie:903324276147499041>")
                 if integer == 2:
                     await message.add_reaction("<:CharlieUwU:857907947371495424>")
-                return  #   Don't want it triggering multiple times if person is mentioned.
 
     #  here we can do global server ones because its funny
 
-    for word in borisWords:
-        if word in message.content:
-            person = message.author
+    messageContent = message.content.lower()
+    for word in messageContent.split():
+        if word in borisWords:
             await message.add_reaction("<:boris:785942478381121556>")
             f = open(GlobalLogDir, "a", encoding="utf8")
             f.write((str (f"\nINFO: 'boris' emoji sent, initiated by '{message.author}' at {datetime.now()}")))#    compress str writing by using f strings
@@ -1297,17 +1322,17 @@ async def on_message(message):
        
 #   essential do not delete     essential do not delete     essential do not delete     essential do not delete     essential do not delete     
 
-    if message.channel.id == 759861456761258045:
-        if message.content.startswith("."):
-            hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', message.guild.roles)
-            async with message.channel.typing():
-                if hasAdmin in message.author.roles:
-                    await client.process_commands(message)
-                    return
-                else:
-                    await asyncio.sleep(0.5)
-                    await message.channel.send("Commands can't be used here, try <#785620979300302869>.")
-                    return
+    #if message.channel.id == 759861456761258045:
+    #    if message.content.startswith("."):
+    #        hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', message.guild.roles)
+    #        async with message.channel.typing():
+    #            if hasAdmin in message.author.roles:
+    #                await client.process_commands(message)
+    #                return
+    #            else:
+    #                await asyncio.sleep(0.5)
+    #                await message.channel.send("Commands can't be used here, try <#785620979300302869>.")
+    #                return
     else:
         await client.process_commands(message)
 
@@ -2696,7 +2721,7 @@ async def adaptor(ctx):
 @client.command(help="Downloads a youtube video using the search term and plays the audio to the voice channel.", brief="[Audio] Searches for and plays YouTube video", pass_context=True)
 async def yt(ctx, url: str):
     async with ctx.typing():
-        await ctx.send("The YT command will be phased out in v1.2! Please use the new .play command, which includes much faster load times and better quality audio.")
+        await ctx.send("Warning: This is the legacy youtube player. It takes a long time if a video has not been played prevoiusly. Use `.yts` to stream audio directly.")
         global hasVideo
         testForToggles = ctx.message.content
         debugMode = False
@@ -3721,6 +3746,8 @@ async def on_slash_command_error(ctx, error):
 
 @client.event
 async def on_command_error(ctx, error):
+    if "is not found" in str(error):
+        return
     if ctx.message.content.startswith(".."):
         return
     randomCry = random.randint(1,7)
@@ -3748,7 +3775,11 @@ async def on_command_error(ctx, error):
     f.write((str ("\n\nERROR: An error occured! Original command initialised by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))) + (str (".\n          : ")) + (str(error)))
     f.close()
 
-load_dotenv(dotenv_path='D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\.env')
+dotenvPath = 'D:\\BaguetteBot\\draggiebot\\.env'
+load_dotenv(dotenv_path=dotenvPath)
+if dotenvPath != 'D:\\BaguetteBot\\draggiebot\\.env':
+    print("\n\n\n\n\nRUNNING IN TEST MODE!\n\n\n\n\n")
 client.run(os.getenv('TOKEN'))
+
 
 #   poggerspogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpog
