@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.19a"
+DraggieBot_version = "v1.19b"
 
 print("Importing all modules...\n")
 import      discord
@@ -94,7 +94,7 @@ print("Done!\nSlash commands initialising...")
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
 brigaders = [759861456300015657]
 
-@slash.slash(name="debug", guild_ids=tester_guilds, description="Spits out debug info for debugging bugs")
+@slash.slash(name="debug", description="Spits out debug info for debugging bugs")
 async def test(ctx):
     nolwenniumUserDir = f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{ctx.author.id}.txt"
     my_file = Path(nolwenniumUserDir)
@@ -452,6 +452,7 @@ async def on_ready():
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
+        print(f"{guild.name} - {guild.member_count - 1} members")
     await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     global draggie, general, console, upvote, downvote
     draggie = client.get_user(382784106984898560)
@@ -834,7 +835,7 @@ async def on_member_update(before, after):
         embed.add_field(name='Date/Time', value=tighem)
         send = True
         print(f"OP WATCHDOG: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
-        if after.guild.id == 759861456300015657:
+        if after.guild.id == 0:
             await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
             await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
             print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
@@ -911,6 +912,29 @@ async def on_message(message):
         await console.send("say FRENCH Detected!!!!")
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
+    if message.author.id == 892858065647440003:
+        async def DLstuff():
+            if len(message.attachments) < 1: # Checks if there is an attachment on the message
+                return
+            else: # If there is it gets the filename from message.attachments
+                attachmentsDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
+                if not os.path.exists(attachmentsDir):
+                    os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
+                    print("Made directory" + (attachmentsDir))
+                nameOfFile = str(message.attachments).split("filename='")[1]
+                filename = str(nameOfFile).split("' ")[0]
+                beans = ((str (attachmentsDir)) + (str ("{}".format(filename))))
+                if os.path.isfile(beans):
+                    filename = str(nameOfFile).split("' ")[0]
+                    beans = ((str (attachmentsDir)) + (str (uuid.uuid4())) + (str ("-name={}".format(filename))))
+                await message.attachments[0].save(fp=beans)
+
+                LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+                if os.path.isfile(sendLogsDir):
+                    await LoggingChannel.send((str (f"Attachment sent in <#{channelID}>: **{filename}**")))
+
+            await DLstuff()
     if message.author.bot:
        return
 
