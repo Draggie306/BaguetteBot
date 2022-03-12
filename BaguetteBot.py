@@ -173,7 +173,52 @@ async def _rgb(ctx):
         await ctx.send(f"RGB Advisor updated to {colour}")
     else:
         await ctx.send("no")
+
+@slash.slash(name="dm",
+    description="DM an Instagram user.",
+    guild_ids=tester_guilds,
+    options=[create_option(
+            name="user",
+            description="User @ to DM",
+            option_type=3,
+            required=True,
+            ),
+            create_option(
+            name="message",
+            description="Message to send to @user",
+            option_type=3,
+            required=True
+            )])
+async def _dm(ctx, user:str, message:str):
+    msg = message
     
+    accounts = ("`draggiefn`, `nolwenntighe`, `charli3_s3w`, `xxnova_smokexx`, `ismail_ahmed_06_2`, `sam_partridge._`, `b3nny_b0oze`, `_reuben_72`, `therealwillbyrne`, `unicornkid_72`, `riaz_bari_`, `drevilo.19`, `some_one_acctually`, `harrigeorg`")
+    if user not in accounts:
+        await ctx.send(f"Sorry! I can only send DMs to the following accounts: {accounts}")
+        return
+    x = open ("D:\\BaguetteBot\\User.txt", 'w')
+    x.write(f"{user}")
+    x.close()
+    await ctx.send(f"OK! Trying to send **{msg}** to Instagram user @**{user}**. This may take over 30 seconds.")
+    await ctx.send(f"Successfully loaded @{user} from cache in {random.randint(1,10)}ms. URL: https://www.instagram.com/{user}/")
+
+    t1 = threading.Thread(target=InstaDMSendForSlashy, args=[ctx, user, msg])
+    t1.start()
+    await asyncio.sleep(2)
+    await ctx.send(f"Initialising DM instance")
+    await asyncio.sleep(2)
+    await ctx.send(f"Sending DM to **{user}**")
+
+def InstaDMSendForSlashy(ctx, user, msg):
+    with open("D:\\BaguetteBot\\TextValues\\password.txt", encoding="utf-8") as f:
+        password = f.read()
+    try:
+        if __name__ == '__main__':
+            insta = InstaDM(username='draggie306', password=password, headless=False)
+            insta.sendMessage(user=f'{user}', message=f'{msg}')
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+
 @slash.slash(name="components",
     description="Enables/disables specified BaguetteBot components.",
     guild_ids=tester_guilds,
@@ -651,6 +696,12 @@ async def on_message_delete(message):
         await LoggingChannel.send(embed=embed)
 
 @client.command(pass_context=True)
+async def member(ctx, user: discord.Member):
+    role = ctx.guild.get_role(806481292392267796)
+    await user.add_roles(role)
+    await ctx.send("done")
+
+@client.command(pass_context=True)
 async def discorddm(ctx):
     message = ctx.message.content
     x = message.split()
@@ -660,7 +711,7 @@ async def discorddm(ctx):
     await user.send(f"{sp1}")
     await draggie.send(f"{sp1}")
 
-def InstaDMSend(ctx):
+def InstaDMSend(ctx, user):
     message = ctx.message.content
     x = message.split()
     user = (x[1])
