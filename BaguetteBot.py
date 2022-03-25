@@ -1,4 +1,5 @@
-DraggieBot_version = "v1.19b"
+DraggieBot_version = "v1.19"
+revision = "b"
 
 print("Importing all modules...\n")
 import      discord
@@ -498,7 +499,10 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
-    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+    if revision is not None:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+    else:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     global draggie, general, console, upvote, downvote
     draggie = client.get_user(382784106984898560)
     general = client.get_channel(759861456761258045)
@@ -522,7 +526,10 @@ async def on_member_join(member):
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
-    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+    if revision is not None:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+    else:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     #if os.path.isfile(sendLogsDir):
     #    await member.send(f"Welcome to {member.guild.name}")
     #    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -541,7 +548,10 @@ async def on_member_remove(member):
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
-    await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+    if revision is not None:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+    else:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     
 @client.event
 async def on_raw_reaction_add(payload=None):
