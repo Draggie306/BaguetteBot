@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.19"
-revision = "b"
+revision = "d"
 
 print("Importing all modules...\n")
 import      discord
