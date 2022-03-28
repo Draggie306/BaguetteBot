@@ -1,80 +1,49 @@
-DraggieBot_version = "v1.19"
-revision = "d"
+DraggieBot_version = "v1.2"
+revision = ""
 
 print("Importing all modules...\n")
-import      discord
-from        discord import emoji
-from        discord.flags import Intents
-from        discord_slash import SlashCommand, SlashContext
-from        discord_slash.dpy_overrides import send_message
-from        discord_slash.utils.manage_components import create_select, create_select_option, create_actionrow
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets
+from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
 from        discord import Embed
-from        discord.ext import commands   
-from        discord import ext
-from        discord.errors import ClientException, Forbidden, NotFound #       CMD Prequisite: py -3 -m pip install -U discord.py
-from        dotenv import load_dotenv #                             CMD Prequisite: py -3 -m pip install -U python-dotenv
-import      os#                                                     PIP:            python -m ensurepip  
-import      os.path
-from        requests import api
-from        requests import auth#                                                UPDATE PIP:     python -m pip install --upgrade pip
-import      youtube_dl
-from        youtube_search import YoutubeSearch
-import      time
-import      random 
-import      sys
-from        datetime import datetime
-import      requests
-from        requests import get
-from        json import loads
-from        discord.ext.commands import bot
-import      asyncio
-from        pathlib import Path
-import      uuid
-from        requests.auth import HTTPBasicAuth
-from        gc import enable
-import      json
-import      subprocess
-from        mcstatus import MinecraftServer
-import		kahoot
-import      asyncio
-import      functools
-import      itertools
-import      math
-import      random
-from        async_timeout import timeout
 from        discord.ext import commands
-import      discord
-from        discord_slash import SlashCommand, SlashContext
-import      uuid
-from        discord_slash.utils import *
-from        discord_slash import *
-import      difflib
-import      termcolor
-from        termcolor import cprint
-from        ctypes import WinError
-from        attr import attr
-from        discord_slash.context import MenuContext
-from        discord_slash.model import ContextMenuType
+from        discord import ext
+from        discord.errors import Forbidden#                                    CMD Prerequisite: py -3 -m pip install -U discord.py
+from        dotenv import load_dotenv#                                          CMD Prerequisite: py -3 -m pip install -U python-dotenv
+from        youtube_search import YoutubeSearch#                                PIP:            python -m ensurepip
+from        datetime import datetime#                                           UPDATE PIP:     python -m pip install --upgrade pip
+from        json import loads
+from        pathlib import Path
+from        mcstatus import MinecraftServer
 from        instadm import InstaDM
-import      threading
 
 """   
     To do:
-        Replace ALL dirs/msgs/vars with f strings so it looks cleaner
+    Add new roles for coins to buy. Done!
+    Add next role available - e.g Unlocked, unlocked, 320 coins away from this role :locked:
+    
+
 """
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
 print("Done!\nInitialising Bot...")
+global start_time
+start_time = time.time()
 
 sys.setrecursionlimit(99999999)
 
-global voiceVolume, upvote, downvote
-global draggie
-global start_time
+global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker
 voiceVolume = 0.3
-start_time = time.time()
+Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
+tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
+brigaders = [759861456300015657]
+random_word = ["Expulser!", "Troubador!", "Delenda!", "Vincit1", "Consilium!" ,"Renovatur!", "Acheronta!", "Oderint!"]
+emoji_Coins = "<:Coins:852664685270663194>"
+emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
+value_Placeholder = "TBD/tbd"
+name_Nolwennium = "Nolwennium"
+id_Draggie = 382784106984898560
 
 PYTHONIOENCODING="utf-8"
 
@@ -86,18 +55,33 @@ client = commands.Bot(command_prefix='.', case_insensitive=True, intents=intents
 
 slash = SlashCommand(client, sync_commands=True)
 
+nolwennium_checker_directory = "D:\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
+nolwenniumDirChecker = Path(nolwennium_checker_directory)
+if nolwenniumDirChecker.is_file():
+    repl_checker = False
+    print("Not running in a repl")
+else:
+    repl_checker = True
+    print(f"Running in a repl, coins and {name_Nolwennium} values may not be up to date")
+
+def nolwenniumUserDirectory(ctx):
+    global nolwenniumUserDir
+    nolwenniumUserDir = f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{ctx.author.id}.txt"
+
+def coinDirectory(ctx):
+    global coinDir
+    coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{ctx.author.id}.txt")
+
+print("Done!\nSlash commands initialising...")
+
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
 
-print("Done!\nSlash commands initialising...")
-
-tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
-brigaders = [759861456300015657]
 
 @slash.slash(name="debug", description="Spits out debug info for debugging bugs")
 async def test(ctx):
-    nolwenniumUserDir = f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{ctx.author.id}.txt"
+    nolwenniumUserDirectory(ctx)
     my_file = Path(nolwenniumUserDir)
     if not my_file.is_file():
         nolwenniumBal = "null"
@@ -106,28 +90,29 @@ async def test(ctx):
         f = open(nolwenniumUserDir, 'r')
         nolwenniumBal = f.read()
         f.close()
-        nolly = str(nolwenniumBal) + str(" <:NolwenniumCoin:846464419503931443>")
+        nolly = f"{nolwenniumBal} {emoji_Nolwennium}"
     x = False
     Admin = discord.utils.get(ctx.guild.roles, name="Admin")
     if Admin in ctx.author.roles:
         x = True
     shard_id = ctx.guild.shard_id
-    await ctx.send(f"Debug info: S: {ctx.guild.id} in C: {ctx.channel.id} - A: {ctx.author.id}, hA: {x}, Nolwennium: {nolly} + l:{client.latency}s, iID: {uuid.uuid4()}, sO: {ctx.guild.owner.id}, bbPremium = False, usesEmilite: False, sID: {shard_id}")#\n<a:HmmThinkSpin:857307788572098610> *Unsure what this is?* These are just guild/channel ids, send this to Draggie#3060 if you have issues")
-
+    await ctx.send(f"Debug info: S: {ctx.guild.id} in C: {ctx.channel.id} - A: {ctx.author.id}, hA: {x}, {name_Nolwennium}: {nolly} + l:{client.latency}s, iID: {uuid.uuid4()}, sO: {ctx.guild.owner.id}, bbPremium = False, usesEmilite: False, sID: {shard_id}")#\n<a:HmmThinkSpin:857307788572098610> *Unsure what this is?* These are just guild/channel ids, send this to Draggie#3060 if you have issues")
+    #                                Server ID           Channel ID            Message author ID   HasAdmin?         NolwenniumBalance     Ping          Random UUID          Server Owner       
+    
 @slash.slash(name="Ping", description="Shows bot latency to Discord's servers, using Discord WebSocket protocol.")
 async def _ping(ctx):
     print("ping'd")
     if round(client.latency * 1000) <= 100:
-        embed=discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0x44ff44)
+        embed = discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0x44ff44)
     elif round(client.latency * 1000) <= 150:
-        embed=discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0xffd000)
+        embed = discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0xffd000)
     elif round(client.latency * 1000) <= 150:
-        embed=discord.Embed(title="PING", description=f"Message delay is **{round(client.latency *1000)}** milliseconds!", color=0xff6600)
+        embed = discord.Embed(title="PING", description=f"Message delay is **{round(client.latency *1000)}** milliseconds!", color=0xff6600)
     else:
-        embed=discord.Embed(title="PING", description=f"OOF! Message delay is **{round(client.latency *1000)}** milliseconds!", color=0x990000)
+        embed = discord.Embed(title="PING", description=f"OOF! Message delay is **{round(client.latency *1000)}** milliseconds!", color=0x990000)
     await ctx.send(embed=embed)
     f = open(GlobalLogDir, "a", encoding="utf8")
-    f.write((str ("\nCOMMAND RAN -> '.ping' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.ping' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
 
 @slash.slash(name="whitelist",
@@ -158,23 +143,6 @@ async def _whitelist(ctx, add:str):
 async def _cuisine(ctx, country:str):
     await ctx.send(f"You chose {country}.")
 
-
-@slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = brigaders)
-async def _rgb(ctx):
-    rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
-    admin = discord.utils.get(ctx.guild.roles, name="Admin")
-    mod = discord.utils.get(ctx.guild.roles, name="Mod")
-    print(f"RGB ran by {ctx.author.name}")
-    if rgb or mod or admin in ctx.author.roles:
-        guild=ctx.guild
-        colour = random.randint(1000,16777215)
-        colour = discord.Color(colour)
-        role = discord.utils.get(guild.roles, name="RGB Advisor")
-        await role.edit(server=guild, role=role, colour=colour)
-        await ctx.send(f"RGB Advisor updated to {colour}")
-    else:
-        await ctx.send("no")
-
 @slash.slash(name="dm",
     description="DM an Instagram user.",
     guild_ids=tester_guilds,
@@ -192,7 +160,6 @@ async def _rgb(ctx):
             )])
 async def _dm(ctx, user:str, message:str):
     msg = message
-    
     accounts = ("`draggiefn`, `nolwenntighe`, `charli3_s3w`, `xxnova_smokexx`, `ismail_ahmed_06_2`, `sam_partridge._`, `b3nny_b0oze`, `_reuben_72`, `therealwillbyrne`, `unicornkid_72`, `riaz_bari_`, `drevilo.19`, `some_one_acctually`, `harrigeorg`")
     if user not in accounts:
         await ctx.send(f"Sorry! I can only send DMs to the following accounts: {accounts}")
@@ -220,6 +187,22 @@ def InstaDMSendForSlashy(ctx, user, msg):
     except Exception as e:
         print(f"An unexpected error occured: {e}")
 
+@slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = brigaders)
+async def _rgb(ctx):
+    rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
+    admin = discord.utils.get(ctx.guild.roles, name="Admin")
+    mod = discord.utils.get(ctx.guild.roles, name="Mod")
+    print(f"RGB ran by {ctx.author.name}")
+    if rgb or mod or admin in ctx.author.roles:
+        guild=ctx.guild
+        colour = random.randint(1000,16777215)
+        colour = discord.Color(colour)
+        role = discord.utils.get(guild.roles, name="RGB Advisor")
+        await role.edit(server=guild, role=role, colour=colour)
+        await ctx.send(f"RGB Advisor updated to {colour}")
+    else:
+        await ctx.send("no")
+    
 @slash.slash(name="components",
     description="Enables/disables specified BaguetteBot components.",
     guild_ids=tester_guilds,
@@ -251,7 +234,7 @@ async def _components(ctx, enable:str, disable:str):
     if Admin in ctx.author.roles:
         if "log" in enable:
             try:
-                LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)#test
                 print(f"Logging Channel {LoggingChannel}")
                 if LoggingChannel is None:
                     print("Creating channel")
@@ -262,7 +245,7 @@ async def _components(ctx, enable:str, disable:str):
                 LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await LoggingChannel.send("**Logging enabled**")
 
-                sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
+                sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
                 x = open(sendLogsDir, "a", encoding='utf-8')
                 x.close()
                 await ctx.send(f"Enabled logging for server {ctx.guild.id}")
@@ -278,7 +261,7 @@ async def _components(ctx, enable:str, disable:str):
             
         if "log" in disable:
             try:
-                sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
+                sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
                 os.remove(sendLogsDir)
                 await ctx.send(f"Disabled sending logs for server {ctx.guild.id}. The following messages in the log channel will not be sent:\nMessages in the log channel when a user joins, types, changes status, activity, username\nMessages deleted\nDMs to users welcoming them when they join.\n")
             except Exception as e:
@@ -291,15 +274,15 @@ async def _components(ctx, enable:str, disable:str):
             #delete file here
 
         if "redactions" in enable:
-            sendRedactions = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+            sendRedactions = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
             x = open(sendRedactions, "a", encoding='utf-8')
             x.close()
             await ctx.send("Redacted messages have been enabled. Announcements showing a message's deletion will be sent in DMs and broadcasted in the channel.")
         if "redactions" in disable:
             try:
-                sendRedactions = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+                sendRedactions = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
                 os.remove(sendRedactions)
-                x = "enabled" if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt") else "disabled"
+                x = "enabled" if os.path.isfile(f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt") else "disabled"
                 await ctx.send(f"Redacted messages have been disabled. Messages will not be sent in the channel or to DMs. Logging is {x}.")
             except Exception:
                 await ctx.send("Cannot perform that function. `sendRedactions` is `disabled`")
@@ -330,7 +313,6 @@ async def _components(ctx, enable:str, disable:str):
                     create_choice(name="11Geo-P", value="11P - Geography"),
                     create_choice(name="11Geo-P", value="11R - Geography")
                     ])])
-
 async def _SelectClass(ctx, name: str):
     await ctx.defer()
     if name == name:
@@ -354,6 +336,54 @@ async def _SelectClass(ctx, name: str):
     else:
         await ctx.send("Invalid Class Name")
 
+geo1Questions = ["Give one reason why tropical storms have a seasonal pattern [1 mark]", "Suggest why some tropical storms have severe primary and secondary effects.\n\nUse Figure 3 and your own understanding. [6 marks] https://cdn.discordapp.com/attachments/895390385440952352/947549285128495154/unknown.png"]
+
+@slash.slash(name="NameColour",
+            description="Change the colour of your name!",
+            guild_ids = tester_guilds,
+            options = [create_option(
+            name="colour",
+            description="Enter the hex colour. For example, 00acff. (Just the code, not the hashtag!)",
+            option_type=3,
+            required=True,
+            ),
+
+            create_option(
+            name="pos",
+            description="(Testers only) Enter PosInt for role colour display in hierarchy (dont touch me please!!)",
+            option_type=3,
+            required=False,
+            )])
+async def moverole(ctx, colour: str, pos=None):
+    roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.guild.roles)
+    roleTraineeMod = discord.utils.find(lambda r: r.name == 'Trainee Mod', ctx.guild.roles)
+    roleKing = discord.utils.find(lambda r: r.name == 'King', ctx.guild.roles)
+    roleCroissant = discord.utils.find(lambda r: r.name == 'Croissant', ctx.guild.roles)
+    if roleCroissant in ctx.author.roles:
+        await ctx.send("Your highest role **Croissant** is above Admin, so your custom colour will not show")
+    if roleBooster not in ctx.author.roles:
+        if roleTraineeMod or roleKing or roleCroissant not in ctx.author.roles:
+            await ctx.send("You aren't boosting the server or have a high enough role. Boost the server in order to unlock Custom Colours!")
+            return
+    number_of_roles = (len(ctx.guild.roles))
+    pos = number_of_roles - 17
+    role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
+    if role is None:
+        await ctx.guild.create_role(name=f"CC: {ctx.author.name}")
+        role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
+        await ctx.send(f"Role added! at position {pos}")
+    try:
+        colour = int(colour, 16)
+        await role.edit(colour=discord.Colour(colour), position=int(pos))
+        await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
+    except discord.Forbidden:
+        await ctx.send("You do not have permission to do that")
+    except discord.HTTPException:
+        await ctx.send("Failed to move role")
+    except discord.InvalidArgument:
+        await ctx.send("Invalid argument")
+    await ctx.author.add_roles(role)
+
 @slash.slash(name="nsfw",
             description="haha yes.",
             guild_ids = tester_guilds,
@@ -371,7 +401,6 @@ async def nsfw(ctx, character: str):
     global currentAmount
     amount = 0
     currentAmount = amount + 0
-    #await ctx.message.delete()
 
     async def beanery():
         if character == "Wattson":
@@ -379,7 +408,6 @@ async def nsfw(ctx, character: str):
             await ctx.send(file=discord.File(f"D:\\BaguetteBot\\MaximumWattage\\wattson ({randomiser}).png", filename="SPOILER_wattson{randomiser}.png"))
         if character == "Chun-Li":
             await ctx.send("Omg you are so down bad 😂😂😂😂")
-    
     await beanery()
 
 @slash.slash(name="revision",
@@ -408,29 +436,24 @@ async def _revision(ctx, subject: str):
 @slash.slash(name="CodeSearch",
             description="Search the bot's code for a term.",
             guild_ids = tester_guilds,
-            options=[create_option(
-                    name="term",
-                    description="Type in a term to search for. Returns an integer value.",
-                    option_type=3,
-                    required=True)])
+            options=[create_option(name="term",description="Type in a term to search for. Returns an integer value.",option_type=3,required=True)])
 async def _CodeSearch(ctx, term: str):
     await ctx.defer()
     message = term
     searchTerm = message.lower()
-    file=open(((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py"))),encoding="UTF-8").read().lower()
+    file=open("D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot v1.2.py", encoding="UTF-8").read().lower()
     num_chars = sum(1 for line in file)
-    num_lines = sum(1 for line in open ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open ("D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot v1.2.py", encoding='utf-8'))
 
     count=file.count(searchTerm)
     embed = discord.Embed()
     embed.add_field(name=f"Occurences of '**{searchTerm}**' in code:", value=f"{count}", inline=False)
-    embed.set_footer(text=((str (f"Searching {num_chars} characters in {num_lines} lines of code. Requested by {ctx.author}"))))
+    embed.set_footer(text=(f"Searching {num_chars} characters in {num_lines} lines of code. Requested by {ctx.author}"))
     await ctx.send(embed=embed)
 
     f = open(GlobalLogDir, "a")
-    f.write((str (f"\nSLASH COMMAND RAN -> '/CodeSearch' ran by {ctx.author} at {str (datetime.now())}")))
+    f.write(f"\nSLASH COMMAND RAN -> 'CodeSearch' ran by {ctx.author} at {str (datetime.now())}")
     f.close()
-
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
@@ -439,40 +462,40 @@ async def _CodeSearch(ctx, term: str):
 DisabledComponents = "Unknown"
 EnabledComponents = "Unknown"
 
-GlobalLogDir=("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GlobalLog.txt")
+GlobalLogDir=("D:\\BaguetteBot\\draggiebot\\GlobalLog.txt")
 
 """ BULK READ JSONS so it doesn't have to read the file every time a message is sent
     people = nolTighe (p1, g, b, T), oliver, sam (g), jack (r, g), joe (g), charlie (g), haydn, maisy, flo (a), ish, maya, boris (gl), josephTighe (p13, g, c, T)
     "g = grouped", "r = remade", "a = affiliated", "gl = global" 
 """
 
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\NollyMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\NollyMention.json", "r", encoding="utf8") as file:
     nollyWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\OliverMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\OliverMention.json", "r", encoding="utf8") as file:
     oliverWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\SamMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\SamMention.json", "r", encoding="utf8") as file:
     samWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\JackMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\JackMention.json", "r", encoding="utf8") as file:
     jackWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\JoeMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\JoeMention.json", "r", encoding="utf8") as file:
     joeWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\HaydnMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\HaydnMention.json", "r", encoding="utf8") as file:
     haydnWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\MaisyMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\MaisyMention.json", "r", encoding="utf8") as file:
     maisyWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\BenMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\BenMention.json", "r", encoding="utf8") as file:
     benWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\FloMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\FloMention.json", "r", encoding="utf8") as file:
     floWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\IshMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\IshMention.json", "r", encoding="utf8") as file:
     ishWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\BorisMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\BorisMention.json", "r", encoding="utf8") as file:
     borisWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\MayaMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\MayaMention.json", "r", encoding="utf8") as file:
     mayaWords = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\JosephTigheMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\JosephTigheMention.json", "r", encoding="utf8") as file:
     josephTighe = loads(file.read())
-with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\JSONs\\CharlieMention.json", "r", encoding="utf8") as file:
+with open("D:\\BaguetteBot\\draggiebot\\JSONs\\CharlieMention.json", "r", encoding="utf8") as file:
     charlieSewards = loads(file.read())
 with open("D:\\BaguetteBot\\JSONs\\names.json", "r", encoding="utf8") as file:
     protectedNames = loads(file.read())
@@ -483,15 +506,10 @@ async def on_ready():
     global ready_start_time
     ready_start_time = time.time()
 
-    channel = client.get_channel(838107252115374151)
-    await channel.send((str ("Online at **")) + (str (datetime.now()) + (str ("**"))))
-
-    #channel = client.get_channel(759861456761258045)
-    #await channel.send("Baguette")
-    #print("Message sent in #general, please check.")
-
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\n\nREADY at ")) + (str (datetime.now())))
+    channel = client.get_channel(838107252115374151) # Brigaders_channel
+    await channel.send(f"Online at **{datetime.now()}**")
+    f = open(GlobalLogDir, "a", encoding="utf-8")
+    f.write(f"\n\nREADY at {datetime.now()}")
     f.write(' - Logged in as {0.user}'.format(client))
     f.close()
     servers = len(client.guilds)
@@ -503,21 +521,35 @@ async def on_ready():
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
-    global draggie, general, console, upvote, downvote
+    global draggie, general, console, upvote, downvote, hasMembersforGlobalServer
     draggie = client.get_user(382784106984898560)
-    general = client.get_channel(759861456761258045)
+    general = client.get_channel(759861456761258045)#  Brigaders_channel 
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
     upvote = client.get_emoji(803578918488768552)
     downvote = client.get_emoji(803578918464258068)
-    colour = random.randint(1000,16777215)
-    colour = discord.Color(colour)
-    role = discord.utils.get(guild.roles, name="RGB Advisor")
-    await role.edit(server=guild, role=role, colour=colour)
-    
+    hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
+    await StatusAutoUpdator()
+
+async def StatusAutoUpdator():
+    servers = len(client.guilds)
+    members = 0
+    for guild in client.guilds:
+        members += guild.member_count - 1
+    cpuPercentage = psutil.cpu_percent()
+    memoryUsage = psutil.virtual_memory().percent
+    if revision is not None:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+    else:
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+    print(f"Updated status - {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
+    #await asyncio.sleep(random.randint(100,500))
+    await asyncio.sleep(60)
+    await StatusAutoUpdator()
+
 @client.event
 async def on_member_join(member):
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
     if member.guild.id == 759861456300015657:
         await member.send(f"Hello! Welcome to Baguette Brigaders. If you joined from the vanity link, welcome! Please verify yourself. Also, add me to your server! >> https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=8&scope=bot%20applications.commands. (for what I do, click: https://www.ibaguette.com/p/bots.html)")
         print("Welcomed user")
@@ -530,14 +562,10 @@ async def on_member_join(member):
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
-    #if os.path.isfile(sendLogsDir):
-    #    await member.send(f"Welcome to {member.guild.name}")
-    #    channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-    #    await channel.send(f"{member} has joined the server")
 
 @client.event
 async def on_member_remove(member):
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         try:
             channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -567,8 +595,8 @@ async def on_raw_reaction_add(payload=None):
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
         roleUnverified = discord.utils.get(guild.roles, name='Unverified')
         roleSMP2 = discord.utils.get(guild.roles, name='SMP Season 2')
-        roleNew = discord.utils.get(guild.roles, name='New Baguette')
         robloxDev = discord.utils.get(guild.roles, name="Roblox Developer")
+        roleNew = discord.utils.get(guild.roles, name='New Baguette')
         LoggingChannel = discord.utils.get(payload.member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
         if payload is not None:
@@ -581,69 +609,53 @@ async def on_raw_reaction_add(payload=None):
                     if count > 3:
                         await channel.send(f"{message.author.mention}'s 'epic' meme has been removed.")
                         await message.delete()
-
-        if payload is not None:
+                        return
+            authorName = payload.member.name
+            authorName = authorName.lower()
             if payload.message_id == birthdayID:
                 await payload.member.send("You are too late to claim the birthday role, sorry. More exclusive roles will be given in the future!")
-
-        if payload is not None:
             if payload.message_id == smp2ID:
                 await payload.member.add_roles(roleSMP2)
                 print(f"Added role to {roleMember.name}")
                 await payload.member.send(f"{payload.member.mention}, you've been granted SMP Season 2 role in Baguette Brigaders! Enjoy your time on the server.")
                 print(f"Sent DM to {payload.member.name}")
-
-        if payload is not None:
+                
             if payload.message_id == 936320104193474630:
                 print(f"Sent Roblox Message message to {payload.member}")
                 await payload.member.add_roles(robloxDev)
-                await payload.member.send(f"Welcome to the roblox team, {payload.member.name}.")
-                channel = client.get_channel(936317698772697118)
-                await channel.send(f"Welcome to the team, {payload.member.mention}!")
-            
-        if payload is not None:
             if payload.message_id == msgRandomId:#     
                 channel = client.get_channel(930489645014331442)
-                authorName = (str (payload.member.name))
-                authorName = (authorName.lower())
-                #for word in protectedNames:#            Check protected name list.
-                #    if word in authorName:
-                #        await payload.member.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
-                #        return
                 if roleAllRandoms not in payload.member.roles:
                     await payload.member.add_roles(roleAllRandoms)
                     await payload.member.send(f"Welcome, {payload.member.mention}! You have been verified! Maybe check out <#930488896838586448> now?")
                     print(f"Sent message to {payload.member}")     
-                    await LoggingChannel.send((str (payload.member)) + (str (" has been verified.")))
+                    await LoggingChannel.send(f"{payload.member} has been verified.")
                     await payload.member.remove_roles(roleUnverified)
                 else:
                     print(f"{payload.member.name} already has Members role")
-
-        if payload is not None:
             if payload.message_id == 931586778245247018:
-                authorName = (str (payload.member.name))
-                authorName = (authorName.lower())
+
                 choices = ["OK, you'll no longer see the other side.", "No longer seeing the other side. Enjoy your time on this side!", "Who likes the other side anyway, this side is better!"]
                 if roleAllRandoms not in payload.member.roles:
                     await payload.member.add_roles(roleAllRandoms)
-                    await LoggingChannel.send((str (payload.member)) + (str (" has been allowed access to the other side.")))
+                    await LoggingChannel.send("{payload.member} has been allowed access to the other side.")
                 else:
                     print(f"{payload.member.name} already has Members role, removing it.")
                     await payload.member.remove_roles(roleAllRandoms)
                     await payload.member.send(f"{random.choice(choices)}")
-
-        if payload is not None:
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
-                    authorName = (str (payload.member.name))
-                    authorName = (authorName.lower())
                     for word in protectedNames:#            Check protected name list.
                         if word in authorName:
                             await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
                             await asyncio.sleep(8)
                             await channel.purge(limit=1)
                             return
+            if payload.message_id == vaccinatedID:
+                if str(payload.emoji) == "✅":
+                    await payload.member.add_roles(roleVaccinated)
+                    await LoggingChannel.send(f"{payload.member} has been granted vaccination status.")
 
                     #await draggie.send(f"Attempting to ban user {payload.member.name}...")
                     #await payload.member.ban(reason="Banned while i fix this code.")
@@ -661,24 +673,13 @@ async def on_raw_reaction_add(payload=None):
                     #await channel.purge(limit=1)
                     #print("And it's gone in", channel)
 
-        if payload is not None:
-            if payload.message_id == vaccinatedID:
-                if str(payload.emoji) == "✅":
-                    await payload.member.add_roles(roleVaccinated)
-                    await LoggingChannel.send((str (payload.member)) + (str (" has been granted vaccination status.")))
-
-        
-        #if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
-        #    x = 1
     if payload.guild_id == 384403250172133387:#     Must, while reaction roles are not available for all servers.
         if payload.message_id == 907318418712170538:
             channel = client.get_channel(907318241498656850)
 
-
 async def on_guild_remove(guild):
     print(f"Removed from guild {guild}")
-    channel = client.get_channel(838107252115374151)  # notification channel
-    await channel.send(f"DEV MODE: removed from guild {guild}")
+    await draggie.send(f"DEV MODE: removed from guild {guild}")
 
 #   Client evenys
 
@@ -686,7 +687,7 @@ async def on_guild_remove(guild):
 async def on_message_delete(message):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendRedactionsInChannel = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
+    sendRedactionsInChannel = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
     print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
     if message.channel.id == 825470734453047297:
         await message.channel.send(f"Stop deleting your messages in here, we're literally adding numbers, {message.author.mention}. *Their message was {message.content}*")
@@ -696,22 +697,19 @@ async def on_message_delete(message):
             await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
             user = client.get_user(int(message.author.id))
             await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
-    if os.path.isfile(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
+    if os.path.isfile(f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
         LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         embed = discord.Embed(title=f"User's message deleted", colour=0xFF0000)
         embed.add_field(name="User", value=message.author.mention)
         embed.add_field(name='Channel', value=f"<#{message.channel.id}>")
         embed.add_field(name='Time', value=tighem)
-        embed.add_field(name='Message', value=message.content, inline=False)
+        if message.content == "":
+            embed.add_field(name='Message', value="[attachment]", inline=False)
+        else:
+            embed.add_field(name='Message', value=message.content, inline=False)
         await LoggingChannel.send(embed=embed)
 
-@client.command(pass_context=True)
-async def member(ctx, user: discord.Member):
-    role = ctx.guild.get_role(806481292392267796)
-    await user.add_roles(role)
-    await ctx.send("done")
-
-@client.command(pass_context=True)
+@client.command(pass_context=True, hidden=True)
 async def discorddm(ctx):
     message = ctx.message.content
     x = message.split()
@@ -721,15 +719,13 @@ async def discorddm(ctx):
     await user.send(f"{sp1}")
     await draggie.send(f"{sp1}")
 
-def InstaDMSend(ctx, user):
+def InstaDMSend(ctx):
     message = ctx.message.content
     x = message.split()
     user = (x[1])
     msg = message.split(' ', 2)[-1]
-
     with open("D:\\BaguetteBot\\TextValues\\password.txt", encoding="utf-8") as f:
         password = f.read()
-
     try:
         if __name__ == '__main__':
             insta = InstaDM(username='draggie306', password=password, headless=False)
@@ -737,7 +733,7 @@ def InstaDMSend(ctx, user):
     except Exception as e:
         print(f"An unexpected error occured: {e}")
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, hidden=True)
 async def dm(ctx):
     message = ctx.message.content
     x = message.split()
@@ -759,41 +755,48 @@ async def dm(ctx):
 async def on_message_edit(before, after):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
-    print(f"Message updated >>> '{before.content}' changed to '{after.content}' in {after.guild.name}/{after.guild.name}")
+    sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-    if os.path.isfile(sendLogsDir):
-        embed = discord.Embed(title=f"Message edited")
-        embed.add_field(name='User', value=after.author.mention)
-        embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
-        embed.add_field(name='Time', value=tighem)
-        if before.content == '' and after.content == '':
-            embed.add_field(name= "Data", value='<attachment sent>', inline=False)
+
+    if LoggingChannel is not None:
+        if before.content == after.content:
+            embed = discord.Embed(title=f"Message modified", description=f"Embed preview added to message ([jump]({after.jump_url}))")
             await LoggingChannel.send(embed=embed)
             return
-        embed.add_field(name= "Message before", value=before.content, inline=False)
-        embed.add_field(name= "Message after", value=after.content, inline=False)
-        await LoggingChannel.send(embed=embed)
-        return
-    if before == after:
-        embed = discord.Embed(title=f"Message state changed")
-        embed.add_field(name='User', value=after.author.mention)
-        embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
-        embed.add_field(name='Time', value=tighem)
-        case_a = str(before)
-        case_b = str(after)
-        output_list = [li for li in difflib.ndiff(case_a, case_b) if li[0] != ' ']
-        embed.add_field(name='Modified strings (beta)', value=output_list, inline=False)
-        await LoggingChannel.send(embed=embed)
-        return
+
+        print(f"Message updated >>> '{before.content}' changed to '{after.content}' in {after.guild.name}/{after.guild.name}")
+        if os.path.isfile(sendLogsDir):
+            embed = discord.Embed(title=f"Message edited")
+            embed.add_field(name='User', value=after.author.mention)
+            embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
+            embed.add_field(name='Time', value=tighem)
+            if before.content == '' and after.content == '':
+                embed.add_field(name= "Data", value='<attachment sent>', inline=False)
+                await LoggingChannel.send(embed=embed)
+                return
+            embed.add_field(name= "Message before", value=before.content, inline=False)
+            embed.add_field(name= "Message after", value=after.content, inline=False)
+            await LoggingChannel.send(embed=embed)
+            return
+        if before == after:
+            embed = discord.Embed(title=f"Message state changed")
+            embed.add_field(name='User', value=after.author.mention)
+            embed.add_field(name='Channel', value=f"<#{after.channel.id}>")
+            embed.add_field(name='Time', value=tighem)
+            case_a = str(before)
+            case_b = str(after)
+            output_list = [li for li in difflib.ndiff(case_a, case_b) if li[0] != ' ']
+            embed.add_field(name='Modified strings (beta)', value=output_list, inline=False)
+            await LoggingChannel.send(embed=embed)
+            return
     
 @client.event
 async def on_typing(channel, user, when):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
+        sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
     except Exception as e:
         print(e)
         await draggie.send(f"{user.mention} ({user}) is DMing me")
@@ -814,7 +817,7 @@ async def on_typing(channel, user, when):
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(channel.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await LoggingChannel.send(embed=embed)
-                await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")
+                """await draggie.send(f"{user.mention} has been seen **TYPING** in {channel.guild.name}! Triggered by {trigger}: `{tighem}`")"""
                 return
             if baguette in user.roles:
                 print("Baguette detected")
@@ -844,7 +847,7 @@ async def on_member_update(before, after):
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     guild = after.guild
 
-    if before.status != after.status:  # to only run on status
+    if before.status != after.status:
         if guild.id == 759861456300015657:
             croissant = discord.utils.get(after.guild.roles, name='Croissant')
             baguette = discord.utils.get(after.guild.roles, name='Baguette')
@@ -856,7 +859,7 @@ async def on_member_update(before, after):
                 embed.add_field(name='Trigger', value="high profile role [Croissant]")
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
+                print(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
                 await LoggingChannel.send(embed=embed)
                 return
             if baguette in after.roles:
@@ -879,7 +882,7 @@ async def on_member_update(before, after):
         send = True
         print(f"OP WATCHDOG: STATUS of {after} has been updated FROM {before.status} TO {after.status} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
-    elif before.nick != after.nick:  # to only run on status
+    elif before.nick != after.nick:
         embed = discord.Embed(title=f"Changed nick", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.nick)
@@ -896,9 +899,46 @@ async def on_member_update(before, after):
         embed.add_field(name='Date/Time', value=tighem)
         send = True
         print(f"OP WATCHDOG: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
-        if after.guild.id == 0:
+        if after.guild.id == 759861456300015657 or after.guild.id == 384403250172133387:
+            if new_role.name == "Server Booster":
+                coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\Coins\\{after.guild.id}.txt")
+                nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{after.id}.txt")
+                my_file = Path(nolwenniumUserDir)
+                if not my_file.is_file():
+                    with open(nolwenniumUserDir, 'a') as f:
+                        print (f"\n[CURRENCY - {name_Nolwennium}] Set {name_Nolwennium} value to 0, new user. {after.id} - {after.name}")
+                        f.write('0')
+                        f.close()
+
+                with open(nolwenniumUserDir, 'r') as f:
+                    beforeBonusAmount = (float (f.read()))
+                    f.close()
+    
+                toAdd = random.randint(100,1000)
+                addedAmount = beforeBonusAmount + toAdd       
+
+                f = open(nolwenniumUserDir, 'w+')
+                f.close()
+
+                with open(nolwenniumUserDir, 'a') as f:
+                    f.write(str (addedAmount))
+                    print (f"\n[CURRENCY - {name_Nolwennium}] Added balance of {toAdd} (total: {addedAmount} for boosting the server: {after.id} - {after.name}")
+                    f.close()
+    
+                f = open(coinDir, 'r')
+                coins = int(f.read())
+                f.close()
+                newSum = coins + 200
+                f = open(coinDir, 'w+')
+                f.write(str (newSum))
+                f.close()
+                f = open(coinDir, 'r')
+                newCoins = int(f.read())
+                f.close()
+
+                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /boostercolour for more information.")
             await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
-            await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+            #await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!') <<<<<<                   In Brigaders Helper
             print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif len(after.roles) < len(before.roles):
@@ -910,7 +950,7 @@ async def on_member_update(before, after):
         send = True
         print(f"OP WATCHDOG: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
-    elif before.name != after.name:  # to only run on status
+    elif before.name != after.name:
         embed = discord.Embed(title=f"Changed name", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.name)
@@ -919,7 +959,7 @@ async def on_member_update(before, after):
         send = True
         print(f"OP WATCHDOG: NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
-    elif before.discriminator != after.discriminator:  # to only run on status
+    elif before.discriminator != after.discriminator:
         embed = discord.Embed(title=f"Changed discriminator", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
         embed.add_field(name='Before', value=before.discriminator)
@@ -928,7 +968,7 @@ async def on_member_update(before, after):
         send = True
         print(f"OP WATCHDOG: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
-    sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         if send == True:
             LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -961,8 +1001,6 @@ async def on_member_update(before, after):
         send = False
         return
 
-    #print(watchdogMsg)
-
 #   on message
 
 @client.event
@@ -973,32 +1011,39 @@ async def on_message(message):
         await console.send("say FRENCH Detected!!!!")
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
-    if message.author.id == 892858065647440003:
-        async def DLstuff():
-            if len(message.attachments) < 1: # Checks if there is an attachment on the message
-                return
-            else: # If there is it gets the filename from message.attachments
-                attachmentsDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
-                if not os.path.exists(attachmentsDir):
-                    os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
-                    print("Made directory" + (attachmentsDir))
-                nameOfFile = str(message.attachments).split("filename='")[1]
+
+    async def DLstuff():
+        if len(message.attachments) < 1: # Checks if there is an attachment on the message
+            return
+        else: # If there is it gets the filename from message.attachments
+            if message.channel.id == 930494689105309777 or message.channel.id == 930496092754284576:
+                upvote = client.get_emoji(803578918488768552)
+                downvote = client.get_emoji(803578918464258068)
+                await message.add_reaction(upvote)
+                await message.add_reaction(downvote)
+            attachmentsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.server.id}\\Attachments\\")
+            if not os.path.exists(attachmentsDir):
+                os.makedirs(f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Attachments\\")
+                print("Made directory" + (attachmentsDir))
+            nameOfFile = str(message.attachments).split("filename='")[1]
+            filename = str(nameOfFile).split("' ")[0]
+            beans = (f"{attachmentsDir}{filename}")
+            attachment = message.attachments[0]
+            
+            if os.path.isfile(beans):
                 filename = str(nameOfFile).split("' ")[0]
-                beans = ((str (attachmentsDir)) + (str ("{}".format(filename))))
-                if os.path.isfile(beans):
-                    filename = str(nameOfFile).split("' ")[0]
-                    beans = ((str (attachmentsDir)) + (str (uuid.uuid4())) + (str ("-name={}".format(filename))))
-                await message.attachments[0].save(fp=beans)
+                beans = (f"{attachmentsDir}{uuid.uuid4()}-name={filename}")
+            await message.attachments[0].save(fp=beans)
 
-                LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
-                if os.path.isfile(sendLogsDir):
-                    await LoggingChannel.send((str (f"Attachment sent in <#{channelID}>: **{filename}**")))
+            LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+            sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+            if os.path.isfile(sendLogsDir):
+                await LoggingChannel.send(f"Attachment sent in <#{channelID}>: **{filename}**: {attachment.url}")
 
-            await DLstuff()
+    await DLstuff()
+
     if message.author.bot:
        return
-
     person = message.author
     personID = message.author.id
 
@@ -1008,21 +1053,22 @@ async def on_message(message):
             x = message.split()
             msgchannel = (x[1])
             sp1 = message.split(' ', 2)[-1]
-            channel = client.get_channel((int (msgchannel)))
-            await channel.send((str ("`")) + (str (sp1)) + (str ("`")))
+            channel = client.get_channel(int (msgchannel))
+            await channel.send(f"`{sp1}`")
             return
         if message.startswith(".sa"):
             x = message.split()                
             msgchannel = (x[1])
             sp1 = message.split(' ', 2)[-1]
-            channel = client.get_channel((int (msgchannel)))
+            channel = client.get_channel(int (msgchannel))
             await channel.send(str (sp1))
             return
-        await draggie.send(((str ("\n'")) + (str (message)) + (str ("' DMed by ")) + (str (person)) + (str (" at ") + (str (datetime.now())))))
-        print(((str ("\n'")) + (str (message)) + (str ("' DMed by ")) + (str (person)) + (str (" at ") + (str (datetime.now())))))
-        dmLocation = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\DMs\\")) + (str (personID)) + (str (".txt")))
+        await draggie.send(f"\n'{message}' DMed by {person} at {datetime.now()}")
+        print(f"\n'{message}' DMed by {person} at {datetime.now()}")
+
+        dmLocation = (f"D:\\BaguetteBot\\draggiebot\\DMs\\{personID}.txt")
         logAllMessages = open(dmLocation, "a", encoding='utf-8')
-        logAllMessages.write((str ("\n'")) + (str (message)) + (str ("' DMed by ")) + (str (person)) + (str (" at ") + (str (datetime.now()))))
+        logAllMessages.write(f"\n'{message}' DMed by {person} at {datetime.now()}")
         logAllMessages.close()
         return
             
@@ -1034,64 +1080,47 @@ async def on_message(message):
     serverID = message.guild.id
     channelName = message.channel.name
     channelID = message.channel.id
-    messageRepeat = message.content
 
-    filedir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Logs\\")))
+    filedir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\")
     if not os.path.exists(filedir):
-        os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Logs\\")))
+        os.makedirs(f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\")
 
     try:
-        with open((str (filedir)) + (str ("MessageLog.txt")), "a", encoding='utf-8') as logAllMessages:
-            logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
+        with open((f"{filedir}MessageLog.txt"), "a", encoding='utf-8') as logAllMessages:
+            logAllMessages.write(f"\n'{message.content}' sent by {message.author} in [{serverName}- #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
             logAllMessages.close()
     except Exception as e:
-        errorMsg = str(f"\nError!!!! Logging file corruption has occured!!! cc: <@382784106984898560> \n\n{e}")
+        errorMsg = str(f"\n\n\n\nError!!!! Logging file corruption has occured!!! cc: <@382784106984898560> \n\n\n\n{e}\n\n")
         print(errorMsg)
-        #await message.channel.send(errorMsg)
         try:
-            with open((str (filedir)) + (str ("MessageLog1.txt")), "a", encoding='utf-8') as logAllMessages:
-                logAllMessages.write((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
+            with open((f"{filedir}MessageLog1.txt"), "a", encoding='utf-8') as logAllMessages:
+                logAllMessages.write(f"\n'{message.content}' sent by {message.author} in [{serverName}- #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
                 logAllMessages.close()
         except Exception as e:
                 errorMsg = str(f"\nCRITICAL ERROR!!!! Server file corruption has occured!!! cc: <@382784106984898560>, server ID is {serverID} / {channelID}\nDM Draggie#3060 if this does not get resolved in 10 minutes\nError: {e}")
                 print(errorMsg)
                 await message.channel.send(errorMsg)
 
-    print((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (message.author)) + (str (" in [{}".format(serverName) + f" - #{channelName}]")) + (str (" at ") + (str (datetime.now())) + (str (f" - IDs: {serverID} - {channelID}"))))
+    print(f"\n'{message.content}' sent by {message.author} in [{serverName}- #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
 
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
         # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS  # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 
-    async def DLstuff():
-        if len(message.attachments) < 1: # Checks if there is an attachment on the message
-            return
-        else: # If there is it gets the filename from message.attachments
-            if message.channel.id == 930494689105309777 or message.channel.id == 930496092754284576:
-                upvote = client.get_emoji(803578918488768552)
-                downvote = client.get_emoji(803578918464258068)
-                await message.add_reaction(upvote)
-                await message.add_reaction(downvote)
-            attachmentsDir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
-            if not os.path.exists(attachmentsDir):
-                os.makedirs((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Attachments\\")))
-                print("Made directory" + (attachmentsDir))
-            nameOfFile = str(message.attachments).split("filename='")[1]
-            filename = str(nameOfFile).split("' ")[0]
-            beans = ((str (attachmentsDir)) + (str ("{}".format(filename))))
-            if os.path.isfile(beans):
-                filename = str(nameOfFile).split("' ")[0]
-                beans = ((str (attachmentsDir)) + (str (uuid.uuid4())) + (str ("-name={}".format(filename))))
-            await message.attachments[0].save(fp=beans)
+    #   Note: This code is in BaguetteBrigadersHelper, so it has been commented. 
 
-            LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-            sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
-            if os.path.isfile(sendLogsDir):
-                await LoggingChannel.send((str (f"Attachment sent in <#{channelID}>: **{filename}**")))
+    if serverID == 759861456300015657 or serverID == 384403250172133387:
+        if hasMembersforGlobalServer in message.author.guild.roles:
+            inviteLinkChecker = message.content.lower()
+            with open("D:\\BaguetteBot\\JSONs\\inviteLinkChecker.json", "r", encoding="utf8") as file:
+                data = loads(file.read())
+                for word in data:
+                    if word in inviteLinkChecker:
+                        if "/baguette" not in message.content:
+                            await message.delete()
+                            await message.channel.send(f"{message.author.mention}, you must have a higher role than that in order to send server invite links!")
 
-    await DLstuff()
-
-    if message.author.id == 629321969615110154:
+    if message.author.id == 854323313631559680:
         blacklistCheck = message.content.lower()
         with open("D:\\BaguetteBot\\JSONs\\antiFrench.json", "r", encoding="utf8") as file:
             data = loads(file.read())
@@ -1099,8 +1128,7 @@ async def on_message(message):
                 if word in blacklistCheck:
                     person = message.author   
                     await message.channel.send(f"Sorry but you can't say that, {person.mention}")
-                    await message.delete()
-                    print("Deleted!")
+                await message.delete()
 
     if message.channel.name == 'nolwennium-138':
         emoji = client.get_emoji(786177817993805844)
@@ -1132,8 +1160,8 @@ async def on_message(message):
     global currentMinute
     global coinDir
     
-    coinDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (authorID)) + (str (".txt"))
-    serverdir = ((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins")))
+    coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{authorID}.txt")
+    serverdir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins")
     
     if not os.path.exists(serverdir):
         os.makedirs(serverdir)
@@ -1141,22 +1169,19 @@ async def on_message(message):
     try:
         f = open(coinDir, 'r')
         coins = f.read()
-        #print ((str ("coins = ")) + (str (coins)))
         f.close()
 
         f = open(coinDir, 'w+')
         coins = (int (str (coins))) + 1
         f.close()
-        #print ((str ("new coins = ")) + (str (coins)))
 
         with open(coinDir, 'a') as f:
-            #print ((str ("appended coins = ")) + (str (coins)))
             f.write(str (coins))
             f.close()
 
     except FileNotFoundError:   #   User not found
         with open(coinDir, 'a') as f:
-            print ((str ("\n\nset coin value to 1, new user.")))
+            print (f"\nSet coin value to 1, {message.author.name} is a new user.")
             try:
                 f.write('1')
                 f.close()
@@ -1164,177 +1189,103 @@ async def on_message(message):
                 f.write('1')
                 f.close()
 
-        sendLogsDir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+        sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
         my_file = Path(sendLogsDir)
         if my_file.is_file():
             try:
                 bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
                 embed = discord.Embed(title="User First Message", 
-                description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
+                description=(f"{person.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
             except Exception:
-                print((str ("Unable to send that a new user has joined. This server, ")) + (str (serverName)) + (str (", doesn't have a text channel called 'event-log-baguette'.")))
+                print(f"Unable to send that a new user has joined. This server, {serverName}, doesn't have a text channel called 'event-log-baguette'.")
                 guild = message.author.guild
                 await guild.create_text_channel('event-log-baguette')
                 bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
                 await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
                 embed = discord.Embed(title="User First Message", 
-                description=((str (person.mention)) + (str (" has sent their first message. Their coins balance has been set to 1."))), colour=0x00ff00)
+                description=(f"{person.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
-            
     except ValueError:
         f.write('1')
         f.close()
     
-    #print (len(s))
 
 #   Generic commands.
 
-    if message.content == ("hi"):
-        await message.channel.send('hi')
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nWORD MENTIONED -> 'hi' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
+    if message.guild.id == 759861456300015657:
+        if message.content == ("hi"):
+            await message.channel.send('hi')
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nWORD MENTIONED -> 'hi' ran by {message.author} at {datetime.now()}")
+            f.close()
 
-    if message.content == ("Hi"):
-        await message.channel.send('Hi')
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nWORD MENTIONED -> 'Hi' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
+        if message.content == ("Hi"):
+            await message.channel.send('Hi')
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nWORD MENTIONED -> 'Hi' said by {message.author} at {datetime.now()}")
+            f.close()
 
-# Animated emoji sender.
+    # Animated emoji sender.
 
-    if message.content.startswith('ninjarage'): #                                     ninjarage emoji animated
-        await message.channel.send("<a:ninjarage:767453473133953044>")
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.ninjarage' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> '.ninjarage' ran by ")) + (str (message.author)))
-    if message.content.startswith('boris'): #                                     boris emoji animated
-        await message.channel.send("<a:boris:795038238799822848>")
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.boris' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> '.boris' ran by ")) + (str (message.author)))
-    if message.content.startswith('Colette'): #                                     boris emoji animated
-        await message.channel.send("<a:colette:790577621690875956>")
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> 'colette' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> 'colette' ran by ")) + (str (message.author)))
+        if message.content.startswith('ninjarage'): #                                     ninjarage emoji animated
+            await message.channel.send("<a:ninjarage:767453473133953044>")
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nCOMMAND RAN -> '.ninjarage' ran by {message.author} at {datetime.now()}")
+            f.close()
+            print(f"\nCOMMAND RAN -> '.ninjarage' ran by {message.author} at {datetime.now()}")
+        if message.content.startswith('boris'): #                                     boris emoji animated
+            await message.channel.send("<a:boris:795038238799822848>")
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nCOMMAND RAN -> '.boris' ran by {message.author} at {datetime.now()}")
+            f.close()
+            print(f"\nCOMMAND RAN -> '.boris' ran by {message.author} at {datetime.now()}")
+        if message.content.startswith('Colette'): #                                     boris emoji animated
+            await message.channel.send("<a:colette:790577621690875956>")
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nCOMMAND RAN -> '.Colette' ran by {message.author} at {datetime.now()}")
+            f.close()
+            print(f"\nCOMMAND RAN -> '.Colette' ran by {message.author} at {datetime.now()}")
 
-#   Fanficcs
+        if message.content.startswith("bbot://"):
+            if personID == 382784106984898560:
+                await message.channel.send("```Executed instruction.```")
+            else:
+                await message.channel.send(f"```{uuid.uuid4()}_callstack/MainThread: operation rejected, traceback includes data: message.author.id is {personID}```")
 
-    if message.content.startswith('fanfics'):
-        await message.channel.purge(limit=1)
-        await message.channel.send('I sure do love FANFICS!!!')
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nWORD DETECTED, message sent -> 'fanfics' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
+    #   test
 
-#   Reply to custom message, write here:
+        if message.content == ('test'):
+            await message.channel.send("testerino")
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nCOMMAND RAN -> '.test' ran by {message.author} in {message.guild.id} at {datetime.now()}")
+            f.close()
 
-#    if message.content.startswith('..'): #
-#        await message.channel.send('actually yeah it is kinda cool, everyone run it plz thanks :))))')
+        if message.content == ('France'):
+            await message.channel.purge(limit=1)
+            franceRand = 0
+            franceRand = secrets.randbelow(270)
+            if franceRand == 50:
+                await message.channel.send("You must speak French in this server only for the next hour.")
+                print (franceRand)
+            else:
+                await message.channel.send(f"Nope. (number = {franceRand})")
+                print (franceRand)
+            f = open(GlobalLogDir, "a")
+            f.write(f"\nCOMMAND RAN -> 'France' ran by {message.author} in {message.guild.id} at {datetime.now()}. Number randomly generated between 0 and 100: {franceRand}")
+            f.close()
 
-    if message.content.startswith("bbot://"):
-        if personID == 382784106984898560:
-            await message.channel.send("```Executed instruction.```")
-        else:
-            await message.channel.send(f"```{uuid.uuid4()}_callstack/MainThread: operation rejected, traceback includes data: message.author.id is {personID}```")
+    #   Split message
 
-#   In the loop
+        if message.content.startswith (".split"):
+            txt = message.content
+            x = txt.split()
+            print(x[1])
+            await message.channel.send(x[1])
 
-    if message.content.startswith('.loop 5'): #  loop                           LOOP5
-        await message.channel.send('loop!')
-        await asyncio.sleep(0.1)
-        await message.channel.send('loop!')
-        await asyncio.sleep(0.1)
-        await message.channel.send('loop!')
-        await asyncio.sleep(0.1)
-        await message.channel.send('loop!')
-        await asyncio.sleep(0.1)
-        await message.channel.send('loop!')
-        await asyncio.sleep(0.1)
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.loop 5' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> '.loop' ran by ")) + (str (message.author)))
-
-#   Mobile notifications 
-
-    if message.content.startswith(".noti"):#NOTI                                NOTI
-        await message.channel.send("On mobile: swipe from the right to the left > look at top for the notifications icon > tap it and hit notification settings > use **only @mentions** for notifications only if you are tagged, or temporarily mute the server.")
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.noti' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-        print ((str ("\nCOMMAND RAN -> '.noti' ran by ")) + (str (message.author)))
-
-#   test
-
-    if message.content == ('test'):
-        await message.channel.send("testerino")
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> '.test ' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-
-    if message.content == ('France'):
-        await message.channel.purge(limit=1)
-        franceRand = 0
-        franceRand = random.randint (0,720)
-        if franceRand == 50:
-            await message.channel.send("You must speak French in this server only for the next hour.")
-            print (franceRand)
-        else:
-            await message.channel.send((str ("Nope. (number = ")) + (str(franceRand)) + (str (")")))
-            print (franceRand)
-        f = open(GlobalLogDir, "a")
-        f.write((str ("\nCOMMAND RAN -> 'France' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.write((str (". Number randomly generated between 0 and 100: ")) + (str (franceRand)))
-        f.close()
-
-#    if message.content == ('...'):
-#        await message.channel.send("Lmao no it's not")
-
-#   Get user @
-
-    if message.content == ("@"):
-        person = message.author
-        await message.channel.send((str ("You're ")) + (str (message.author)) + (str(" (")) + (str (person.mention)) + (str(")")))
-        f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\\\Logs\\GlobalLog.txt", "a")
-        f.write((str ("\nCOMMAND RAN -> '@' ran by ")) + (str (message.author)) + (str (" at ") + (str (datetime.now()))))
-        f.close()
-
-#   Split message
-
-    if message.content.startswith (".split"):
-        txt = message.content
-        x = txt.split()
-        print(x[1])
-        await message.channel.send(x[1])
-    
-#   Split message, delete original
-
-#    if message.content.startswith (".delsplit"):
-#        txt = message.content
-#        print (txt)
-#        x = txt.split()
-#        print (x)
-#        await message.channel.purge(limit=1)
-#        await message.channel.send(x[1])
-#
-#    if message.content.startswith (".testfor"):
-#        txt = message.content
-#        x = txt.split()
-#        print (x)
-#        #await message.channel.send(x[1])
-#        await message.channel.purge(limit=1)
-#        await message.channel.send(str ("Testing for ") + (str (x[1])) )
-
-
-#   Send Emoji for Face!
+    #   Send Emoji for Face!
 
     if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
         messageContent = message.content.lower()
@@ -1381,43 +1332,11 @@ async def on_message(message):
         if word in borisWords:
             await message.add_reaction("<:boris:785942478381121556>")
             f = open(GlobalLogDir, "a", encoding="utf8")
-            f.write((str (f"\nINFO: 'boris' emoji sent, initiated by '{message.author}' at {datetime.now()}")))#    compress str writing by using f strings
+            f.write((str (f"\nINFO: 'boris' emoji sent, initiated by '{message.author}' at {datetime.now()}")))
             f.close()  
-
-#   Nolly = :nolly:786177817993805844
-#   Oliver = :oliver:786275811405070337
-#   Jack = :jacc:786275811405070337
-#   Joe = :joecat:786277202400116770
-
-#   Charlie = 
-
-
-#   Haydn = :haydn:786276584671412244
-#   Maisy = :maisy:786276271809101840
-#   Ben = :bennybooze:788311580768075786
-#   Flo = :JacksGF:788162163289358367
-#   Ish = :ish:791381704278540369
-#   Boris = :boris:785942478381121556
-#   Maya = :maya:785942478448230470
-#   Sam = :samf:785942793280815114
-
-#   Charlie's emoji below, enable later
-
-#   Other Emoji Mention
        
 #   essential do not delete     essential do not delete     essential do not delete     essential do not delete     essential do not delete     
 
-    #if message.channel.id == 759861456761258045:
-    #    if message.content.startswith("."):
-    #        hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', message.guild.roles)
-    #        async with message.channel.typing():
-    #            if hasAdmin in message.author.roles:
-    #                await client.process_commands(message)
-    #                return
-    #            else:
-    #                await asyncio.sleep(0.5)
-    #                await message.channel.send("Commands can't be used here, try <#785620979300302869>.")
-    #                return
     else:
         await client.process_commands(message)
 
@@ -1427,120 +1346,26 @@ async def on_message(message):
     
 @client.command(help="Sends up to 9 random baguette pics", brief="Sends random baguette pics", pass_context=True)
 async def baguette(ctx, member: discord.Member = None):
-    baguetteRand = (str (random.randint(1,9)))
-    await ctx.send(file=discord.File(f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Assets\\Baguettes\\baguette{baguetteRand}.jpg"))
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.baguette ' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-
-#   ping
-
-#@client.command(help="Says the ping immediately after user has sent the command. Used for determining latency/ping or downtime.", brief="Shows ping.", pass_context=True)
-#async def ping(ctx):
-#
-#    if round(client.latency * 1000) <= 100:
-#        embed=discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0x44ff44)
-#    elif round(client.latency * 1000) <= 150:
-#        embed=discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0xffd000)
-#    elif round(client.latency * 1000) <= 150:
-#        embed=discord.Embed(title="PING", description=f"Message delay is **{round(client.latency *1000)}** milliseconds!", color=0xff6600)
-#    else:
-#        embed=discord.Embed(title="PING", description=f"OOF! Message delay is **{round(client.latency *1000)}** milliseconds!", color=0x990000)
-#    await ctx.send(embed=embed)
-#    f = open(GlobalLogDir, "a", encoding="utf8")
-#    f.write((str ("\nCOMMAND RAN -> '.ping' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-#    f.close()
-
-#   Statuses
-
-@client.command(help="Displays/changes status. Syntax: \n.status <playing | streaming | listening | watching> [custom cool text you enter here]", brief="Type .help status", pass_context=True)
-async def status(ctx):
-
-    text = ctx.message.content
-
-    fullString = text.split(' ', 2)[-1]
-
-    x = text.split()
-    determiner = (str (x[1]))
-    
-    if determiner == "playing":
-        await client.change_presence(activity=discord.Game(name=(fullString)))
-        await ctx.send((str ("I'm playing ")) + (str (fullString)) + (str("!")))    
-
-    if determiner == "streaming":
-        await client.change_presence(activity=discord.Streaming(name=(fullString), url=(fullString)))
-        await ctx.send((str ("I'm streaming ")) + (str (fullString)) + (str("!")))
-
-    if determiner == "listening":
-        await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=(fullString)))
-        await ctx.send((str ("I'm listening to ")) + (str (fullString)) + (str("!")))
-
-    if determiner == "watching":
-        await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=(fullString)))
-        await ctx.send((str ("I'm watching ")) + (str (fullString)) + (str("!")))
-
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.status' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-
-#   channel test
-
-@client.command(help="channel", brief="channel", pass_context=True)
-async def channel(ctx):
-    await ctx.send(ctx.message.channel.mention)
-    print(ctx.message.channel.mention)
+    await ctx.send(f"Use French Cuisine bot for this and much more! https://discord.com/api/oauth2/authorize?client_id=803718367230820364&permissions=8&scope=bot%20applications.commands")
 
 #   Cross Server Messaging
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, hidden=True)
 async def sa(ctx):
     text = ctx.message.content
     x = text.split()
     
     msgchannel = (x[1])
-    #print((str ("\nmsgchannel = '")) + (str (msgchannel)) + (str ("'")))
-
     sp1 = text.split(' ', 2)[-1]
-    #print((str ("\nsp1 = '")) + (str (sp1)) + (str ("'")))
-
     channel = client.get_channel((int (msgchannel)))
-    #print((str ("\nchannel = '")) + (str (channel)) + (str ("'")))
-
     await channel.send(str (sp1))
     return
-
-#   Last message in channel.
-
-@client.command(pass_context=True)
-async def lastMessage(ctx, users_id: int):
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-
-    oldestMessage = None
-    for channel in ctx.guild.text_channels:
-        fetchMessage = await channel.history().find(lambda m: m.author.id == users_id)
-        if fetchMessage is None:
-            continue
-
-        if oldestMessage is None:
-            oldestMessage = fetchMessage
-        else:
-            if fetchMessage.created_at > oldestMessage.created_at:
-                oldestMessage = fetchMessage
-
-    if (oldestMessage is not None):
-        await ctx.send((str ("<@!")) + (str (sp1)) + (str (">")) + (str (f"'s last message is: \n\n'{oldestMessage.content}'.")))
-    else:
-        await ctx.send((str ("<@!")) + (str (sp1)) + (str (">")) + (str (" has been inactive for a long time, their last message has not been sent within the past page of messages in any channel.")))
 
 #   Kahoot botter
 
 @client.command()
 async def bot(ctx):
     global name
-    #                           await ctx.send("Syntax: .bot <CODE> <AMOUNT> <NAME/random>")
-    #await ctx.send("IDE detected! Unable to run command. Aborting.")
-    #return
     text = ctx.message.content
 
     namerator = requests.get('https://apis.kahoot.it/namerator.json')
@@ -1560,12 +1385,9 @@ async def bot(ctx):
         await ctx.send("I'm not sure you have the correct syntax. Use `.bot <CODE> <AMOUNT> <NAME/random>`. The `<NAME>` section can be set to `random`, this will auto generate a Kahoot 'safe' name.\nExample: `.bot 8261910 138 Test player`\n\nNote: Bots do not answer questions, *yet*.")
         return
 
-    clients = []
+    (f"Attempting to add `{botNum}` bots to game ID `{code}`... <a:loading:935623554215591936>")
 
-    if botNum >= 2:
-        print((str ("Attempting to add `")) + (str (botNum)) + (str ("` bots to game ID `")) + (str (code)) + (str ("`!")))
-    else:
-        print((str ("Attempting to add `")) + (str (botNum)) + (str ("` bot to game ID `")) + (str (code)) + (str ("`!")))
+    clients = []
 
     joins = 0
     targetJoins = (int(botNum))
@@ -1588,46 +1410,35 @@ async def bot(ctx):
 
         if ogName == 'random':
             clients[client].join(code,name)
-            #await ctx.send((str ("Joined as `")) + (str (name)) + (str ("`.")))
             print(name)
             joins = joins + 1
             if joins == targetJoins:
                 print("Done!")
-                if botNum >= 2:
-                    await ctx.send((str ("Done! `")) + (str (joins)) + (str ("` bots have been added to `")) + (str (code)) + (str ("`.")))
-                else:
-                    await ctx.send((str ("Done! `")) + (str (joins)) + (str ("` bot has been added to `")) + (str (code)) + (str ("`.")))
+                await ctx.send(f"Done! `{joins}` bots have been added to `{code}`. It may take a few seconds for the bots to appear on the screen depending on the connection speed.")
 
         else:
             clients[client].join(code,name+str(client+1))
-            #await ctx.send((str ("Joined as `")) + (str (name)) + (str (client+1)) + (str ("`.")))#clients[client].join(code,name+str(client+1))
+            #await ctx.send(f"Joined as `{name}{client+1}`.")#clients[client].join(code,name+str(client+1))
             print(name+str(client+1))
             joins = joins + 1
             if joins == targetJoins:
                 print("Done!")
-                if botNum >= 2:
-                    await ctx.send((str ("Done! `")) + (str (joins)) + (str ("` bots have been added to `")) + (str (code)) + (str ("`.")))
-                else:
-                    await ctx.send#((str ("Done! `")) + (str (joins)) + (str ("` bot has been added to `")) + (str (code)) + (str ("`.")))
+                await ctx.send(f"Done! `{joins}` bots have been added to `{code}`. It may take a few seconds for the bots to appear on the screen depending on the connection speed.")
 
 #   Elon musk
 
-@client.command(pass_context=True, help="X Æ A-12", brief="bebe spam X Æ A-12")
+@client.command(pass_context=True, help="X Æ A-12", brief="bebe spam X Æ A-12", hidden=True)
 async def ElonMusk(ctx):
     await ctx.send("X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12X Æ A-12")
-    f = open(GlobalLogDir, 'a')
-    f.write((str ("\nCOMMAND RAN -> '.ElonMusk' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.ElonMusk' ran by ")) + (str (ctx.message.author)))
 
 #   convert
 
-@client.command(help="Shows coin balance. If above a threshold, shows items to buy", brief="Shows your balance, and available to buy items.", pass_context=True)
+@client.command(help="Shows coin balance. If above a threshold, shows items to buy", brief="Shows your balance, and available to buy items.", pass_context=True, hidden=True)
 async def convert(ctx):
     url = 'https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=1&symbol=ETH'
     #await ctx.send("IDE detected! Unable to run command. Aborting.")
     #return
-    with open("D:\\OneDrive - Sapientia Education Trust\\api_file.bin", encoding="utf-8") as f:
+    with open("D:\\BaguetteBot\\draggiebot\\cmc_api_key.txt", encoding="utf-8") as f:
         api_key = f.read()
 
     parameters = {}
@@ -1639,7 +1450,6 @@ async def convert(ctx):
     try:
         response = requests.get(url, params=parameters, headers=headers)
         data = str (json.loads(response.text))
-
         print(data)
         f = json.loads(data)
         print(list(filter(lambda x:x["quote"]=="USD",data)))
@@ -1648,6 +1458,130 @@ async def convert(ctx):
         await ctx.send(data)
     except Exception as e:
         await ctx.send(e)
+
+#   brawlstars
+
+@client.command(help="Displays currency options and commands", brief="Displays currency options and commands.", pass_context=True)
+async def currency(ctx):
+    nolwenniumUserDirectory(ctx)
+    my_file = Path(nolwenniumUserDir)
+
+    if not my_file.is_file():
+        with open(nolwenniumUserDir, 'a') as f:
+            print (f"\n[CURRENCY - {name_Nolwennium}] Set {name_Nolwennium} value to 0, new user. {ctx.author.id} - {ctx.author.name}")
+            try:
+                f.write('0')
+                f.close()
+            except Exception:
+                f.write('0')
+                f.close()
+
+    f = open(nolwenniumUserDir, 'r')
+    nolwenniumBal = round(float(f.read()), 4)
+    f.close()
+
+    message = ""
+    number = 0
+    for guild in ctx.author.mutual_guilds:
+        message += f"`{guild.name}` \n"
+        number = number + 1
+
+    await ctx.send(f"Multiplier: 1.{number}x ({number}0%) bonus {nolwenniumBal}")
+    await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwenniumBal} new currency points! {emoji_Nolwennium}")
+
+@client.command(hidden=True)
+async def getBBboosters(ctx):
+    if ctx.author.id == 382784106984898560:
+        await ctx.message.delete()
+        role = discord.utils.get(ctx.guild.roles, name="Server Booster")
+        if role is None:
+            await bot.say('There is no "Server Booster" role on this server!')
+            return
+        hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
+        hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
+        hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
+        hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
+        for member in ctx.guild.members:
+            coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{member.id}.txt")
+            refresher = False
+            if hasCitizen in member.roles:
+                await member.remove_roles(hasCitizen)
+                await member.send(f"Your role **Citizen** has been (temporarily) removed due to a server update. To get this role again, simply buy it from the shop in {ctx.guild.name} for free!")
+                refresher = True
+            if hasKnight in member.roles:
+                await member.remove_roles(hasKnight)
+                await member.send(f"Your role **King** has also been removed. You have been **refunded** an **additional 300 coins** to purchase new roles.")
+                f = open(coinDir, 'r')
+                coins = int(f.read())
+                f.close()
+                newSum = coins + 300
+                f = open(coinDir, 'w+')
+                f.write(str (newSum))
+                f.close()
+                refresher = True
+            if hasPrince in member.roles:
+                await member.remove_roles(hasPrince)
+                await member.send(f"Your role **Prince** has also been removed. You have been **refunded** an **additional 1250 coins** to purchase new roles.")
+                f = open(coinDir, 'r')
+                coins = int(f.read())
+                f.close()
+                newSum = coins + 1250
+                f = open(coinDir, 'w+')
+                f.write(str (newSum))
+                f.close()
+                refresher = False
+            if hasKing in member.roles:
+                f = open(coinDir, 'r')
+                coins = int(f.read())
+                f.close()
+                newSum = coins + 3000
+                f = open(coinDir, 'w+')
+                f.write(str (newSum))
+                f.close()
+                await member.remove_roles(hasKing)
+                await member.send(f"Your role **King** has also been removed. You have been **refunded** an **additional 3000 coins** to purchase new roles.")
+                refresher = False
+            
+            if refresher == True:
+                await member.send(f"In case you need a refresher, the command to see your coins is `.coins`, and to buy an item, use the command `.buy <item>` in {ctx.guild.name}. Thank you for being a part of this epic community!")
+            await asyncio.sleep(0.1)
+
+            if role in member.roles:
+                nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{member.id}.txt")
+                my_file = Path(nolwenniumUserDir)
+                if not my_file.is_file():
+                    with open(nolwenniumUserDir, 'a') as f:
+                        print (f"\n[CURRENCY - {name_Nolwennium}] Set {name_Nolwennium} value to 0, new user. {member.id} - {member.name}")
+                        f.write('0')
+                        f.close()
+
+                with open(nolwenniumUserDir, 'r') as f:
+                    beforeBonusAmount = (float (f.read()))
+                    f.close()
+
+                toAdd = random.randint(100,1000)
+                addedAmount = beforeBonusAmount + toAdd       
+
+                f = open(nolwenniumUserDir, 'w+')
+                f.close()
+
+                with open(nolwenniumUserDir, 'a') as f:
+                    f.write(str (addedAmount))
+                    print (f"\n[CURRENCY - {name_Nolwennium}] Added balance of {toAdd} (total: {addedAmount} for boosting the server: {member.id} - {member.name}")
+                    f.close()
+
+                f = open(coinDir, 'r')
+                coins = int(f.read())
+                f.close()
+                newSum = coins + 200
+                f = open(coinDir, 'w+')
+                f.write(str (newSum))
+                f.close()
+                f = open(coinDir, 'r')
+                newCoins = int(f.read())
+                f.close()
+
+                await general.send(f"Thank you {member.mention} for boosting the server! You have the **Server Booster** role, an **exclusive name colour**, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name's colour **permanently** to a colour of your choice, type `/namecolour` and enter the colour you want!")
 
 #   coins
 
@@ -1668,21 +1602,20 @@ async def coins(ctx):
     #await ctx.send("Coins earned before 30/07/2021 are not available to use. This is a known bug and will be fixed later. You have not lost any Coins, but you cannot buy anything with your old balance. New Coins will be added to your old Coins.")
     userID = authorID
     user = ctx.message.author
-    serverName = ctx.message.guild.name
     serverID = ctx.message.guild.id
     #print (serverID)
 
-    coinDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (authorID)) + (str (".txt"))
+    coinDirectory(ctx)
     f = open(coinDir, 'r')
     coinBal = f.read()
     f.close()
 
-    nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (authorID)) + (str (".txt"))
+    nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
     my_file = Path(nolwenniumUserDir)
 
     if not my_file.is_file():
         with open(nolwenniumUserDir, 'a') as f:
-            print ((str ("\n\nset Nolwennium value to 0, new user.")))
+            print (f"\nSet {name_Nolwennium} value to 0, {authorID} is a new user.")
             try:
                 f.write('0')
                 f.close()
@@ -1694,374 +1627,631 @@ async def coins(ctx):
     nolwenniumBal = f.read()
     f.close()
     
-    canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
-    if canRunCommand in user.roles:
-        try:
-            #	List of stuff BEFORE showing the user their balance
-            txt = ctx.message.content
-            x = txt.split()
-            word1 = (str (x[1]))
+    if ctx.message.guild.id == 384403250172133387 or ctx.guild.id == 759861456300015657:
+        canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
+        if canRunCommand in user.roles:
+            try:
+                #	List of stuff BEFORE showing the user their balance
+                txt = ctx.message.content
+                x = txt.split()
+                word1 = (str (x[1]))
 
-            if word1.lower() == 'set':
-                if ctx.message.author.guild_permissions.administrator == True:
-                    userID = (str (x[2]))
-                    amount = (str (x[3]))
-                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-                    oc = open(usersCoins, 'r')
-                    oldCoins = oc.read()
-                    oc.close()
+                if word1.lower() == 'set':
+                    if ctx.message.author.guild_permissions.administrator == True:
+                        userID = (str (x[2]))
+                        amount = (str (x[3]))
+                        usersCoins = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+                        oc = open(usersCoins, 'r')
+                        oldCoins = oc.read()
+                        oc.close()
 
-                    e = open(usersCoins, 'w+')
-                    e.close()
+                        e = open(usersCoins, 'w+')
+                        e.close()
 
-                    with open(usersCoins, 'a') as f:
-                        f.write(str (amount))
+                        with open(usersCoins, 'a') as f:
+                            f.write(str (amount))
+                            f.close()
+
+                        nc = open(usersCoins, 'r')
+                        newCoins = nc.read()
+                        nc.close()
+                        
+                        if silent == False:
+                            await ctx.send(f"<@{userID}>'s coins have been updated from {oldCoins} {emoji_Coins} to **{newCoins}** {emoji_Coins}.")
+                        if silent == True:
+                            print(f"Old coins: {oldCoins} -----> New coins: {newCoins}")
+                            await ctx.message.add_reaction('✅')
+                        return
+                
+                if word1.lower() == 'add':
+                    if ctx.message.author.guild_permissions.administrator == True:
+                        userID = (str (x[2]))
+                        amountToAdd = (str (x[3]))
+
+                        usersCoins = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+
+                        oc = open(usersCoins, 'r')
+                        oldCoins = oc.read()
+                        oc.close()
+
+                        e = open(usersCoins, 'w+')
+                        e.close()
+
+                        newCoins = int(oldCoins) + int(amountToAdd)
+
+                        with open(usersCoins, 'a') as f:
+                            f.write(str (newCoins))
+                            f.close()
+
+                        nc = open(usersCoins, 'r')
+                        newCoins = nc.read()
+                        nc.close()
+
+                        if silent == False:
+                            await ctx.send(f"<@{userID}>'s coins have been updated from {oldCoins} {emoji_Coins} to **{newCoins}** {emoji_Coins}.")
+                        if silent == True:
+                            print(f"{userID}: Old coins: {oldCoins} -----> New coins: {newCoins}")
+                            await ctx.message.add_reaction('✅')
+                        return
+                if word1.lower() == 'lookup':
+                    if ctx.message.author.guild_permissions.administrator == True:
+                        userID = (str (x[2]))
+
+                        usersCoins = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+                        oc = open(usersCoins, 'r')
+                        coinAmount = oc.read()
+                        oc.close()
+
+                        nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
+                        my_file = Path(nolwenniumUserDir)
+
+                        if not my_file.is_file():
+                            with open(nolwenniumUserDir, 'a') as f:
+                                print (f"\nSet{name_Nolwennium} value to 0, {authorID} is a new user.")
+                                try:
+                                    f.write('0')
+                                    f.close()
+                                except Exception:
+                                    f.write('0')
+                                    f.close()
+
+                        f = open(nolwenniumUserDir, 'r')
+                        nolwenniumBal = f.read()
                         f.close()
 
-                    nc = open(usersCoins, 'r')
-                    newCoins = nc.read()
-                    nc.close()
-                    
-                    if silent == False:
-                        await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
-                    if silent == True:
-                        print(f"Old coins: {oldCoins} -----> New coins: {newCoins}")
-                        await ctx.message.add_reaction('✅')
-                    return
-            
-            if word1.lower() == 'add':
-                if ctx.message.author.guild_permissions.administrator == True:
-                    userID = (str (x[2]))
-                    amountToAdd = (str (x[3]))
-
-                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-
-                    oc = open(usersCoins, 'r')
-                    oldCoins = oc.read()
-                    oc.close()
-
-                    e = open(usersCoins, 'w+')
-                    e.close()
-
-                    newCoins = int(oldCoins) + int(amountToAdd)
-
-                    with open(usersCoins, 'a') as f:
-                        f.write(str (newCoins))
-                        f.close()
-
-                    nc = open(usersCoins, 'r')
-                    newCoins = nc.read()
-                    nc.close()
-
-                    if silent == False:
-                        await ctx.send((str ('<@')) + (str (userID)) + (str (">'s coins have been updated from ")) + (str (oldCoins)) + (str ("<:Coins:852664685270663194> to **")) + (str (newCoins)) + (str ("** <:Coins:852664685270663194>.")))
-                    if silent == True:
-                        print(f"{userID}:       Old coins: {oldCoins} -----> New coins: {newCoins}")
-                        await ctx.message.add_reaction('✅')
-                    return
-            if word1.lower() == 'lookup':
-                if ctx.message.author.guild_permissions.administrator == True:
-                    userID = (str (x[2]))
-
-                    usersCoins = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (userID)) + (str (".txt"))
-                    oc = open(usersCoins, 'r')
-                    coinAmount = oc.read()
-                    oc.close()
-
-                    nolwenniumUserDir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\")) + (str (userID)) + (str (".txt"))
-                    my_file = Path(nolwenniumUserDir)
-
-                    if not my_file.is_file():
-                        with open(nolwenniumUserDir, 'a') as f:
-                            print ((str ("\n\nset Nolwennium value to 0, new user.")))
-                            try:
-                                f.write('0')
-                                f.close()
-                            except Exception:
-                                f.write('0')
-                                f.close()
-
-                    f = open(nolwenniumUserDir, 'r')
-                    nolwenniumBal = f.read()
-                    f.close()
-
-                    if silent == False:
-                        await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** Nolwennium.")
-                    if silent == True:
-                        print(f"{userID}:       Coins: {coinAmount} -----> Nolwennium: {nolwenniumBal}")
-                        await ctx.message.add_reaction('✅')
-                    return
-            else:
-                await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
-
-        except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
-            global citizenPurchasable
-            global knightPurchasable
-            global princePurchasable
-            global kingPurchasable
-            global adminPurchasable
-
-            citizenPurchasable = '-'
-            knightPurchasable = ' '
-            princePurchasable = ' '
-            kingPurchasable = ' '
-            adminPurchasable = ' '
-
-            hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
-            hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
-            hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
-            hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
-            hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
-
-            randomCry = random.randint(1,7)
-            global cry
-            if randomCry == 1:
-                cry = '<:AmberCry:828577834146594856>'
-            if randomCry == 2:
-                cry = '<:BibiByeBye:828683852939395072>'
-            if randomCry == 3:
-                cry = '<:ColetteCry:828683829631516732>'
-            if randomCry == 4:
-                cry = '<:JessieCry:828683805861740654>'
-            if randomCry == 5:
-                cry = '<:SpikeCry:828683779206807622>'
-            if randomCry == 6:
-                cry = '<:SurgeCry:828683755694063667>'
-            if randomCry == 7:
-                cry = '<:TaraCry:828683724286853151>'
-
-            if serverID != 759861456300015657:
-                await ctx.send("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
-            
-            if hasCitizen in user.roles:
-                citizenPurchasable = '\nCitizen: *🔓 Unlocked!*'
-            if int (str (coinBal)) > 1:
-                citizenPurchasable = 'Citizen: 0 <:Coins:852664685270663194>'
-
-            if hasKnight in user.roles:
-                knightPurchasable = '\nKnight:*🔓 Unlocked!*'
-
-            if int (str (coinBal)) > 250:
-                knightPurchasable = '\nKnight: 250 <:Coins:852664685270663194>'
-
-            if hasPrince in user.roles:
-                princePurchasable = '\nPrince:*🔓 Unlocked!*'
-
-            if int (str (coinBal)) > 1000:
-                princePurchasable = '\nPrince: 1000 <:Coins:852664685270663194>'
-
-            if hasKing in user.roles:
-                kingPurchasable = '\nKing:*🔓 Unlocked!*'
-
-            if int (str (coinBal)) > 2500:
-                kingPurchasable = '\nKing: 2,500 <:Coins:852664685270663194>'
-
-            if int (str (coinBal)) > 1000000:
-                if hasAdmin in user.roles:
-                    adminPurchasable = '\nAdmin:*🔓 Unlocked!*'
-
+                        if silent == False:
+                            await ctx.send(f"<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** {name_Nolwennium}.")
+                        if silent == True:
+                            print(f"{userID}:       Coins: {coinAmount} -----> {name_Nolwennium}: {nolwenniumBal}")
+                            await ctx.message.add_reaction('✅')
+                            await ctx.author.send(f'<@{userID}> has **{coinAmount}** coins, and **{nolwenniumBal}** {name_Nolwennium}.')
+                        return
                 else:
-                    adminPurchasable = '\nAdmin: 1,000,000 <:Coins:852664685270663194>'
+                    await ctx.send("I don't know what you mean. The correct syntaxes are:\n\n`.coins set <targetUserID> <newCoins>`\n`.coins add <targetUserID> <addedAmount>`\n`.coins lookup <targetUserID>`")
 
-            f = open (nolwenniumUserDir, 'r')
+            except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
+                citizenPurchasable = '-'
+                knightPurchasable = ' '
+                baronPurchasable = ' '
+                viscountPurchasable = ' '
+                earlPurchasable = ' '
+                marquessPurchasable = ' '
+                dukePurchasable = ' '
+                princePurchasable = ' '
+                kingPurchasable = ' '
+                adminPurchasable = ' '
+
+                hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
+                hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
+                hasBaron = discord.utils.find(lambda r: r.name == 'Baron', ctx.message.guild.roles)
+                hasDuke = discord.utils.find(lambda r: r.name == 'Duke', ctx.message.guild.roles)
+                hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
+                hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
+                hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
+
+                randomCry = random.randint(1,7)
+                global cry
+                if randomCry == 1:
+                    cry = '<:AmberCry:828577834146594856>'
+                if randomCry == 2:
+                    cry = '<:BibiByeBye:828683852939395072>'
+                if randomCry == 3:
+                    cry = '<:ColetteCry:828683829631516732>'
+                if randomCry == 4:
+                    cry = '<:JessieCry:828683805861740654>'
+                if randomCry == 5:
+                    cry = '<:SpikeCry:828683779206807622>'
+                if randomCry == 6:
+                    cry = '<:SurgeCry:828683755694063667>'
+                if randomCry == 7:
+                    cry = '<:TaraCry:828683724286853151>'
+
+                if serverID != 759861456300015657:
+                    await ctx.send("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
+                
+                if hasCitizen in user.roles:
+                    citizenPurchasable = 'Citizen: **🔓 Unlocked!**'
+                else:
+                    if int (coinBal) > 1:
+                        citizenPurchasable = f'Citizen: 0 {emoji_Coins}'
+
+                if hasKnight in user.roles:
+                    knightPurchasable = 'Knight: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 25:
+                        knightPurchasable = f'Knight: 25 {emoji_Coins}'
+
+                if hasBaron in user.roles:
+                    baronPurchasable = 'Baron: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 50:
+                        baronPurchasable = f'Baron: 50 {emoji_Coins}'
+
+                if hasViscount in user.roles:
+                    viscountPurchasable = 'Viscount: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 100:
+                        viscountPurchasable = f'Viscount: 100 {emoji_Coins}'
+
+                if hasEarl in user.roles:
+                    earlPurchasable = 'Earl: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 250:
+                        earlPurchasable = f'Earl: 250 {emoji_Coins}'
+
+                if hasMarquess in user.roles:
+                    marquessPurchasable = 'Marquess: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 500:
+                        marquessPurchasable = f'Marquess: 500 {emoji_Coins}'
+
+                if hasDuke in user.roles:
+                    dukePurchasable = 'Duke: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 1000:
+                        dukePurchasable = f'Duke: 1000 {emoji_Coins}'
+
+                if hasPrince in user.roles:
+                    princePurchasable = 'Prince: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 2500:
+                        princePurchasable = f'Prince: 2,500 {emoji_Coins}'
+
+                if hasKing in user.roles:
+                    kingPurchasable = 'King: **🔓 Unlocked!**'
+                else:
+                    if int(coinBal) > 10000:
+                        kingPurchasable = f'King: 10,000 {emoji_Coins}'
+
+                if int(coinBal) > 1000000:
+                    if hasAdmin in user.roles:
+                        adminPurchasable = 'Admin: **🔓 Unlocked!**'
+
+                    else:
+                        adminPurchasable = f'Admin: 1,000,000 {emoji_Coins}'
+
+                f = open (nolwenniumUserDir, 'r')
+                nolwenniumBal = f.read()
+                f.close()
+
+                finalSum = f"{citizenPurchasable}\n{knightPurchasable}\n{baronPurchasable}\n{viscountPurchasable}\n{earlPurchasable}\n{marquessPurchasable}\n{dukePurchasable}\n{princePurchasable}\n{kingPurchasable}\n{adminPurchasable}"
+
+                if "🔓" not in finalSum:
+                    if f"{emoji_Coins}" not in finalSum:
+                        finalSum = f"***You have bought all possible roles! Maybe some more will come out in the future...***"
+                
+                embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {emoji_Coins} coins and {nolwenniumBal} {emoji_Nolwennium} Nolwennium available to spend."), colour=0xFFD700)
+                embed.add_field(
+                name="Items available to buy:",
+                value=finalSum,
+                inline=False)
+                if serverID in tester_guilds:
+                    embed.set_footer(text=(f'Type ".buy item" to buy your selected item!\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
+                else:
+                    embed.set_footer(text=(f"Type .buy item to buy your selected item!\nYou can buy roles for Coins, and use {name_Nolwennium} to run commands for the bot (saved across all servers)."))
+                await ctx.send(embed=embed)
+        else:
+            await ctx.send("You do not have permission to access the shop interface.")
+    else:
+        nolwenniumUserDirectory(ctx)
+        my_file = Path(nolwenniumUserDir)
+        if not my_file.is_file():
+            nolly = "0"
+        else:
+            f = open(nolwenniumUserDir, 'r')
             nolwenniumBal = f.read()
             f.close()
-
-            embed = discord.Embed(title="User Balance", description=((str ("You have ")) + (str (coinBal)) + (str (" <:Coins:852664685270663194> coins and ")) + (str (nolwenniumBal)) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium available to spend."))), colour=0xFFD700)
-            embed.add_field(
-            name="Items available to .buy",
-            value=(citizenPurchasable) + (knightPurchasable) + (princePurchasable) + (kingPurchasable) + (adminPurchasable),
-            inline=False)
-            if serverID == 759861456300015657:
-                embed.set_footer(text=("What can I do with these?\nYou can buy roles for Coins (this server only) by typing .buy [item], and use Nolwennium to run commands for the bot (saved across all servers)."))
-            await ctx.send(embed=embed)
-    else:
-        await ctx.send("You do not have permission to access the shop interface.")
+            nolly = f"{nolwenniumBal} {emoji_Nolwennium}"
+        await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {emoji_Nolwennium}")
 
 #   buy
 
 @client.command(help="Shows coin balance. If above a threshold, displays the list of roles the user can buy by typing .buy <role>", brief="Shows your balance, and available to buy items.", pass_context=True)
 async def buy(ctx):
-    canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
-    if canRunCommand in ctx.message.author.roles:
-        async with ctx.typing():
-            member = ctx.message.author
-            authorID = ctx.message.author.id
-            text = ctx.message.content
-            serverID = ctx.message.guild.id
+    if ctx.guild.id in tester_guilds:
+        canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
+        if canRunCommand in ctx.message.author.roles:
+            async with ctx.typing():
+                member = ctx.message.author
+                authorID = ctx.message.author.id
+                text = ctx.message.content
+                serverID = ctx.message.guild.id
 
-            try:
-                x = text.split()
-                determiner = (str (x[1]))
-            except Exception as e:
-                await ctx.send("Please enter an item to buy.")
-                return
-            filedir = (str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Coins\\")) + (str (authorID)) + (str (".txt"))
-            f = open(filedir, 'r')
-            coinBal = f.read()
-            f.close()
+                try:
+                    x = text.split()
+                    determiner = (str (x[1]))
+                    determiner = determiner.lower()
+                except Exception as e:
+                    await ctx.send("Please enter an item to buy.")
+                    return
+                filedir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{authorID}.txt")
+                f = open(filedir, 'r')
+                coinBal = f.read()
+                f.close()
 
-            if determiner.lower() == 'citizen':
+                if determiner == 'citizen':
+                    hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
+                    if hasCitizen in member.roles:
+                        await ctx.send("You can't buy Citizen, you already have it!")
+                        return
+                    
+                    coinBal = int(coinBal) - 1
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
+                    await member.add_roles(role)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought Citizen for free! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value="• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus {name_Nolwennium}", inline=False)   
+                    await ctx.send(embed=embed)
+                    return
 
+#           KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT
+
+            if determiner == 'knight':
+                cost = 25
+                roleName = "Knight"
+                hasKnight = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasKnight in member.roles:
+                    await ctx.send(f"You can't buy {roleName}, you already have it!")
+                    return
+                        
                 hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
                 if hasCitizen in member.roles:
-                    await ctx.send("You can't buy Citizen, you already have it!")
-                    return
-
-                coinBal = (int (str (coinBal))) - 1
-
-                f = open(filedir, 'w+')
-                f.close()
-
-                with open(filedir, 'a') as f:
-                    f.write(str (coinBal))
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
                     f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
+
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Citizen before {roleName}.")
+                    return
+                return
+
+#           BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON 
+
+            if determiner == 'baron':
+                cost = 50
+                roleName = "Baron"
+                #   Check if the person already has the role.
+                hasBaron = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    await ctx.send(f"You can't buy {roleName}, you already have it!")
+                    return
                 
-                role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
-                await member.add_roles(role)
+                #   Check if the person has the previous role. If not, can't buy.
+                hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
+                if hasKnight in member.roles:
+                    #   Tests balance if user can afford the new role.
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    #   If the balance is adequate, allow the purchase.
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
 
-                embed = discord.Embed(title="The Shop", description=("You've just bought Citizen for free! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-                embed.add_field(name="Perks", value="• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus Nolwennium", inline=False)   
-                await ctx.send(embed=embed)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Knight before {roleName}.")
+                    return
                 return
 
-    #   KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT
+#           VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT 
 
-        if determiner.lower() == 'knight':
+            if determiner == 'viscount':
+                cost = 100
+                roleName = "Viscount"
+                #   Check if the person already has the role.
+                hasBaron = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    await ctx.send("You can't buy Viscount, you already have it!")
+                    return
+                
+                #   Check if the person has the previous role. If not, can't buy.
+                hasBaron = discord.utils.find(lambda r: r.name == 'Baron', ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    #   Tests balance if user can afford the new role.
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    #   If the balance is adequate, allow the purchase.
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
 
-            hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
-            if hasKnight in member.roles:
-                await ctx.send("You can't buy Knight, you already have it!")
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Baron before {roleName}.")
+                    return
                 return
+
+#           EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL
+
+            if determiner == 'earl':
+                cost = 250
+                roleName = "Earl"
+                #   Check if the person already has the role.
+                hasBaron = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    await ctx.send("You can't buy Earl, you already have it!")
+                    return
+                
+                #   Check if the person has the previous role. If not, can't buy.
+                hasViscount = discord.utils.find(lambda r: r.name == "Viscount", ctx.message.guild.roles)
+                if hasViscount in member.roles:
+                    #   Tests balance if user can afford the new role.
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    #   If the balance is adequate, allow the purchase.
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
+
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Viscount before {roleName}.")
+                    return
+                return
+
+#           MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS 
+
+            if determiner == 'marquess':
+                cost = 500
+                roleName = "Marquess"
+                #   Check if the person already has the role.
+                hasBaron = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    await ctx.send("You can't buy Earl, you already have it!")
+                    return
+                
+                #   Check if the person has the previous role. If not, can't buy.
+                hasEarl = discord.utils.find(lambda r: r.name == 'Earl', ctx.message.guild.roles)
+                if hasEarl in member.roles:
+                    #   Tests balance if user can afford the new role.
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    #   If the balance is adequate, allow the purchase.
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
+
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Earl before {roleName}.")
+                    return
+                return
+
+#           DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE 
+
+            if determiner == 'duke':
+                cost = 1000
+                roleName = "Duke"
+                #   Check if the person already has the role.
+                hasBaron = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasBaron in member.roles:
+                    await ctx.send("You can't buy Earl, you already have it!")
+                    return
+                
+                #   Check if the person has the previous role. If not, can't buy.
+                hasMarquess = discord.utils.find(lambda r: r.name == 'Marquess', ctx.message.guild.roles)
+                if hasMarquess in member.roles:
+                    #   Tests balance if user can afford the new role.
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        requiredAmount = cost - int(coinBal)
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
+                        return
+                    #   If the balance is adequate, allow the purchase.
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
+
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send(f"You must buy Marquess before {roleName}.")
+                    return
+                return
+        
+#           PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE 
+
+            if determiner == 'prince':
+                cost = 2500
+                roleName = "Prince"
+                hasPrince = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasPrince in member.roles:
+                    await ctx.send("You can't buy Prince, you already have it!")
+                    return
+                
+                hasDuke = discord.utils.find(lambda r: r.name == 'Duke', ctx.message.guild.roles)
+                if hasDuke in member.roles:
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        await ctx.send(f"You do not have enough Coins to buy {roleName}.")
+                        return
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name=roleName)
+                    await member.add_roles(role)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send("You must buy Knight before Prince.")
+                return
+
+#           KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING 
+
+            if determiner == 'king':
+                cost = 10000
+                roleName = "King"
+                hasKing = discord.utils.find(lambda r: r.name == roleName, ctx.message.guild.roles)
+                if hasKing in member.roles:
+                    await ctx.send("You can't buy King, you already have it!")
+                    return
+                
+                hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
+                if hasPrince in member.roles:
+                    coinBalTest = int(coinBal) - cost
+                    if coinBalTest < 0:
+                        await ctx.send("You do not have enough Coins to buy King.")
+                        return
+                    coinBal = int(coinBal) - cost
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
+                    role = discord.utils.get(ctx.message.guild.roles, name="King")
+                    await member.add_roles(role)
+
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought King for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send("You must buy Prince before King.")
+                return
+            
+            if determiner == 'admin':
+                hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
+                if hasAdmin in member.roles:
+                    await ctx.send("You can't buy Admin, you already have it!")
+                    return
+                coinBalTest = int(coinBal) - 1000000
+
+                if coinBalTest < 1000000:
+                    await ctx.send("You do not have enough Coins to buy Admin.")
+                    return
+                hasCroissant = discord.utils.find(lambda r: r.name == 'Croissant', ctx.message.guild.roles)
+                hasBaguette = discord.utils.find(lambda r: r.name == 'Baguette', ctx.message.guild.roles)
+                if hasBaguette or hasCroissant in member.roles:
+                    coinBal = int(coinBal) - 1000000
+                    f = open(filedir, 'w+')
+                    f.close()
+                    with open(filedir, 'a') as f:
+                        f.write(str (coinBal))
+                        f.close()
                     
-            hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
-            if hasCitizen in member.roles:
-
-                coinBalTest = (int (str (coinBal))) - 250
-
-                if coinBalTest < 0:
-                    await ctx.send("You do not have enough Coins to buy Knight.")
+                    embed = discord.Embed(title="The Shop", description=(f"You've just bought Admin for 1,000,000 {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed.add_field(name="Perks", value=r"value = f'{ctx.guild.Administrator}'", inline=False)
+                    role = discord.utils.get(ctx.message.guild.roles, name="Admin")
+                    await member.add_roles(role)
+                    await ctx.send(embed=embed)
                     return
-
-                coinBal = (int (str (coinBal))) - 250
-
-                f = open(filedir, 'w+')
-                f.close()
-
-                with open(filedir, 'a') as f:
-                    f.write(str (coinBal))
-                    f.close()
-                
-                role = discord.utils.get(ctx.message.guild.roles, name="Knight")
-                await member.add_roles(role)
-
-                embed = discord.Embed(title="The Shop", description=("You've just bought Knight for 250 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-                embed.add_field(name="Perks", value="• Above Citizen in the Member List\n• Show embeds on your messages\n• Send TTS messages\n", inline=False)   
-                await ctx.send(embed=embed)
+                else:
+                    await ctx.send("You aren't French")
             else:
-                await ctx.send("You must buy Citizen before Knight.")
-                return
-            return
-
-    #   PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE 
-
-        if determiner.lower() == 'prince':
-            hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
-            if hasPrince in member.roles:
-                await ctx.send("You can't buy Prince, you already have it!")
-                return
-            
-            hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
-            if hasKnight in member.roles:
-                coinBalTest = (int (str (coinBal))) - 1000
-                if coinBalTest < 0:
-                    await ctx.send("You do not have enough Coins to buy Prince.")
-                    return
-                coinBal = (int (str (coinBal))) - 1000
-
-                f = open(filedir, 'w+')
-                f.close()
-
-                with open(filedir, 'a') as f:
-                    f.write(str (coinBal))
-                    f.close()
-
-                role = discord.utils.get(ctx.message.guild.roles, name="Prince")
-                await member.add_roles(role)
-
-                embed = discord.Embed(title="The Shop", description=("You've just bought Prince for 1000 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-                embed.add_field(name="Perks", value="• Above Knight in the Member List\n• Mass ping many people\n• Priority Voice Chat speaker\n• Move other members in Voice Chats\n• Manage server emojis\n• Manage webhooks\n", inline=False)   
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send("You must buy Knight before Prince.")
-            return
-
-    #   KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING 
-
-        if determiner.lower() == 'king':
-
-            hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
-            if hasKing in member.roles:
-                await ctx.send("You can't buy King, you already have it!")
-                return
-            
-            hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
-            if hasPrince in member.roles:
-                coinBalTest = (int (str (coinBal))) - 2500
-                if coinBalTest < 0:
-                    await ctx.send("You do not have enough Coins to buy King.")
-                    return
-
-                coinBal = (int (str (coinBal))) - 2500
-
-                f = open(filedir, 'w+')
-                f.close()
-
-                with open(filedir, 'a') as f:
-                    f.write(str (coinBal))
-                    f.close()
-                
-                role = discord.utils.get(ctx.message.guild.roles, name="King")
-                await member.add_roles(role)
-
-                embed = discord.Embed(title="The Shop", description=("You've just bought King for 2500 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-                embed.add_field(name="Perks", value="• Mute other members in Voice Chat\n• Deafen other members in Voice Chat\n• Delete or pin other users' messages\n• Change other peoples' nicknames\n• Kick members", inline=False)
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send("You must buy Prince before King.")
-            return
-        
-        if determiner == 'admin':
-
-            hasKing = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
-            if hasKing in member.roles:
-                await ctx.send("You can't buy Admin, you already have it!")
-                return
-            coinBalTest = (int (str (coinBal))) - 1000000
-
-            if coinBalTest < 0:
-                await ctx.send("You do not have enough Coins to buy Admin.")
-                return
-
-            coinBal = (int (str (coinBal))) - 1000000
-
-            f = open(filedir, 'w+')
-            f.close()
-
-            with open(filedir, 'a') as f:
-                f.write(str (coinBal))
-                f.close()
-            
-            embed = discord.Embed(title="The Shop", description=("You've just bought Admin for 1,000,000 <:Coins:852664685270663194>! Remaining balance: {} <:Coins:852664685270663194>".format(coinBal)), colour=0xFFD700)
-            role = discord.utils.get(ctx.message.guild.roles, name="Admin")
-            await member.add_roles(role)
-            await ctx.send(embed=embed)
-            return
-        
+                await ctx.send(f"**{determiner}** isn't a valid item to buy. Try `Citizen/Knight/Baron/Viscount/Earl/Marquess/Duke/Prince/King/Admin`!")
         else:
-            await ctx.send("That's not a valid item to buy!")
+            await ctx.send("You do not have permission to access the buy interface.")
     else:
-        await ctx.send("You do not have permission to access the buy interface.")
+        nolwenniumUserDirectory(ctx)
+        my_file = Path(nolwenniumUserDir)
+        if not my_file.is_file():
+            nolly = "0"
+        else:
+            f = open(nolwenniumUserDir, 'r')
+            nolwenniumBal = f.read()
+            f.close()
+            nolly = f"{nolwenniumBal} {emoji_Nolwennium}"
+        await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {emoji_Nolwennium}")
+
+#   Get messages
+
+@client.command(pass_context=True)
+async def getMessages(ctx):
+    if ctx.message.author.id == 382784106984898560:
+        x = ctx.message.content.split()
+        userID = int((x[1]))
+
+        user1 = await client.fetch_user(userID)
+
+        dmchannel = await user1.create_dm() # "Create" a DM
+        async for message in dmchannel.history(limit=30): # Async through the messages
+            await ctx.send(f"{message.author.name}: `{message.content}`")
 
 #   Voice Channel Bitrate
 
@@ -2076,14 +2266,23 @@ async def bitrate(ctx):
 
 #   offline status for replit
 
-@client.command(help="Turns status to offline/invisible", brief="[Status] Turns invisible")
+@client.command(help="Turns status to offline/invisible", brief="[Status] Turns invisible", hidden=True)
 async def offline(ctx):
     await client.change_presence(status=discord.Status.invisible)
     await ctx.send("Status set to invisible/offline.")
 
+@client.command(hidden=True)
+async def variable(ctx):
+    if ctx.author.id == id_Draggie:
+        x = ctx.message.content.split()
+        word1 = (str (x[1]))
+        word2 = (str (x[2]))
+        await ctx.send(f"Set {word1} to value {word2}.")
+        word1 = word2
+
 #   yn
 
-@client.command(help="Randomly answers yes or no.", brief="Ask me a yes/no question.", pass_context=True)
+@client.command(help="Randomly answers yes or no.", brief="Ask me a yes/no question.", pass_context=True, hidden=True)
 async def yn(ctx):
     randWord = random.randint(1,14)
     if randWord == 1:
@@ -2115,9 +2314,9 @@ async def yn(ctx):
     if randWord == 14:
         await ctx.send("Yessir!")#  y
 
-    print ((str ("\nCOMMAND RAN -> '.yn' ran by ")) + (str (ctx.message.author)))
+    print (f"\nCOMMAND RAN -> '.yn' ran by {ctx.message.author}")
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.yn' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.yn' ran by {ctx.message.author} at {datetime.now()}")
     f.close()
 
 #   setdelay
@@ -2136,13 +2335,13 @@ async def setdelay(ctx):
     await ctx.send(embed=embed)
 
     f = open(GlobalLogDir, "a", encoding='utf-8')
-    f.write((str ("\nCOMMAND RAN -> '.setdelay {seconds}' ran by ")) + (str (ctx.message.author)) + (str (" in channel ")) + (str (ctx.channel.mention)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.setdelay {sp1}' ran by {ctx.message.author} in channel {ctx.channel.mention} at {datetime.now()}")
     f.close()
-    print((str ("\nCOMMAND RAN -> '.setdelay {seconds}' ran by ")) + (str (ctx.message.author)) + (str (" in channel ")) + (str (ctx.channel.mention)) + (str (" at ") + (str (datetime.now()))))
+    print(f"\nCOMMAND RAN -> '.setdelay {sp1}' ran by {ctx.message.author} in channel {ctx.channel.mention} at {datetime.now()}")
 
 #	Brawl Stars Music
 
-@client.command(help="Plays random Brawl Stars music. This command requires the user to be in a voice channel. Also triggered by typing .r", brief="[Audio] Repeatedly plays Brawl Stars music.", aliases=['r'], pass_context=True)
+@client.command(help="Plays random Brawl Stars music. This command requires the user to be in a voice channel. Also triggered by typing .r", brief="[Audio] Repeatedly plays Brawl Stars music.", aliases=['r'], pass_context=True, hidden=True)
 async def radio(ctx):
     async with ctx.typing():
         channel = ctx.author.voice.channel
@@ -2154,16 +2353,12 @@ async def radio(ctx):
                 debugMode = True
             else:
                 await ctx.send("Your server administrator has disabled the option to use the debug mode toggle.")
-
-        #await ctx.send("IDE detected! Unable to run command. Aborting.")
-        #return
-
         def after_audio():
             voice_client = ctx.guild.voice_client
             randomnumber = random.randint(1,69)
-            musicDir = ((str("D:\\App Files\\Brawl Music\\py\\music_")) + (str(randomnumber)) + (str ('.ogg')))
+            musicDir = (f"D:\\App Files\\Brawl Music\\py\\music_{randomnumber}.ogg")
             voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
-            print((str ("RADIO: Playing 'music_")) + (str (randomnumber)) + (str ("' in [")) + (str (serverName)) + (str ("/")) + (str (channel)) + (str ("] Debug data: in after_audio")))
+            print(f"RADIO: Playing 'music_{randomnumber} in [{serverName} / {channel}] Debug data: in after_audio")
             if debugMode == True:
                 #await ctx.channel.send((str ("RADIO: Playing 'music_")) + (str (randomnumber)) + (str ("' in [")) + (str (serverName)) + (str ("/")) + (str (channel)) + (str ("] Debug data: in after_audio")))
                 print("Debug mode ON but cannot send message.")
@@ -2176,11 +2371,11 @@ async def radio(ctx):
                 voice_client.stop()
                 await asyncio.sleep(0.2)
                 randomnumber = random.randint(1,69)
-                musicDir = ((str("D:\\App Files\\Brawl Music\\py\\music_")) + (str(randomnumber)) + (str ('.ogg')))
+                musicDir = (f"D:\\App Files\\Brawl Music\\py\\music_{randomnumber}.ogg")
                 voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
-                print((str ("RADIO: Playing 'music_")) + (str (randomnumber)) + (str ("' in [")) + (str (serverName)) + (str ("/")) + (str (channel)) + (str ("] Debug data: in BaguetteBot.py/funcion/playtheaudio/try")))
+                print(f"RADIO: Playing 'music_{randomnumber}' in [{serverName}/{channel}] Debug data: in BaguetteBot v1.2.py/funcion/playtheaudio/try")
                 if debugMode == True:
-                    await ctx.channel.send((str ("```RADIO: Playing 'music_")) + (str (randomnumber)) + (str ("' in [")) + (str (serverName)) + (str ("/")) + (str (channel)) + (str ("] Debug data: in BaguetteBot.py/funcion/playtheaudio/try```")))
+                    await ctx.channel.send(f"```RADIO: Playing 'music_{randomnumber}' in [{serverName} / {channel}] Debug data: in BaguetteBot v1.2.py/funcion/playtheaudio/try```")
                     
             except:
                 voice_client = ctx.guild.voice_client
@@ -2209,23 +2404,23 @@ async def vbucks(ctx):
 
     if vTier == (float ("1")):
         vAmount = (float (vTier1)) * (int (vAmount))
-        await ctx.send((str ("£") + (str (GBP)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 1 of vbuck purchase)."))))
+        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 1 of vbuck purchase).")
     if vTier == (float ("2")):
         vAmount = (int (vTier2)) * (int (vAmount))
-        await ctx.send((str ("£") + (str (GBP)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 2 of vbuck purchase)."))))
+        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 2 of vbuck purchase).")
         print (vAmount)
     if vTier == (float ("3")):
         vAmount = (int (vTier3)) * (int (vAmount))
-        await ctx.send((str ("£") + (str (GBP)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 3 of vbuck purchase)."))))
+        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 3 of vbuck purchase).")
         print (vAmount)
     if vTier == (float ("4")):
         vAmount = (int (vTier4)) * (int (vAmount))
-        await ctx.send((str ("£") + (str (GBP)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 4 of vbuck purchase)."))))
+        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 4 of vbuck purchase).")
         print (vAmount)
 
 #   Vbucks USD
 
-@client.command()
+@client.command(hidden=True)
 async def vbucksUSD(ctx):
     txt = ctx.message.content
     x = txt.split()
@@ -2238,42 +2433,44 @@ async def vbucksUSD(ctx):
     vTier3USD = (int (156.298843))
     vTier4USD = (int (168.771096))
 
-    if vTier == (str ("1")):
+    if vTier == "1":
         vAmount = (int (vTier1USD)) * (int (vAmount))
-        await ctx.send((str ("$") + (str (USD)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 1 of vbuck purchase)."))))
+        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 1 of vbuck purchase)")
         print (vAmount)
-    if vTier == (str ("2")):
+    if vTier == "2":
         vAmount = (int (vTier2USD)) * (int (vAmount))
-        await ctx.send((str ("$") + (str (USD)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 2 of vbuck purchase)."))))
+        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 2 of vbuck purchase)")
         print (vAmount)
-    if vTier == (str ("3")):
+    if vTier == "3":
         vAmount = (int (vTier3USD)) * (int (vAmount))
-        await ctx.send((str ("$") + (str (USD)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 3 of vbuck purchase)."))))
+        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 3 of vbuck purchase)")
         print (vAmount)
-    if vTier == (str ("4")):
+    if vTier == "4":
         vAmount = (int (vTier4USD)) * (int (vAmount))
-        await ctx.send((str ("$") + (str (USD)) + (str (" is equal to ")) + (str (vAmount)) + (str(" vbucks ")) + (str ("(using tier 4 of vbuck purchase)."))))
+        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 4 of vbuck purchase)")
         print (vAmount)
 
 #   Face
 
-@client.command(help="Allows face.", brief="Allows face.", pass_context=True)
+@client.command(help="Allows face.", brief="Allows face.", pass_context=True, hidden=True)
 async def face(ctx):
-    await ctx.send("Face allowed. Please wait for the next DraggieBot version for your setting to be applied. This may take an hour. If your face is not already added, please go to #emoji-nominations channel to add or modify it! :)")
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.face' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.face' ran by ")) + (str (ctx.message.author)))
+    if ctx.guild.id == 759861456300015657:
+        await ctx.send("Face allowed. Please wait for the next DraggieBot version for your setting to be applied. This may take an hour. If your face is not already added, please go to #emoji-nominations channel to add or modify it! :)")
+        f = open(GlobalLogDir, "a")
+        f.write(f"\nCOMMAND RAN -> '.face' ran by {ctx.message.author} at {datetime.now()}")
+        f.close()
+        print (f"\nCOMMAND RAN -> '.face' ran by {ctx.message.author} at {datetime.now()}")
 
 #   brawlstars
 
-@client.command(help="?", brief="?", pass_context=True)
+@client.command(help="?", brief="?", pass_context=True, hidden=True)
 async def BrawlStars(ctx):
-    num_lines = sum(1 for line in open ("C:\\Users\\Draggie\\iCloudDrive\\iCloud~is~workflow~my~workflows\\Brawl Stars Counter.txt"))
-    await ctx.send((str ("I have opened Brawl Stars ***")) + (str (num_lines)) + (str ("***  times since the 19th October 2020.")))
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.lines' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
+    if ctx.guild.id == 759861456300015657:
+        num_lines = sum(1 for line in open ("C:\\Users\\Draggie\\iCloudDrive\\iCloud~is~workflow~my~workflows\\Brawl Stars Counter.txt"))
+        await ctx.send(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
+        f = open(GlobalLogDir, "a")
+        f.write(f"\nCOMMAND RAN -> '.lines' ran by {ctx.message.author} at {datetime.now()}")
+        f.close()
 
 #   log search
 
@@ -2284,24 +2481,22 @@ async def log(ctx):
     searchTerm = searchTerm.lower()
     serverID = ctx.message.guild.id
     serverName = ctx.message.guild.name
-    file=open(((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Servers\\")) + (str (serverID)) + (str ("\\Logs\\MessageLog.txt"))),encoding="UTF-8").read().lower()
+    file=open((f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\MessageLog.txt"),encoding="UTF-8").read().lower()
     count=file.count(searchTerm)
 
     count = count - 1
     
-    #await ctx.send((str ("Searched message log file for '**")) + (str (searchTerm)) + (str ("**'. Found `")) + (str (count)) + (str ("` occurences!")))
-
     embed = discord.Embed()
     embed.add_field(name=f"Occurences of '**{searchTerm}**':", value=f"{count}", inline=False)
-    embed.set_footer(text=((str (f"Not case sensitive. Does not account bot messages. Searching in server {serverID}/{serverName}."))))
+    embed.set_footer(text=f"Not case sensitive. Does not account for bot messages. Searching in server {serverID}/{serverName}.")
     await ctx.send(embed=embed)
 
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.log' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.log' ran by {ctx.message.author} at {datetime.now()}")
     f.close()
 
 @slash.slash(name="stats", description="Useful bot statistics.")
-async def stats(ctx):
+async def _stats(ctx):
     YTAPI_Status = "Enabled"
     SCAPI_Status = "Mixed results"  
 
@@ -2315,8 +2510,9 @@ async def stats(ctx):
         pingColour = (0x990000)
 
     fileSizeBytes = os.path.getsize('D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py')
+    fileSizeBytes = os.path.getsize('D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot New Ver.py')
 
-    num_lines = sum(1 for line in open ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open ("D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot New Ver.py", encoding='utf-8'))
 
     global secsOrMins1
     global secsOrMins2
@@ -2326,7 +2522,9 @@ async def stats(ctx):
     uptimeInSeconds = int(round(current_time - start_time))
 
     uptime_stillInSeconds = uptimeInSeconds
-    print((str ("Uptime In Seconds: ")) + (str (uptime_stillInSeconds)))
+
+    cpuPercentage = psutil.cpu_percent()
+    memoryUsage = psutil.virtual_memory().percent
 
     if uptimeInSeconds > 60:
         uptimeInSeconds = int(round(uptimeInSeconds / 60))
@@ -2347,33 +2545,57 @@ async def stats(ctx):
     DIR = 'D:\\BaguetteBot\\AudioCache\\'
     cachedVideos = (len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]))
 
-    embed = discord.Embed(title="_**Bot Stats**_\n", colour=(pingColour))
-    embed.add_field(name="Lines of Code", value="{} lines".format(num_lines), inline=False)    
-    embed.add_field(name="File Size", value=((str (fileSizeBytes)) + (str (" bytes"))), inline=False)    
-    embed.add_field(name="**Uptime:**", value=((str (real_uptimeInSeconds)) + (str (" ")) + (str (secsOrMins1)) + (str (" (")) + (str (uptimeInSeconds)))  + (str (" ")) + (str (secsOrMins2)) + (str (" since run)")), inline=False)
-    embed.add_field(name="**Ping:**", value=((str (ping)) + (str (" ms"))), inline=False)
-    embed.add_field(name="**YouTube Videos Loaded:**", value=((str (cachedVideos))), inline=False)
+    embed = discord.Embed(title="_**Bot Stats**_\n", colour=pingColour)
+    embed.add_field(name="CPU Usage", value=f"{cpuPercentage}%", inline=False)  
+    embed.add_field(name="RAM Usage", value=f"{memoryUsage}%", inline=False)  
+    embed.add_field(name="Lines of Code", value=f"{num_lines} lines", inline=False)    
+    embed.add_field(name="File Size", value=(f"{fileSizeBytes} bytes"), inline=False)    
+    embed.add_field(name="**Uptime:**", value=(f"{real_uptimeInSeconds} {secsOrMins1} ({uptimeInSeconds} {secsOrMins2} since run)"), inline=False)
+    embed.add_field(name="**Ping:**", value=(f"{ping} ms"), inline=False)
+    embed.add_field(name="**YouTube Videos Loaded:**", value=cachedVideos, inline=False)
     embed.add_field(name="**Servers :**", value=(servers), inline=False)
-    embed.add_field(name="**Members in All Servers:**", value=(members), inline=False)
-    #embed.add_field(name="**Random Integer:**", value=(random.randint(0,10000000)), inline=False)
-
+    embed.add_field(name="**Members in All Servers:**", value=members, inline=False)
     embed.add_field(name="\n**Debug Mode:**", value="Disabled")
     embed.add_field(name="**Command Logging:**", value="Enabled")
     embed.add_field(name="**Message Logging:**", value="Enabled")
     embed.add_field(name="**Voice Channels:**", value="Enabled")
-    embed.add_field(name="**YouTube Player:**", value=(YTAPI_Status))
-    embed.add_field(name="**Supercell API:**", value=(SCAPI_Status))
+    embed.add_field(name="**YouTube Player:**", value=YTAPI_Status)
+    embed.add_field(name="**Supercell API:**", value=SCAPI_Status)
 
-    embed.set_footer(text=((str ("\nDraggieBot.py | ")) + (str (DraggieBot_version))))
+    embed.set_footer(text=(f"\nDraggieBot.py | {DraggieBot_version}"))
     await ctx.send(embed=embed)
 
-    #await ctx.send((str ("DraggieBot currently has ***")) + (str (num_lines)) + (str ("***  lines of code. ")) + (str ("(***")) + (str (DraggieBot_version)) + (str ("***)")))
-
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.stats' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f = open(GlobalLogDir, "a", encoding="UTF-8")
+    f.write(f"\nSLASH COMMAND RAN -> '.stats' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
 
-#   divide by zero
+#   epic
+
+@client.command(pass_context=True)
+async def tts(ctx):
+    txt = ctx.message.content
+    x = txt.split()
+    locale = (str (x[1]))
+    speed = (str (x[2]))
+    inputText = txt.split(' ', 3)[-1]
+
+    if any(word in '[]#?/\|£$%^&*=+}{`¬<>' for word in inputText):
+        return(await ctx.send("Cannot do that"))
+    else:
+        query_string = f"https://www.google.com/speech-api/v1/synthesize?text={inputText}&enc=mpeg&lang={locale}&speed={speed}&client=lr-language-tts&use_google_only_voices=1"
+        #await ctx.send(query_string)
+
+        r = requests.get(query_string)
+        x = uuid.uuid4()
+        with open(f'Z:\\{x}.MP3', 'wb') as f:
+            f.write(r.content)
+        
+        voice_client = ctx.voice_client
+        if not voice_client:
+            channel = ctx.author.voice.channel
+            await channel.connect()
+            voice_client = ctx.guild.voice_client
+        voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3', executable="D:\\Downloads\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\bin\\ffmpeg.exe"))
 
 @client.command(help="Starts or querys a server instance.\n\nSyntax:\n.server - Shows details about the server mc.ibaguette.com.\n.server [smp | test] - Starts the specified server", brief="Starts or querys a server instance.", pass_context=True)
 async def server(ctx):
@@ -2470,7 +2692,7 @@ async def server(ctx):
                     await ctx.send("Fatal error occured. Output:")
                     file=discord.File("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
                     await ctx.send(file=file)
-            os.chdir("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot")
+            os.chdir("D:\\BaguetteBot\\draggiebot")
 
         if version == 'smp':
         
@@ -2560,7 +2782,7 @@ async def server(ctx):
                     await ctx.send("Fatal error occured. Output:")
                     file=discord.File("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
                     await ctx.send(file=file)
-            os.chdir("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot")
+            os.chdir("D:\\BaguetteBot\\draggiebot")
     except:
         server = MinecraftServer.lookup("mc.ibaguette.com")
         status = server.status()
@@ -2573,32 +2795,6 @@ async def server(ctx):
             await ctx.send("No players online")
         else:
             await ctx.send(messagetosend)
-
-
-#   Leave voice channel id thre is no one in it
-
-#@client.event
-#async def on_voice_state_update(member, before, after):
-#    voice_state = member.guild.voice_client
-#    if voice_state is None:
-#        # Exiting if the bot it's not connected to a voice channel
-#        return 
-#
-#    if len(voice_state.channel.members) == 1:
-#        await voice_state.disconnect()
-
-
-#   divide by zero
-
-@client.command(help="Breaks code by dividing by zero.", brief="Raises an error.", pass_context=True)
-@commands.has_any_role('Admin', 'Mod', 'Prince')
-async def kill(ctx):
-    zero = 2/0
-    print (zero)
-    print ((str ("\nCOMMAND RAN -> '.break' ran by ")) + (str (ctx.message.author)))
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.break' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
 
 #   play
 
@@ -2634,15 +2830,15 @@ async def sfx(ctx):
         await ctx.send(f"Executed, delay = **{tot}ms** (**{nTighe}ms** processing + Discord API **{ping}ms**)")
 
         f = open(GlobalLogDir, "a")
-        f.write((str ("\nAUDIO COMMAND RAN -> '.sfx' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+        f.write(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
         f.close()
-        print ((str ("\nAUDIO COMMAND RAN -> '.sfx' ran by ")) + (str (ctx.message.author)))
+        print(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     except:
         channel = ctx.author.voice.channel
         await channel.connect()
         await sfx(ctx)
 
-@client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True)
+@client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
 async def playdir(ctx):
     async with ctx.typing():
         channel = ctx.author.voice.channel
@@ -2667,46 +2863,20 @@ async def playdir(ctx):
                 await ctx.send(embed=embed)
                 return
             f = open(GlobalLogDir, "a")
-            f.write((str ("\nAUDIO COMMAND RAN -> '.playdir' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+            f.write(f"\nAUDIO COMMAND RAN -> '.playdir' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
             f.close()
-            print ((str ("\nAUDIO COMMAND RAN -> '.playdir' ran by ")) + (str (ctx.message.author)))
+            print(f"\nAUDIO COMMAND RAN -> '.playdir' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 
         except:
             channel = ctx.author.voice.channel
             await channel.connect()
             await playdir(ctx)
 
-#   oldPlay
-
-@client.command(help="Plays audio at predefined directory.", brief="[Audio] Plays audio using old version", pass_context=True)
-async def oldplay(ctx):
-    channel = ctx.author.voice.channel
-    #await ctx.send("IDE detected! Unable to run command. Aborting.\nFeature enabled in v1.1")
-    #return
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    voice_client = ctx.guild.voice_client
-    voice_client.stop()
-    voice_client.play(discord.FFmpegPCMAudio(executable="D:\\ffmpeg\\bin\\ffmpeg.exe", source=(str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Files\\")) + (str (sp1))))
-    await ctx.send((str ("Playing audio '*") + (str (sp1)) + (str ("*' in voice channel *#")) + (str (channel))) + (str ("* using ffmpeg version from *31/08/2020*")))
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nAUDIO COMMAND RAN -> '.oldplay' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nAUDIO COMMAND RAN -> '.oldplay' ran by ")) + (str (ctx.message.author)))  
-
 #   play
 
-@client.command(help="Sends what is written to the message log.", brief="Sends what is written to the message log.", pass_context=True)
+@client.command(help="Sends what is written to the message log.", brief="Sends what is written to the message log in the channel.", pass_context=True)
 async def message(ctx):
-    messageRepeat = ctx.message.content
-    serverName = ctx.message.guild.name
-    await ctx.send((str ("\n'")) + (str (messageRepeat)) + (str ("' sent by ")) + (str (ctx.message.author)) + (str (" in [{}".format(serverName) + " - #{}]".format(ctx.channel.name))) + (str (" at ") + (str (datetime.now()))))
-
-#   Stream YT
-
-#@client.command(help=".", brief="[Audio] Sets audio volume (WARNING BROKEN)", pass_context=True)
-#async def volume(ctx):
-#    await ctx.send("Command is being worked on :)")
+    await ctx.send(f"\n'{ctx.message.content}' sent by {ctx.message.author} in [{ctx.message.guild.name} - #{ctx.channel.name}] at {datetime.now()}")
 
 #   Stream YT
 
@@ -2719,28 +2889,14 @@ async def url(ctx, url: str):
     voice_client = ctx.guild.voice_client
     voice_client.stop()
     voice_client.play(discord.FFmpegPCMAudio(URL))
-    await ctx.send((str ("Streaming audio")))
-
-#   spam
-
-@client.command(help="Spam", brief="Spams. Syntax [number] [text]", pass_context=True)
-async def spam(ctx):
-    text = ctx.message.content
-    txt = ctx.message.content
-    x = txt.split()
-    sp1 = text.split(' ', 2)[-1]
-    spamNumber = (int (x[1]))
-    print(x[1])
-    while (int (spamNumber)) > (str ("1")):
-        await ctx.send(sp1)
-        spamNumber = (int (spamNumber)) - (int ("1"))
+    await ctx.send("Streaming audio")
 
 #   download
 
 @client.command(help="Downloads a youtube video.", brief="Downloads an entire YouTube video", pass_context=True)
 async def download(ctx, url: str):
     async with ctx.typing():
-        os.chdir("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\youtube-dl")
+        os.chdir("D:\\BaguetteBot\\draggiebot\\youtube-dl")
         text = ctx.message.content
         sp1 = text.split(' ', 1)[-1]
         ydl_opts = {
@@ -2758,32 +2914,30 @@ async def download(ctx, url: str):
 
 #   Invite link
 
-@client.command()
+@client.command(hidden=True)
 async def create_invite(ctx):
     if ctx.message.author.id == 382784106984898560:
         txt = ctx.message.content
         x = txt.split()
         channel = int(x[1])
         channel = client.get_channel(channel)
-        #print(channel)
         link = await channel.create_invite(max_age = 69)
-        await ctx.send(str ("Channel invite link: ") + (str (link)))
+        await ctx.send(f"Channel invite link: {link}")
     else:
-        await ctx.send("Error 5: `command reserved for bot developer(s)`")
+        await draggie.send("Error 5: `command reserved for bot developer(s)`")
 
-@client.command()
+@client.command(hidden=True)
 async def addroles(ctx):
     if ctx.message.author.id == 382784106984898560 or ctx.message.author.id == 606583679396872239 or ctx.message.author.id == 854323313631559680:
+        await ctx.message.delete()
         member = ctx.message.author
         for r in ctx.guild.roles:
-            try: # it will error if the bot has insufficient perms to give a role
+            try:
                 await ctx.author.add_roles(r)
-                #await ctx.send(f"Good: **`{r.name}` given** to {member}")
+                await member.send(f"Good: **`{r.name}` given** to {member}")
             except Exception as e:
-                print(f"Error: **`{r.name}` couldn't be given** to {member}: {e}")
-        #await ctx.send(f"Successfully gave {member} all the roles I could!")
-    else:
-        await ctx.send("Error 5: `command reserved for bot developer(s)`")
+                await member.send(f"Error: **`{r.name}` couldn't be given** to {member}: {e}")
+        await member.send(f"Successfully gave {member} all the roles I could!")
 
 @client.command()
 async def adaptor(ctx):
@@ -2796,10 +2950,6 @@ async def adaptor(ctx):
         await guild.edit(name=sp1)
     else:
         await ctx.send("Error 5: `command reserved for bot developer(s)`")
-    
-#@client.command()
-#async def seek():
-#    x = 1
 
 #   YouTube search, download, convert, play.
 
@@ -2826,8 +2976,6 @@ async def yt(ctx, url: str):
                 await ctx.send("You cannot use the quick mode toggle.")
         try:
             voice = ctx.guild.voice_client
-            #await ctx.send("IDE detected! Unable to run command. Aborting.\nFeature enabled in v1.1")
-            #return
             os.chdir("D:\\BaguetteBot\\AudioCache")
             text = ctx.message.content
 
@@ -2844,21 +2992,20 @@ async def yt(ctx, url: str):
                 return
 
             if debugMode == True:
-                await ctx.send((str ('\n\nResults = ')) + (str (results)))
+                await ctx.send(f"\n\nResults = {results}")
             for v in results:
                 id = v['id']
                 result = ('https://www.youtube.com/watch?v=' + v['id'])
 
-                my_file = Path((str ("D:\\BaguetteBot\\AudioCache\\")) + (str (id)))
+                my_file = Path("D:\\BaguetteBot\\AudioCache\\{id}")
                 if my_file.is_file():
                     global hasVideo
-                    #await ctx.send("fileExists=True")
                     hasVideo = "True"
                     print("hasvideo set to true")
                 else:
                     hasVideo = "False"
                 if debugMode == True:
-                    await ctx.send((str ('\n\nResult = ')) + (str (result)))
+                    await ctx.send(f"\n\nResult = {result}")
 
                 ydl_opts = {}
 
@@ -2873,15 +3020,15 @@ async def yt(ctx, url: str):
                         info_dict = ydl.extract_info(video, download=False)
                         video_title = info_dict.get('title', None)
 
-                print((str ('\n\nResult = ')) + (str (result)))
-                await ctx.send((str ('Processing: `')) + (str (video_title)) + (str ("`.")))
+                print(f"\n\nResult = {result}")
+                await ctx.send(f"Processing: `{video_title}`.")
                 url = result
                 text = ctx.message.content
             
             #print(id)
             if hasVideo == "True":
                 print("hasvideo = true")
-                my_file = Path((str ("D:\\BaguetteBot\\AudioCache\\")) + (str (id)))
+                my_file = Path(f"D:\\BaguetteBot\\AudioCache\\{id}")
                 voice.play(discord.FFmpegPCMAudio(my_file))
                 doneMillisecs = round(time.time() * 1000)
                 nTighem = doneMillisecs - millisecs
@@ -2889,13 +3036,11 @@ async def yt(ctx, url: str):
                 voice.source.volume = 0.3
                 print("cached")
                 if debugMode == True:
-                    await ctx.send((str ("Playing: **")) + (video_title) + (str("** (avec `time taken: ")) + (str (nTighem)) + (str ("ms`)\n\nattrs:\nplayingFromCache")))
+                    await ctx.send(f"Playing: **{video_title}** (avec `time taken: {nTighem}ms`)\n\nattrs:\nplayingFromCache")
                 else:
-                    await ctx.send((str ("Playing: **")) + (video_title) + (str("** (avec `time taken: ")) + (str (nTighem)) + (str ("ms`). `c=t`,`d=f`)"))) #    c=t means cache = true. s=f means downloaded = false
+                    await ctx.send(f"Playing: **{video_title}** (avec `time taken: {nTighem}ms`). `c=t`,`d=f`)") #    c=t means cache = true. s=f means downloaded = false
             else:
                 print("uncached else")
-                #currenttime = datetime.time()
-                
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'quiet': True,
@@ -2921,7 +3066,7 @@ async def yt(ctx, url: str):
 
                 filename = (id)
                 if debugMode == True:
-                    await ctx.send((str ('\n\nFilename = ')) + (filename))
+                    await ctx.send(f"Filename = {filename}")
 
                 for file in os.listdir("./"):
                     if file.endswith(".part"):
@@ -2931,11 +3076,11 @@ async def yt(ctx, url: str):
                             os.remove(file)
                             print(f"Removed file {file}")
                             if debugMode == True:
-                                await ctx.send((str (f"Successfully removed {name}")))
+                                await ctx.send(f"Successfully removed {name}")
                         except:
                             print(f"Failed to remove file {file}")
                             if debugMode == True:
-                                await ctx.send((str (f"Failed to remove {name}")))
+                                await ctx.send(f"Failed to remove {name}")
 
                 doneMillisecs = round(time.time() * 1000)
                 try:
@@ -2953,19 +3098,19 @@ async def yt(ctx, url: str):
                 nTighem = doneMillisecs - millisecs
 
                 if debugMode == True:
-                    await ctx.send((str ("value nTighem = ")) + (str (nTighem)))
+                    await ctx.send(f"value nTighem = {nTighem}")
 
                 name = filename
                 nName = name.rsplit("-", 1)
                 vName = nName[0]
 
                 if debugMode == True:
-                    await ctx.send((str ("value nName = ")) + (str (nName)))
+                    await ctx.send(f"value nName = {nName}")
                 if debugMode == True:
-                    await ctx.send((str ("value vName = ")) + (str (vName)))
+                    await ctx.send(f"value vName = {vName}")
 
-                await ctx.send((str ("Playing: **")) + (video_title) + (str("** (avec `time taken: ")) + (str (nTighem)) + (str("ms`). `c=f`,`d=t`)")))
-                print((str ("Playing: **")) + (video_title) + (str("** (avec `time taken: ")) + (str (nTighem)) + (str("ms`). `c=f`,`d=t`)")))
+                await ctx.send(f"Playing: **{video_title}** (avec `time taken: {nTighem}ms`). `c=f`,`d=t`)")
+                print(f"Playing: **{video_title}** (avec `time taken: {nTighem}ms`). `c=f`,`d=t`)")
         except Exception as e:
             try:
                 try:
@@ -2973,7 +3118,7 @@ async def yt(ctx, url: str):
                     await channel.connect()
                     await yt(ctx, url)
                 except:
-                    await ctx.send(f"An error occured and idk what it is. It says: `{e}`. Please report this in github/baguettebot/issues or DM Draggie#3060 with your server ID.")
+                    await ctx.send(f"An unhandlable error occured! Error message: `{e}`. Please report this in github/baguettebot/issues or DM Draggie#3060 with your server ID.")
             except:
                 await ctx.send("An error occured.")
     
@@ -2995,23 +3140,17 @@ async def yts(ctx):
 
         try:
             text = ctx.message.content
-            #await ctx.send("IDE detected! Unable to run command. Aborting.\nFeature enabled in v1.1")
-
             searchTerm = text.split(' ', 1)[-1]
-
             millisecs = round(time.time() * 1000)
-
             results = YoutubeSearch(searchTerm, max_results=1).to_dict()
-
             for v in results:
                 result = ('https://www.youtube.com/watch?v=' + v['id'])
-                print((str ('\nresult = ')) + (str (result)))
+                print(f"\nresult = {result}")
                 if debugMode == True:
-                    await ctx.send((str ('DEBUG: Loading: `')) + (str (result)) + (str ("`")))
+                    await ctx.send(f"DEBUG: Loading: `{result}`")
                 url = result
-            
                 text = ctx.message.content
-
+                
                 YTDL_OPTIONS = {
                     'format': 'bestaudio/best',
                     'extractaudio': True,
@@ -3027,7 +3166,6 @@ async def yts(ctx):
                     'default_search': 'auto',
                     'source_address': '0.0.0.0',
                 }
-
                 FFMPEG_OPTIONS = {
                     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
                     'options': '-vn',
@@ -3049,11 +3187,9 @@ async def yts(ctx):
                 voice_client.source.volume = 0.3
                 doneMillisecs = round(time.time() * 1000)
                 timeDelay = doneMillisecs - millisecs
-
                 nname = result.rsplit("=", 1)
                 #nTighem = datetime.time()
-                await ctx.send((str ("Playing: ")) + (nname[1]) + (str("\n`time taken: ")) + (str (timeDelay)) + (str("ms`")))
-                await ctx.send("btw: youtube playing is runing in streaming mode, this may lead to audio randomly cutting off!")
+                await ctx.send(f"Playing: {nname[1]}`time taken: {timeDelay}ms`")
         except AttributeError:
             await ctx.send("You are not in a voice channel. You need to be in one to use audio commands.")
             return
@@ -3085,19 +3221,10 @@ async def links(ctx):
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 URL = info['formats'][0]['url']
-                print((str ('\n\nurl = ')) + (str (URL)))
+                print(f"\n\nurl = {URL}")
                 embed = discord.Embed()
-                embed.description = ((str ("[audio url](")) + (str (URL)) + (str (")")))
+                embed.description = (f"[audio url]({URL})")
                 await ctx.send(embed=embed)
-
-#            ydl_opts = {'format': 'bestvideo/best'}
-#            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-#
-#                info = ydl.extract_info(url, download=False)
-#                URL = info['formats'][0]['url']
-#                embed = discord.Embed()
-#                embed.description = ((str ("[video url](")) + (str (URL)) + (str (")")))
-#                await ctx.send(embed=embed)
 
 #   Pause audio
 
@@ -3129,9 +3256,9 @@ async def links(ctx):
 #    voice_client.stop()
 #    await ctx.send((str ("Stopped playing audio.")))
 #    f = open(GlobalLogDir, "a")
-#    f.write((str ("\nAUDIO COMMAND RAN -> '.stop' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+#    f.write(f"\nAUDIO COMMAND RAN -> '.stop' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 #    f.close()
-#    print ((str ("\nAUDIO COMMAND RAN -> '.stop' ran by ")) + (str (ctx.message.author)))
+#    print(f"\nAUDIO COMMAND RAN -> '.stop' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 #    return
 
 #   join/leave voice
@@ -3165,7 +3292,7 @@ async def links(ctx):
 
 #   Purge
 
-@client.command(help="Purges a specified amount of messages", brief="Purges messages", pass_context=True)
+@client.command(help="Purges a specified amount of messages", brief="Delets x messages", pass_context=True)
 @commands.has_any_role('Admin', 'Mod', 'King')
 async def purge(ctx):
     if ctx.message.author.id == 382784106984898560:
@@ -3174,46 +3301,37 @@ async def purge(ctx):
             x = txt.split()
             print(x[1])
             y = (int (x[1])) + 1
-
             if (x[1]) == 1:
                 await ctx.channel.purge(limit = y)
-                await ctx.send(str ("Deleted ") + (x[1]) + (str (" message!")))
-                f = open(GlobalLogDir, "a")
-                f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-                f.close()
-                print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
-                return  
-            if y <= 21:
+                await ctx.send(f"Deleted {x[1]} message!")
+            elif y <= 21:
                 await ctx.channel.purge(limit = y)
-                await ctx.send(str ("Deleted ") + (x[1]) + (str (" messages!")))
+                await ctx.send(f"Deleted {x[1]} messages!")
                 f = open(GlobalLogDir, "a")
-                f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-                f.close()
-                print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
-                return
-            if (x[1]) == 69:
-                await ctx.send(str ("Nice"))  
+            else:
+                await ctx.send("You are trying to delete too many messages at once!")
             f = open(GlobalLogDir, "a")
-            f.write((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+            f.write(f"\nCOMMAND RAN -> '.purge' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
             f.close()
-            print ((str ("\nCOMMAND RAN -> '.purge' ran by ")) + (str (ctx.message.author)))
+            print(f"\nCOMMAND RAN -> '.purge' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+            return  
     else:
         await ctx.send("You don't have permissions for that u sussy boi")
 
 #   i g n o r e
 
-@client.command(help="UwU", brief="UwU", pass_context=True)
+@client.command(help="UwU", brief="UwU", pass_context=True, hidden=True)
 @commands.has_any_role('Admin', 'Mod')
 async def uwu(ctx):
     uwuwu = random.randint(1,2)
     if uwuwu == 1:
-        await ctx.send(file=discord.File(r"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
+        await ctx.send(file=discord.File(r"D:\\BaguetteBot\\draggiebot\\Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
     if uwuwu == 2:
-        await ctx.send(file=discord.File(r"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
+        await ctx.send(file=discord.File(r"D:\\BaguetteBot\\draggiebot\\Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.uwu' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.uwu' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
-    print ((str ("\nCOMMAND RAN -> '.uwu' ran by ")) + (str (ctx.message.author)))  
+    print(f"\nCOMMAND RAN -> '.uwu' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 
 #   change nickname
 
@@ -3226,13 +3344,13 @@ async def chnick(ctx):
     await member.edit(nick=sp1)
 
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.chnick' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.chnick' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
-    print ((str ("\nCOMMAND RAN -> '.chnick' ran by ")) + (str (ctx.message.author)))
+    print(f"\nCOMMAND RAN -> '.chnick' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 
 #   brawl stars API
 
-@client.command(help = "Use: .bs <PLAYER TAG IN C", brief = "Interacts with the Brawl Stars API. Type '.help bs' for usage", pass_context=True)
+@client.command(help = "Use: .bs <PLAYER TAG>", brief = "Interacts with the Brawl Stars API. Type '.help bs' for usage", pass_context=True, hidden=True)
 async def bs(ctx):
     async with ctx.typing():
         txt = ctx.message.content
@@ -3241,15 +3359,14 @@ async def bs(ctx):
         playerTag = (x[1])
         playerTag = playerTag.upper()
 
-        print((str ('playerTag = ') + (str (playerTag))))
+        print(f'playerTag = {playerTag}')
 
         if (x[2]) == 'brawlers':
-            url = ((str ('https://api.brawlstars.com/v1/players/%23')) + (str (playerTag)))
-            print((str ('url = ') )+ (str (url)))
-            with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+            url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}')
+            print(f'url = {url}')
+            with open("D:\\BaguetteBot\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
 
-            
             headers = {
             'Accept': 'application/json',
             'authorization': api_key,
@@ -3264,30 +3381,25 @@ async def bs(ctx):
                 embed.set_footer(text="404 Not Found")
                 await ctx.send(embed=embed)
                 return
-
-            
             print(brawlerRequest.status_code)
 
-            path = ((str ("Z:\\#"))+(str(playerTag)) + (str(".json")))
-            #print(brawlerRequest.json())
-
+            path = (f"Z:\\#{playerTag}.json")
             if os.path.isfile(path):
                 f = open(path, "w+")
                 f.close()
-        
             f = open(path, "w")
             f.write((str (brawlerRequest.json())))
             f.close()
 
             try:
-                await ctx.send((str ('Recieved this response from Supercell Servers:\n\n' )) + (str (brawlerRequest.json())))
+                await ctx.send(f'Recieved this response from Supercell Servers:\n\n{brawlerRequest.json()}')
             except:
                 await ctx.send(file=discord.File(path))
 
         if (x[2]) == 'battles':
-            url = ((str (f'https://api.brawlstars.com/v1/players/%23{playerTag}/battlelog')))
+            url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}/battlelog')
 
-            with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+            with open("D:\\BaguetteBot\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
             headers = {
             'Accept': 'application/json',
@@ -3297,8 +3409,7 @@ async def bs(ctx):
             brawlerRequestStr = (str (brawlerRequest))
             brawlerRequestStatusCode = brawlerRequest.status_code
             print(brawlerRequestStr)
-            path = ((str ("Z:\\#"))+(str(playerTag)) + (str(".json")))
-            #print(brawlerRequest.json())
+            path = (f"Z:\\#{playerTag}.json")
 
             if os.path.isfile(path):
                 f = open(path, "w+")
@@ -3308,43 +3419,13 @@ async def bs(ctx):
             f.write((str (brawlerRequest.json())))
             f.close()
             try:
-                await ctx.send((str ('Recieved this response from Supercell Servers:\n\n' )) + (str (brawlerRequest.json())))
+                await ctx.send(f'Recieved this response from Supercell Servers:\n\n{brawlerRequest.json()}')
             except:
                 await ctx.send(file=discord.File(path))
 
-#   SPLIT TESTS
-
-@client.command(brief = "test split msg str", pass_context=True)
-async def testsplit(ctx):
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    await ctx.send(sp1)
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.testsplit' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.testsplit' ran by ")) + (str (ctx.message.author)))  
-
-#   FILE TEST
-
-@client.command(brief = "tests for file", pass_context=True)
-@commands.has_any_role('Admin', 'Mod')
-async def testForFile(ctx):
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    print (sp1)
-    my_file = Path((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Files\\")) + (str (sp1)))
-    if my_file.is_file():
-        await ctx.send("fileExists=True")
-    else:
-        await ctx.send("fileExists=False")
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.testForFile' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.testForFile' ran by ")) + (str (ctx.message.author)))  
-
 #   Birthdays
 
-@client.command(help = "Writes your birthday to a file. Use .birthday set [date] to set birthday, and .birthday file to get a list of birthdays.", brief = "Sets your birthday, syntax '.birthday set [your birth date]",pass_context=True)
+@client.command(help = "Writes your birthday to a file. Use .birthday set [date] to set birthday, and .birthday file to get a list of birthdays.", brief = "Sets your birthday, syntax '.birthday set [your birth date]", pass_context=True, hidden=True)
 async def birthday(ctx):
     async with ctx.typing():
         try:
@@ -3353,7 +3434,7 @@ async def birthday(ctx):
             birthDate = text.split(' ', 2)[-1]
             x = text.split()
             if x[1] == "file":
-                with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\logs\\birthdays.txt") as file:
+                with open("D:\\BaguetteBot\\draggiebot\\logs\\birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -3367,7 +3448,7 @@ async def birthday(ctx):
                 return
 
             if x[1] == "file":
-                with open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\logs\\birthdays.txt") as file:
+                with open("D:\\BaguetteBot\\draggiebot\\logs\\birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -3376,91 +3457,42 @@ async def birthday(ctx):
 
             if x[1] == "set":
                 author = (str (ctx.message.author.id))
-                file=open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Logs\\birthdays.txt",encoding="UTF-8").read()
+                file=open("D:\\BaguetteBot\\draggiebot\\Logs\\birthdays.txt",encoding="UTF-8").read()
                 count=file.count(author)
                 print (count)
                 if count != 0:
                     await ctx.send("Error! You have already added your birthday to the file. Please ask an admin to remove it if you believe this is an error.")    
                     return
 
-                f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\logs\\birthdays.txt", "a")
-                f.write((str ("\n<@!")) + (str (ctx.message.author.id)) + (str (">'s birthday is on the ") + (str(birthDate))))
+                f = open("D:\\BaguetteBot\\draggiebot\\logs\\birthdays.txt", "a")
+                f.write(f"\n<@!{ctx.message.author.id}>'s birthday is on the {birthDate}")
                 f.close()
-                await ctx.send((str ("\n")) + (str (ctx.message.author)) + (str ("'s birthday has been set to `") + (str(birthDate)) + (str ("`. A custom message will be sent, enjoy!"))))
+                await ctx.send(f"\n{ctx.message.author}'s birthday has been set to `{birthDate}`. A custom message will be sent, enjoy!")
         
         except Exception:
             await ctx.send("Error! Please ensure your command looks something like this:\n\n**.birthday set 25th June 2006**")
 
-#   DLfile  
-
-@client.command(help = "Downloads file at specific directory.", brief = "Downloads any file on my PC (8mb max)",pass_context=True)
-@commands.has_any_role('Admin', 'Mod', 'Prince')
-async def dlfile(ctx):
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    print (sp1)
-    await ctx.send(file=discord.File((str (sp1))))
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.dlfile' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.dlfile' ran by ")) + (str (ctx.message.author)))  
-
 #   Dir
 
-@client.command(help = "Specify the directory to display all items in it.", brief = "Shows all files in my PC...",pass_context=True)
+@client.command(help = "Specify the directory to display all items in it.", brief = "Shows all files in my PC...",pass_context=True, hidden=True)
 @commands.has_any_role('Admin', 'Mod', 'Prince')
 async def dir(ctx):
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    arr = os.listdir((str (sp1)))
-    embed=discord.Embed(title=(str ("Directory lookup: ")) + ((str (sp1))), description=(str (arr)) + (str ("\n\nInit by ")) + ((str ("{}".format(ctx.author.mention)))), colour=0xFF5800)
-    await ctx.send(embed=embed)
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.dir' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.dir' ran by ")) + (str (ctx.message.author)))  
-
-#   Files
-
-@client.command(help = "Lists all files in DraggieBot's file directory.", brief = "Lists available files", pass_context=True)
-@commands.has_any_role('Admin', 'Mod', 'Prince')
-async def files(ctx):
-    arr = os.listdir('D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Files')
-    embed = discord.Embed
-    embed=discord.Embed(title="List of all files", description=(str (arr)) + (str ("\n\n Add a file by going to http://bit.ly/DraggieBotFiles.")), colour=0x00acff)
-    await ctx.send(embed=embed)
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.files' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.files' ran by ")) + (str (ctx.message.author)))   
-
-#   File
-
-@client.command(help = "Sends a file in DraggieBot's directory.", brief = "Sends files", pass_context=True)
-@commands.has_any_role('Admin', 'Mod', 'Prince')
-async def file(ctx):
-    txt = ctx.message.content
-    x = txt.split()
-    print(x[1])
-    my_file = Path((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Files\\")) + (str (x[1])))
-    if my_file.is_file():
-#           await ctx.send("True")
-        await ctx.send(file=discord.File((str ("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Files\\")) + (str (x[1]))))
-    else:
-        embed=discord.Embed(title="Error: 404", description=((str ("File ")) + (str ((x[1]))) + (str (" not found!"))), colour=0x990000)
+    if ctx.guild.id == 759861456300015657:
+        text = ctx.message.content
+        sp1 = text.split(' ', 1)[-1]
+        arr = os.listdir((str (sp1)))
+        embed=discord.Embed(title=f"Directory lookup: {sp1}", description=f"{arr}\n\nInit by {ctx.author.mention}", colour=0xFF5800)
         await ctx.send(embed=embed)
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.file' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.file' ran by ")) + (str (ctx.message.author)))     
+        f = open(GlobalLogDir, "a")
+        f.write(f"\nCOMMAND RAN -> '.dir' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+        f.close()
+        print(f"\nCOMMAND RAN -> '.dir' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 
 #   Drop
 
-@client.command(help = "drop", brief = "Where we droppin?", pass_context=True)
+@client.command(help = "drop", brief = "Gets random Fortnite location.", pass_context=True)
 async def drop(ctx):
-
     dropLocation = random.randint(1,34)
-
     if dropLocation == 1:
         await ctx.send("Salty Towers")
     if dropLocation == 2:
@@ -3530,144 +3562,53 @@ async def drop(ctx):
     if dropLocation == 34:
         await ctx.send("Follow someone off spawn and pickaxe them!")
 
-
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.drop' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"\nCOMMAND RAN -> '.drop' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
-    print ((str ("\nCOMMAND RAN -> '.drop' ran by ")) + (str (ctx.message.author)))
+    print(f"\nCOMMAND RAN -> '.drop' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+
+#   Roleperms command
+
+@client.command(help="Gets all roles with that permission.", brief="Gets all roles with that permission", pass_context=True)
+async def roleperms(ctx):
+    x = ctx.message.content.split()
+    permLookup = (str (x[1]).lower())
+    rolesWithPerm = []
+    roles = [r for r in ctx.guild.roles if any(p[1] and p[0] == f"{permLookup}" for p in r.permissions)]
+    for name in roles:
+        rolesWithPerm.append(name.mention)
+    
+    rolesWithPerm = list(reversed(rolesWithPerm))
+
+    rolesWithPerm = (str(rolesWithPerm)).replace("'", "")
+    if rolesWithPerm == '[]':
+        await ctx.send(f"No roles have that permission. Check out permissions here to find a valid permission: https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags")
+    else:
+        embed=discord.Embed(title=f"All roles with permission '{permLookup}'", description=(f"{rolesWithPerm}"), colour=0x00acff)
+        embed.set_footer(text="This only shows permissions which have been specifically enabled for that role\nMentioning users or roles in an embed like this does not send a ping to anyone.")
+        await ctx.send(embed=embed)
 
 #   Ship
 
-@client.command(help="Ships people. Syntax: *.ship [person1] [person2]", brief="Ships 2 people out of 100.", pass_context=True)
+@client.command(help="Ships things. Syntax: *.ship [person1] [person2]", brief="Ships 2 things out of 100.", pass_context=True)
 async def ship(ctx):
-    #   LOC NAMES
     txt = ctx.message.content
     x = txt.split()
-    #print(x[1])
     y = (str (x[1]))
     z = (str (x[2]))
     #   CALC RAND
-    shipMaths = random.randint(1,100)
-
-    #   BIAS!
-
-    if y == "oliver":
-        shipMaths = shipMaths + 10
-        print("True - oliver y")
-    if y == "Oliver":
-        shipMaths = shipMaths + 10
-        print("True - Oliver y")
-
-    if z == "Oliver":
-        shipMaths = shipMaths + 10
-        print("True - oliver z")
-    if z == "oliver":
-        shipMaths = shipMaths + 10
-        print("True - Oliver z")
-    
-    if y == "sam":
-        shipMaths = shipMaths + 10
-        print("True - sam y")
-    if y == "Sam":
-        shipMaths = shipMaths + 10
-        print("True - Sam y")
-
-    if z == "sam":
-        shipMaths = shipMaths + 10
-        print("True - sam z")
-    if z == "Sam":
-        shipMaths = shipMaths + 10
-        print("True - Sam z")
-
-    if y == "jack":
-        shipMaths = shipMaths + 10
-        print("True - sam y")
-    if y == "Jack":
-        shipMaths = shipMaths + 10
-        print("True - Jack y")
-
-    if z == "jack":
-        shipMaths = shipMaths + 10
-        print("True - jack z")
-    if z == "Jack":
         shipMaths = shipMaths + 10
         print("True - Jack z")
 
     if y == "nolly":
-        shipMaths = shipMaths + 10
-        print("True - noll y")
-    if y == "Nolly":
-        shipMaths = shipMaths + 10
-        print("True - Noll y")
-    if z == "nolly":
-        shipMaths = shipMaths + 10
-        print("True - noll z")
-    if z == "Nolly":
-        shipMaths = shipMaths + 10
-        print("True - Noll z")
+    calculation = random.randint(1,100)
 
-    if y == "nolwenn":
-        shipMaths = shipMaths + 10
-        print("True - nol y")
-    if y == "Nolwenn":
-        shipMaths = shipMaths + 10
-        print("True - Nol y")
-    if z == "nolwenn":
-        shipMaths = shipMaths + 10
-        print("True - nol z")
-    if z == "Nolwenn":
-        shipMaths = shipMaths + 10
-        print("True - Nol z")
-
-    if y == "ish":
-        shipMaths = shipMaths + 10
-        print("True - ish y")
-    if y == "Ish":
-        shipMaths = shipMaths + 10
-        print("True - Ish y")
-    if z == "ish":
-        shipMaths = shipMaths + 10
-        print("True - ish z")
-    if z == "Ish":
-        shipMaths = shipMaths + 10
-        print("True - Ish z")
-    if z == "<@!757978892370706573>":
-        shipMaths = shipMaths + 10
-
-    if y == "ismail":
-        shipMaths = shipMaths + 10
-        print("True - ism y")
-    if y == "Ismail":
-        shipMaths = shipMaths + 10
-        print("True - Ism y")
-    if z == "ismail":
-        shipMaths = shipMaths + 10
-        print("True - ism z")
-    if z == "Ismail":
-        shipMaths = shipMaths + 10
-        print("True - Ism z")
-    if y == "sam":
-        if z == "jack":
-            shipMaths = 100
-            embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
-            await ctx.send(embed=embed)
-            return
-    if y == "jack":
-        if z == "sam":
-            shipMaths = 100
-            embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
-            await ctx.send(embed=embed)
-            return
-
-    #   LONG STRING
-
-    embed=discord.Embed(title="Shipping...", description=((str ("{}".format(ctx.author.mention))) + (str (" ships **")) + (str (y)) + (str (" x ")) + (str (z)) + (str ("**!")) + (str ("\n\nResult: **")) + (str (shipMaths) + (str ("**    out of 100!")))), colour=0x00acff)
+    embed=discord.Embed(title="Shipping...", description=(f"{ctx.author.mention} ships **{y} x {z}**!\n\nResult: **{calculation}** out of 100!"), colour=0x00acff)
     await ctx.send(embed=embed)
-    #   LOG
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.ship' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f.write(f"COMMAND RAN -> '.ship' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
-    print ((str ("\nCOMMAND RAN -> '.ship' ran by ")) + (str (ctx.message.author)))
+    print(f"COMMAND RAN -> '.ship' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
 
 #   broadcast
 
@@ -3695,25 +3636,14 @@ async def broadcast(ctx, *, msg):
     else:
         await ctx.send("You do not have permission to run this command.")
 
-#   Command template
-
-@client.command(help="Lots of help goes here", brief="[template command]", pass_context=True)
-async def COMMAND(ctx):
-    await ctx.send("Sends a message.")
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.COMMAND' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-    f.close()
-    print ((str ("\nCOMMAND RAN -> '.COMMAND' ran by ")) + (str (ctx.message.author)))
-
 #   Nolwennium mine
 
-@client.command(help="Mines a random amount of Nolwennium.", brief="Mines Nolwennium.", pass_context=True)
+@client.command(help=f"Mines a random amount of {name_Nolwennium}.", brief=f"Mines {name_Nolwennium}.", pass_context=True)
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def mine(ctx):
     global balance
     global myuuid
     global address
-    channelName = ctx.message.channel.name
     channelID = ctx.message.channel.id
     serverID = ctx.message.guild.id
 
@@ -3725,39 +3655,31 @@ async def mine(ctx):
     authorID = ctx.message.author.id
     person = ctx.message.author
     address = authorID
-    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\
+    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\BaguetteBot\\draggiebot\\Nolwennium\\
 
-    filedir = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{authorID}.txt")
-    newNumber = random.randint(1,10)
-    fee = newNumber/(random.randint(50,200))
+    filedir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
+    newNumber = random.randint(10,100)
+    fee = newNumber/random.randint(50,200)
     newNumberAfterFee = newNumber - fee
     newNumberAfterFee = round(newNumberAfterFee, 3)
     fee = round(fee, 3)
 
     try:
         e = open(filedir, 'r')
-        balance = (float (e.read()))
+        balance = float(e.read())
         e.close()
-        minedString = (f"Mined another {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
+        minedString = (f"Mined another {newNumber} {emoji_Nolwennium} {name_Nolwennium}!")
     except:
         e = open(filedir, 'w+')
-        e.write(str (0))
+        e.write(str(0))
         e.close()
 
         e = open(filedir, 'r')
-        balance = (float (e.read()))
+        balance = float(e.read())
         e.close()
-        minedString = (f"Mined {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
-        #return
-    
-    #await ctx.send((str ("\n\nYour address is: ")) + (str (address)))
-
-    minedString_existing = (f"Mined another {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
-    minedString_new = (f"Mined {newNumber} <:NolwenniumCoin:846464419503931443> Nolwennium!")
+        minedString = f"Mined {newNumber} {emoji_Nolwennium} {name_Nolwennium}!"
 
     roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
-
-    Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
 
     embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
     embed.add_field(name="**Fees Paid**", value=f"{fee} to <@{random.choice(Croissants)}>", inline=False)
@@ -3766,41 +3688,41 @@ async def mine(ctx):
 
     if roleBooster in person.roles:
         BoosterBonus = random.randint(5,15)
-        embed.add_field(name="**Server Booster Bonus**", value=(str (BoosterBonus)) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium")))
+        embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {emoji_Nolwennium} {name_Nolwennium}"))
         balance = balance + BoosterBonus
 
-    embed.add_field(name="**Total Balance**", value=((str (round (balance, 3))) + (str (" <:NolwenniumCoin:846464419503931443> Nolwennium"))), inline=False)
-    embed.set_footer(text=((str ("User ID: ")) + (str (authorID))))
+    embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+    embed.set_footer(text=f"User ID: {authorID}")
     await ctx.send(embed=embed)
 
     f = open(filedir, 'w+')
-    f.write((str (balance)))
+    f.write(str (balance))
     f.close()
 
-    f = open(GlobalLogDir, "a")
-    f.write((str ("\nCOMMAND RAN -> '.mine' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
+    f = open(GlobalLogDir, "a", encoding='utf-8')
+    f.write(f"COMMAND RAN -> '.mine' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
 
     #   Pay the fees
 
-    randomcroissant = (f"D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\Nolwennium\\{random.choice(Croissants)}.txt")
+    randomcroissant = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{random.choice(Croissants)}.txt")
     try:
         e = open(randomcroissant, 'r')
-        balance = (float (e.read()))
+        balance = float(e.read())
         e.close()
     except:
         e = open(randomcroissant, 'w+')
-        e.write(str (0))
+        e.write("0")
         e.close()
 
         e = open(randomcroissant, 'r')
-        balance = (float (e.read()))
+        balance = float(e.read())
         e.close()
 
     balance = balance + fee
 
     f = open(randomcroissant, 'w+')
-    f.write((str (balance)))
+    f.write(str(balance))
     f.close()
 
 #   YouTube audio EPIC VERSION
@@ -3826,12 +3748,13 @@ async def on_slash_command_error(ctx, error):
         cry = '<:SurgeCry:828683755694063667>'
     if randomCry == 7:
         cry = '<:TaraCry:828683724286853151>'                    
-    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    embed=discord.Embed(title=(f"{cry} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
     await ctx.send(embed=embed)
 
 @client.event
 async def on_command_error(ctx, error):
     if "is not found" in str(error):
+        print(f"Command returned an error but will be returned. Server: {ctx.server.name}, error message = {error}")
         return
     if ctx.message.content.startswith(".."):
         return
@@ -3850,14 +3773,14 @@ async def on_command_error(ctx, error):
         cry = '<:SurgeCry:828683755694063667>'
     if randomCry == 7:
         cry = '<:TaraCry:828683724286853151>'                    
-    embed=discord.Embed(title=((str (cry)) + (str (" An error occured"))), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    embed=discord.Embed(title=(f"{cry} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
     await ctx.send(embed=embed)
     print (str(error))
     f = open(GlobalLogDir, "a")
-    f.write((str ("\nERROR: An error occured! Original command initialised by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))) + (str (". ERROR MESSAGE: ")) + (str(error)))
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.message.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
-    f = open("D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\errors.txt", "a")
-    f.write((str ("\n\nERROR: An error occured! Original command initialised by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))) + (str (".\n          : ")) + (str(error)))
+    f = open("D:\\BaguetteBot\\draggiebot\\errors.txt", "a")
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.message.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
 
 dotenvPath = 'D:\\BaguetteBot\\draggiebot\\.env'
@@ -3865,6 +3788,5 @@ load_dotenv(dotenv_path=dotenvPath)
 if dotenvPath != 'D:\\BaguetteBot\\draggiebot\\.env':
     print("\n\n\n\n\nRUNNING IN TEST MODE!\n\n\n\n\n")
 client.run(os.getenv('TOKEN'))
-
 
 #   poggerspogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpog
