@@ -517,7 +517,7 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
-    if revision is not None:
+    if revision != "":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
@@ -538,7 +538,7 @@ async def StatusAutoUpdator():
         members += guild.member_count - 1
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-    if revision is not None:
+    if revision !="":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
@@ -558,7 +558,7 @@ async def on_member_join(member):
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
-    if revision is not None:
+    if revision != "":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
@@ -576,7 +576,7 @@ async def on_member_remove(member):
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
-    if revision is not None:
+    if revision != "":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
@@ -1744,6 +1744,9 @@ async def coins(ctx):
                 hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
                 hasKnight = discord.utils.find(lambda r: r.name == 'Knight', ctx.message.guild.roles)
                 hasBaron = discord.utils.find(lambda r: r.name == 'Baron', ctx.message.guild.roles)
+                hasViscount = discord.utils.find(lambda r: r.name == 'Viscount', ctx.message.guild.roles)
+                hasEarl = discord.utils.find(lambda r: r.name == 'Earl', ctx.message.guild.roles)
+                hasMarquess = discord.utils.find(lambda r: r.name == 'Marquess', ctx.message.guild.roles)
                 hasDuke = discord.utils.find(lambda r: r.name == 'Duke', ctx.message.guild.roles)
                 hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
                 hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
@@ -2509,7 +2512,6 @@ async def _stats(ctx):
     else:
         pingColour = (0x990000)
 
-    fileSizeBytes = os.path.getsize('D:\\OneDrive - Sapientia Education Trust\\Year 10\\Computer Science\\Python\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py')
     fileSizeBytes = os.path.getsize('D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot New Ver.py')
 
     num_lines = sum(1 for line in open ("D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot New Ver.py", encoding='utf-8'))
@@ -3597,10 +3599,6 @@ async def ship(ctx):
     y = (str (x[1]))
     z = (str (x[2]))
     #   CALC RAND
-        shipMaths = shipMaths + 10
-        print("True - Jack z")
-
-    if y == "nolly":
     calculation = random.randint(1,100)
 
     embed=discord.Embed(title="Shipping...", description=(f"{ctx.author.mention} ships **{y} x {z}**!\n\nResult: **{calculation}** out of 100!"), colour=0x00acff)
