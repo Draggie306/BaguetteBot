@@ -1,7 +1,8 @@
-DraggieBot_version = "v1.2"
+DraggieBot_version = "v1.2.1"
 revision = ""
 
 print("Importing all modules...\n")
+from dis import Instruction
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
@@ -33,7 +34,7 @@ start_time = time.time()
 
 sys.setrecursionlimit(99999999)
 
-global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker
+global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker, roleMember, hasMember, hasAdmin
 voiceVolume = 0.3
 Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -71,6 +72,95 @@ def nolwenniumUserDirectory(ctx):
 def coinDirectory(ctx):
     global coinDir
     coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{ctx.author.id}.txt")
+
+async def changeNolwenniumBalance(ctx, number_to_change_by):
+    person = ctx.message.author
+    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\BaguetteBot\\draggiebot\\Nolwennium\\
+    filedir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{ctx.message.author.id}.txt")
+    
+    fee = number_to_change_by / random.randint(50, 200)
+    newNumberAfterFee = number_to_change_by - fee
+    newNumberAfterFee = round(newNumberAfterFee, 3)
+    fee = round(fee, 3)
+
+    try:
+        e = open(filedir, 'r')
+        balance = float(e.read())
+        e.close()
+        minedString = (f"Mined another {number_to_change_by} {emoji_Nolwennium} {name_Nolwennium}!")
+    except:
+        e = open(filedir, 'w+')
+        e.write(str(0))
+        e.close()
+
+        e = open(filedir, 'r')
+        balance = float(e.read())
+        e.close()
+        minedString = f"Mined {number_to_change_by} {emoji_Nolwennium} {name_Nolwennium}!"
+
+    roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
+    shared_guilds = ctx.author.mutual_guilds
+    shared_number = 0
+    SharedServerBonus = 0
+    BoosterBonus = 0
+    bonuses = 0
+    for guild in shared_guilds:
+        shared_number += 1
+
+    embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
+
+    if roleBooster in person.roles:
+        BoosterBonus = random.randint(5,15)
+        embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+        balance = balance + BoosterBonus
+        bonuses += BoosterBonus
+
+    if shared_number > 1:
+        SharedServerBonus = random.randint(1,shared_number)
+        embed.add_field(name="**Shared Servers Bonus**", value=(f"{SharedServerBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+        balance = balance + SharedServerBonus
+        bonuses += SharedServerBonus
+    
+    print(f"Total bonuses: {bonuses} - {SharedServerBonus} server, {BoosterBonus} booster")
+    
+    embed.add_field(name="**Fees Paid**", value=f"{fee} to <@{random.choice(Croissants)}>", inline=False)
+    
+    balance = balance + newNumberAfterFee
+
+    embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+    embed.set_footer(text=f"User ID: {ctx.message.author.id} | Total extra bonuses: {bonuses}")
+    
+    await ctx.send(embed=embed)
+
+    f = open(filedir, 'w+')
+    f.write(str (balance))
+    f.close()
+
+    f = open(GlobalLogDir, "a", encoding='utf-8')
+    f.write(f"COMMAND RAN -> '.mine' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+    f.close()
+
+    #   Pay the fees
+
+    randomcroissant = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{random.choice(Croissants)}.txt")
+    try:
+        e = open(randomcroissant, 'r')
+        balance = float(e.read())
+        e.close()
+    except:
+        e = open(randomcroissant, 'w+')
+        e.write("0")
+        e.close()
+
+        e = open(randomcroissant, 'r')
+        balance = float(e.read())
+        e.close()
+
+    balance = balance + fee
+
+    f = open(randomcroissant, 'w+')
+    f.write(str(balance))
+    f.close()
 
 print("Done!\nSlash commands initialising...")
 
@@ -366,11 +456,11 @@ async def moverole(ctx, colour: str, pos=None):
             await ctx.send("You aren't boosting the server or have a high enough role. Boost the server in order to unlock Custom Colours!")
             return
     number_of_roles = (len(ctx.guild.roles))
-    pos = number_of_roles - 17
-    role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
+    pos = number_of_roles - 16
+    role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
     if role is None:
-        await ctx.guild.create_role(name=f"CC: {ctx.author.name}")
-        role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
+        await ctx.guild.create_role(name=f"{ctx.author.name}")
+        role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
         await ctx.send(f"Role added! at position {pos}")
     try:
         colour = int(colour, 16)
@@ -503,7 +593,7 @@ with open("D:\\BaguetteBot\\JSONs\\names.json", "r", encoding="utf8") as file:
 @client.event
 async def on_ready():
     print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
-    global ready_start_time
+    global ready_start_time, roleMember, hasMember, hasAdmin
     ready_start_time = time.time()
 
     channel = client.get_channel(838107252115374151) # Brigaders_channel
@@ -518,7 +608,7 @@ async def on_ready():
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
     if revision != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members")))
     else:
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
     global draggie, general, console, upvote, downvote, hasMembersforGlobalServer
@@ -527,6 +617,9 @@ async def on_ready():
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
     upvote = client.get_emoji(803578918488768552)
+    hasMember = discord.utils.find(lambda r: r.name == 'Member', guild.roles)
+    hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
+    roleMember = discord.utils.get(guild.roles, name='Member')
     downvote = client.get_emoji(803578918464258068)
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
     await StatusAutoUpdator()
@@ -539,9 +632,9 @@ async def StatusAutoUpdator():
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
     if revision !="":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     print(f"Updated status - {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
     #await asyncio.sleep(random.randint(100,500))
     await asyncio.sleep(60)
@@ -558,10 +651,12 @@ async def on_member_join(member):
     members = 0
     for guild in client.guilds:
         members += guild.member_count - 1
+    cpuPercentage = psutil.cpu_percent()
+    memoryUsage = psutil.virtual_memory().percent
     if revision != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members| CPU {cpuPercentage}% + RAM {memoryUsage}%")))
 
 @client.event
 async def on_member_remove(member):
@@ -574,12 +669,14 @@ async def on_member_remove(member):
             await draggie.send(f"Removed from server {member.guild.name} / {member.guild.id}")
     servers = len(client.guilds)
     members = 0
+    cpuPercentage = psutil.cpu_percent()
+    memoryUsage = psutil.virtual_memory().percent
     for guild in client.guilds:
         members += guild.member_count - 1
     if revision != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}r{revision} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     
 @client.event
 async def on_raw_reaction_add(payload=None):
@@ -608,6 +705,7 @@ async def on_raw_reaction_add(payload=None):
                     count = reaction.count
                     if count > 3:
                         await channel.send(f"{message.author.mention}'s 'epic' meme has been removed.")
+                        await message.author.send("Your 'epic' meme has been removed as it reached too many downvotes.")
                         await message.delete()
                         return
             authorName = payload.member.name
@@ -937,9 +1035,10 @@ async def on_member_update(before, after):
                 f.close()
 
                 await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /boostercolour for more information.")
-            await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+            #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             #await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!') <<<<<<                   In Brigaders Helper
-            print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+            #print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+            print(f"JOIN >>> {after.name} has joined the server {after.guild.name}")
 
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
@@ -1005,6 +1104,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_message(message):
+    global roleMember, hasMember, hasAdmin
     if "UUID of player EmileTigger is d0b393de-e783-45b6-9d13-19ba56c5451e" in message.content:
         termcolor.cprint("Emile joined", 'red', attrs=['blink'])
         await asyncio.sleep(3)
@@ -1021,9 +1121,9 @@ async def on_message(message):
                 downvote = client.get_emoji(803578918464258068)
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
-            attachmentsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.server.id}\\Attachments\\")
+            attachmentsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Attachments\\")
             if not os.path.exists(attachmentsDir):
-                os.makedirs(f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Attachments\\")
+                os.makedirs(f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Attachments\\")
                 print("Made directory" + (attachmentsDir))
             nameOfFile = str(message.attachments).split("filename='")[1]
             filename = str(nameOfFile).split("' ")[0]
@@ -1038,7 +1138,7 @@ async def on_message(message):
             LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
             sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
             if os.path.isfile(sendLogsDir):
-                await LoggingChannel.send(f"Attachment sent in <#{channelID}>: **{filename}**: {attachment.url}")
+                await LoggingChannel.send(f"Attachment sent in <#{message.channel.id}>: **{filename}**: {attachment.url}")
 
     await DLstuff()
 
@@ -1085,6 +1185,7 @@ async def on_message(message):
     if not os.path.exists(filedir):
         os.makedirs(f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\")
 
+    
     try:
         with open((f"{filedir}MessageLog.txt"), "a", encoding='utf-8') as logAllMessages:
             logAllMessages.write(f"\n'{message.content}' sent by {message.author} in [{serverName}- #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
@@ -1171,13 +1272,14 @@ async def on_message(message):
         coins = f.read()
         f.close()
 
-        f = open(coinDir, 'w+')
-        coins = (int (str (coins))) + 1
-        f.close()
-
-        with open(coinDir, 'a') as f:
-            f.write(str (coins))
+        if message.content != ".":
+            f = open(coinDir, 'w+')
+            coins = (int (str (coins))) + 1
             f.close()
+
+            with open(coinDir, 'a') as f:
+                f.write(str (coins))
+                f.close()
 
     except FileNotFoundError:   #   User not found
         with open(coinDir, 'a') as f:
@@ -1288,42 +1390,56 @@ async def on_message(message):
     #   Send Emoji for Face!
 
     if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
-        messageContent = message.content.lower()
-        for word in messageContent.split():
-            if word in nollyWords:
-                await message.add_reaction("<:nolly:786177817993805844>")
-            if word in oliverWords:
-                await message.add_reaction("<:oliver:790576109795409920>")
-            if word in jackWords:
-                await message.add_reaction("<:LilJack:901155402190823434>")
-            if word in joeWords:
-                await message.add_reaction("<:CuteJoe:897467228545503242>")
-            if word in haydnWords:
-                await message.add_reaction("<:haydn:786276584671412244>")
-            if word in maisyWords:
-                await message.add_reaction("<:maisy:786276271809101840>")
-            if word in benWords:
-                await message.add_reaction("<:bennybooze:788311580768075786>")
-            if word in ishWords:
-                await message.add_reaction("<:ish:791381704278540369>")
-            if word in mayaWords:
-                await message.add_reaction("<:maya:785942478448230470>") 
-            if word in samWords:
-                await message.add_reaction("<:samf:785942793280815114>")
-        for word in josephTighe:
-            if word in messageContent:
-                integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
-                if integer == 1:
-                    await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
-                if integer == 2:
-                        await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
-        for word in charlieSewards:
-            if word in messageContent:
-                integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
-                if integer == 1:
-                    await message.add_reaction("<:charlie:903324276147499041>")
-                if integer == 2:
-                    await message.add_reaction("<:CharlieUwU:857907947371495424>")
+        if hasMember or hasAdmin in person.roles:
+            print(f"ok")
+            messageContent = message.content.lower()
+            for word in messageContent.split():
+                if word in nollyWords:
+                    await message.add_reaction("<:nolly:786177817993805844>")
+                    print(f"Matched word in message! {word}")
+                if word in oliverWords:
+                    await message.add_reaction("<:oliver:790576109795409920>")
+                    print(f"Matched word in message! {word}")
+                if word in jackWords:
+                    await message.add_reaction("<:LilJack:901155402190823434>")
+                    print(f"Matched word in message! {word}")
+                if word in joeWords:
+                    await message.add_reaction("<:CuteJoe:897467228545503242>")
+                    print(f"Matched word in message! {word}")
+                if word in haydnWords:
+                    await message.add_reaction("<:haydn:786276584671412244>")
+                    print(f"Matched word in message! {word}")
+                if word in maisyWords:
+                    await message.add_reaction("<:maisy:786276271809101840>")
+                    print(f"Matched word in message! {word}")
+                if word in benWords:
+                    await message.add_reaction("<:bennybooze:788311580768075786>")
+                    print(f"Matched word in message! {word}")
+                if word in ishWords:
+                    await message.add_reaction("<:ish:791381704278540369>")
+                    print(f"Matched word in message! {word}")
+                if word in mayaWords:
+                    await message.add_reaction("<:maya:785942478448230470>") 
+                    print(f"Matched word in message! {word}")
+                if word in samWords:
+                    await message.add_reaction("<:samf:785942793280815114>")
+                    print(f"Matched word in message! {word}")
+            for word in josephTighe:
+                if word in messageContent:
+                    print(f"Matched word in message! {word}")
+                    integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
+                    if integer == 1:
+                        await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
+                    if integer == 2:
+                            await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
+            for word in charlieSewards:
+                if word in messageContent:
+                    print(f"Matched word in message! {word}")
+                    integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
+                    if integer == 1:
+                        await message.add_reaction("<:charlie:903324276147499041>")
+                    if integer == 2:
+                        await message.add_reaction("<:CharlieUwU:857907947371495424>")
 
     #  here we can do global server ones because its funny
 
@@ -1873,7 +1989,7 @@ async def coins(ctx):
 async def buy(ctx):
     if ctx.guild.id in tester_guilds:
         canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
-        if canRunCommand in ctx.message.author.roles:
+        if "Admin" or canRunCommand in ctx.message.author.roles:
             async with ctx.typing():
                 member = ctx.message.author
                 authorID = ctx.message.author.id
@@ -2571,33 +2687,71 @@ async def _stats(ctx):
     f.write(f"\nSLASH COMMAND RAN -> '.stats' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
 
+async def handleLeaveVoiceChat(ctx):
+    voice_client = ctx.guild.voice_client
+    if not voice_client:
+        await ctx.send("Nothing to leave.")
+
+async def connectToGuildChannel(ctx):
+    voice_client = ctx.guild.voice_client
+    if not voice_client:
+        try:
+            channel = ctx.author.voice.channel
+            try:
+                await channel.connect()
+            except:
+                await ctx.send("Error connecting to voice channel.")
+            voice_client = ctx.guild.voice_client
+            voice_client.stop()
+            return voice_client
+        except AttributeError:
+            return(await ctx.send("You are not in a voice channel."))
+    voice_client.stop()
+    return voice_client
+
+async def getServerVoiceVolume(ctx):
+    try:
+        f = open(f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
+        x = f.read()
+        f.close()
+        volume = (float(x))
+        return volume
+    except FileNotFoundError:
+        await setVolume(ctx)
+
 #   epic
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, brief = "[Audio] Plays Text to Speech voice in voice chat.")
 async def tts(ctx):
     txt = ctx.message.content
     x = txt.split()
-    locale = (str (x[1]))
-    speed = (str (x[2]))
-    inputText = txt.split(' ', 3)[-1]
+
+    try:
+        locale = (str (x[1]))
+        speed = (str (x[2]))
+        inputText = txt.split(' ', 3)[-1]
+    except IndexError:
+        await ctx.send("```.tts <locale> <speed> <inputText>\n^^^^^^^^^^^^^\nlocale, speed, inputText are required arguments which are missing```")
+        return
 
     if any(word in '[]#?/\|£$%^&*=+}{`¬<>' for word in inputText):
-        return(await ctx.send("Cannot do that"))
+        return(await ctx.send(f"Cannot do that, your TTS word contains an incompatible character"))
     else:
         query_string = f"https://www.google.com/speech-api/v1/synthesize?text={inputText}&enc=mpeg&lang={locale}&speed={speed}&client=lr-language-tts&use_google_only_voices=1"
         #await ctx.send(query_string)
 
         r = requests.get(query_string)
+        print(f"Satus {r.status_code}")
         x = uuid.uuid4()
         with open(f'Z:\\{x}.MP3', 'wb') as f:
             f.write(r.content)
         
-        voice_client = ctx.voice_client
-        if not voice_client:
-            channel = ctx.author.voice.channel
-            await channel.connect()
-            voice_client = ctx.guild.voice_client
-        voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3', executable="D:\\Downloads\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\bin\\ffmpeg.exe"))
+        voice_client = await connectToGuildChannel(ctx)
+        
+        volume = await getServerVoiceVolume(ctx)
+        voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3'))
+        voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
+        voice_client.source.volume = volume
 
 @client.command(help="Starts or querys a server instance.\n\nSyntax:\n.server - Shows details about the server mc.ibaguette.com.\n.server [smp | test] - Starts the specified server", brief="Starts or querys a server instance.", pass_context=True)
 async def server(ctx):
@@ -2803,42 +2957,78 @@ async def server(ctx):
 @client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True)
 async def sfx(ctx):
     tighe1 = round(time.time() * 1000)
-    channel = ctx.author.voice.channel
     txt = ctx.message.content
     x = txt.split()
-    sp1 = txt.split(' ', 2)[-1]
 
     term = x[1]
     if "french" in term.lower():
         toPlay = "D:\\BaguetteBot\\QuickAudio\\FrenchAccordion"
     elif "end2" in term.lower():
         toPlay = "D:\\BaguetteBot\\QuickAudio\\NightNight2"
+    elif "seasonx" in term.lower():
+        toPlay = "D:\\BaguetteBot\\QuickAudio\\SeasonX.weba"
+    elif "seasonx" in term.lower():
+        toPlay = "D:\\BaguetteBot\\QuickAudio\\BrawlidaysOrchestral"
     else:
-        await ctx.send(f"No valid sound file found for *{term}*")
+        await ctx.send(f"No valid sound file found for *{term}*.\n```french, end2, seasonx, brawlidays```")
         return
 
     try:
-        voice_client = ctx.guild.voice_client
-        voice_client.stop()
-        voice_client.play(discord.FFmpegPCMAudio(executable="D:\\ffmpeg\\2\\bin\\ffmpeg.exe", source=(toPlay)))
-        voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
-        voice_client.source.volume = 0.5
-        tighe2 = round(time.time() * 1000)
-
-        nTighe = tighe2 - tighe1
-        ping = round(client.latency * 1000)
-        tot = nTighe + ping
-
-        await ctx.send(f"Executed, delay = **{tot}ms** (**{nTighe}ms** processing + Discord API **{ping}ms**)")
-
-        f = open(GlobalLogDir, "a")
-        f.write(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+        f = open(f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
+        x = f.read()
         f.close()
-        print(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+        volume = (float(x))
+    except FileNotFoundError:
+        await setVolume(ctx)
+
+    voice_client = await connectToGuildChannel(ctx)
+    voice_client.play(discord.FFmpegPCMAudio(executable="D:\\ffmpeg\\2\\bin\\ffmpeg.exe", source=(toPlay)))
+    voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
+    voice_client.source.volume = volume
+
+
+    tighe2 = round(time.time() * 1000)
+
+    nTighe = tighe2 - tighe1
+    ping = round(client.latency * 1000)
+    tot = nTighe + ping
+
+    await ctx.send(f"Executed, delay = **{tot}ms** (**{nTighe}ms** processing + Discord API **{ping}ms**)")
+
+    f = open(GlobalLogDir, "a")
+    f.write(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+    f.close()
+    print(f"\nAUDIO COMMAND RAN -> '.sfx' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
+
+async def setVolume(ctx):
+    server_preference_directory = f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences"
+    server_preference_file = f"{server_preference_directory}\\Voice_Chat_Volume.txt"
+    text = ctx.message.content
+    sp1 = text.split(' ', 1)[-1]
+    volume = sp1
+    try:
+        volume = float(volume)
     except:
-        channel = ctx.author.voice.channel
-        await channel.connect()
-        await sfx(ctx)
+        await ctx.send(f"```volume = float(volume)\n^^^^^^\nvolume is not a floating point (between 0 and 1)```")
+    if os.path.exists(server_preference_directory):
+        with open(server_preference_file, "w+") as e:
+            e.close()
+        f = open(server_preference_file, "a")
+        f.write(str (volume))
+        await ctx.send(f"<a:AnimatedTick:956621591108804652> Volume set to {volume*100}%.")
+        f.close()
+    else:
+        os.mkdir(server_preference_directory)
+        with open(server_preference_file, "w+") as e:
+            e.close()
+        f = open(server_preference_file, "a")
+        f.write(str (0.5))
+        f.close()
+        await ctx.send("<a:AnimatedTick:956621591108804652> Volume is now being controlled by the command `.volume`.")
+
+@client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
+async def volume(ctx):
+    await setVolume(ctx)
 
 @client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
 async def playdir(ctx):
@@ -2942,7 +3132,7 @@ async def addroles(ctx):
         await member.send(f"Successfully gave {member} all the roles I could!")
 
 @client.command()
-async def adaptor(ctx):
+async def adaptor(ctx, hidden = True):
     if ctx.message.author.id == 382784106984898560:
         txt = ctx.message.content
         x = txt.split()
@@ -3177,16 +3367,13 @@ async def yts(ctx):
                     info = ydl.extract_info(url, download=False)
                     URL = info['formats'][0]['url']
 
-                try:
-                    voice_client = ctx.guild.voice_client
-                    voice_client.stop()
-                except Exception:
-                    channel = ctx.author.voice.channel
-                    await channel.connect()
+                voice_client = await connectToGuildChannel(ctx)
+                volume = await getServerVoiceVolume(ctx)
 
                 voice_client.play(discord.FFmpegPCMAudio(URL, executable="D:\\Downloads\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\bin\\ffmpeg.exe", options=FFMPEG_OPTIONS))
                 voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
-                voice_client.source.volume = 0.3
+                voice_client.source.volume = volume
+                
                 doneMillisecs = round(time.time() * 1000)
                 timeDelay = doneMillisecs - millisecs
                 nname = result.rsplit("=", 1)
@@ -3650,78 +3837,9 @@ async def mine(ctx):
             await ctx.send("You can't do that here! Try <#785620979300302869>.")
             return
 
-    authorID = ctx.message.author.id
-    person = ctx.message.author
-    address = authorID
-    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\BaguetteBot\\draggiebot\\Nolwennium\\
+    newNumber = random.randint(10, 100)
 
-    filedir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
-    newNumber = random.randint(10,100)
-    fee = newNumber/random.randint(50,200)
-    newNumberAfterFee = newNumber - fee
-    newNumberAfterFee = round(newNumberAfterFee, 3)
-    fee = round(fee, 3)
-
-    try:
-        e = open(filedir, 'r')
-        balance = float(e.read())
-        e.close()
-        minedString = (f"Mined another {newNumber} {emoji_Nolwennium} {name_Nolwennium}!")
-    except:
-        e = open(filedir, 'w+')
-        e.write(str(0))
-        e.close()
-
-        e = open(filedir, 'r')
-        balance = float(e.read())
-        e.close()
-        minedString = f"Mined {newNumber} {emoji_Nolwennium} {name_Nolwennium}!"
-
-    roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
-
-    embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
-    embed.add_field(name="**Fees Paid**", value=f"{fee} to <@{random.choice(Croissants)}>", inline=False)
-    
-    balance = balance + newNumberAfterFee
-
-    if roleBooster in person.roles:
-        BoosterBonus = random.randint(5,15)
-        embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {emoji_Nolwennium} {name_Nolwennium}"))
-        balance = balance + BoosterBonus
-
-    embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
-    embed.set_footer(text=f"User ID: {authorID}")
-    await ctx.send(embed=embed)
-
-    f = open(filedir, 'w+')
-    f.write(str (balance))
-    f.close()
-
-    f = open(GlobalLogDir, "a", encoding='utf-8')
-    f.write(f"COMMAND RAN -> '.mine' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
-    f.close()
-
-    #   Pay the fees
-
-    randomcroissant = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{random.choice(Croissants)}.txt")
-    try:
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
-    except:
-        e = open(randomcroissant, 'w+')
-        e.write("0")
-        e.close()
-
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
-
-    balance = balance + fee
-
-    f = open(randomcroissant, 'w+')
-    f.write(str(balance))
-    f.close()
+    await changeNolwenniumBalance(ctx, newNumber)
 
 #   YouTube audio EPIC VERSION
 
@@ -3752,7 +3870,10 @@ async def on_slash_command_error(ctx, error):
 @client.event
 async def on_command_error(ctx, error):
     if "is not found" in str(error):
-        print(f"Command returned an error but will be returned. Server: {ctx.server.name}, error message = {error}")
+        print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
+        return
+    if "on cooldown" in str(error):
+        await ctx.send(f"{error}.")
         return
     if ctx.message.content.startswith(".."):
         return
