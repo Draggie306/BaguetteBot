@@ -1,9 +1,9 @@
 DraggieBot_version = "v1.2.1"
-revision = ""
+revision = "a"
 
 print("Importing all modules...\n")
 from dis import Instruction
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
 from        discord import Embed
@@ -17,6 +17,12 @@ from        json import loads
 from        pathlib import Path
 from        mcstatus import MinecraftServer
 from        instadm import InstaDM
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 """   
     To do:
@@ -161,6 +167,26 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     f = open(randomcroissant, 'w+')
     f.write(str(balance))
     f.close()
+
+YTDL_OPTIONS = {
+    'format': 'bestaudio/best',
+    'extractaudio': True,
+    'audioformat': 'mp3',
+    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'logtostderr': False,
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0',
+}
+FFMPEG_OPTIONS = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn',
+}
 
 print("Done!\nSlash commands initialising...")
 
@@ -788,8 +814,9 @@ async def on_message_delete(message):
     sendRedactionsInChannel = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
     print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
     if message.channel.id == 825470734453047297:
-        await message.channel.send(f"Stop deleting your messages in here, we're literally adding numbers, {message.author.mention}. *Their message was {message.content}*")
-        return 
+        if message.author.bot == False:
+            await message.channel.send(f"Stop deleting your messages in here, we're literally adding numbers, {message.author.mention}. *Their message was {message.content}*")
+            return 
     if os.path.isfile(sendRedactionsInChannel):
         if message.author.id != 792850689533542420:
             await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
@@ -1390,8 +1417,7 @@ async def on_message(message):
     #   Send Emoji for Face!
 
     if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
-        if hasMember or hasAdmin in person.roles:
-            print(f"ok")
+        if hasMember in person.roles:
             messageContent = message.content.lower()
             for word in messageContent.split():
                 if word in nollyWords:
@@ -1454,7 +1480,8 @@ async def on_message(message):
 #   essential do not delete     essential do not delete     essential do not delete     essential do not delete     essential do not delete     
 
     else:
-        await client.process_commands(message)
+        if message.guild.id != 789537159450198036:
+            await client.process_commands(message)
 
 #   essential do not delete     essential do not delete     essential do not delete     essential do not delete     essential do not delete     
 
@@ -1818,12 +1845,12 @@ async def coins(ctx):
                         coinAmount = oc.read()
                         oc.close()
 
-                        nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
+                        nolwenniumUserDir = (f"D:\\BaguetteBot\\draggiebot\\Nolwennium\\{userID}.txt")
                         my_file = Path(nolwenniumUserDir)
 
                         if not my_file.is_file():
                             with open(nolwenniumUserDir, 'a') as f:
-                                print (f"\nSet{name_Nolwennium} value to 0, {authorID} is a new user.")
+                                print (f"\nSet{name_Nolwennium} value to 0, {userID} is a new user.")
                                 try:
                                     f.write('0')
                                     f.close()
@@ -1891,58 +1918,58 @@ async def coins(ctx):
                 if hasCitizen in user.roles:
                     citizenPurchasable = 'Citizen: **🔓 Unlocked!**'
                 else:
-                    if int (coinBal) > 1:
+                    if int (coinBal) >= 1:
                         citizenPurchasable = f'Citizen: 0 {emoji_Coins}'
 
                 if hasKnight in user.roles:
                     knightPurchasable = 'Knight: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 25:
+                    if int(coinBal) >= 25:
                         knightPurchasable = f'Knight: 25 {emoji_Coins}'
 
                 if hasBaron in user.roles:
                     baronPurchasable = 'Baron: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 50:
+                    if int(coinBal) >= 50:
                         baronPurchasable = f'Baron: 50 {emoji_Coins}'
 
                 if hasViscount in user.roles:
                     viscountPurchasable = 'Viscount: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 100:
+                    if int(coinBal) >= 100:
                         viscountPurchasable = f'Viscount: 100 {emoji_Coins}'
 
                 if hasEarl in user.roles:
                     earlPurchasable = 'Earl: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 250:
+                    if int(coinBal) >= 250:
                         earlPurchasable = f'Earl: 250 {emoji_Coins}'
 
                 if hasMarquess in user.roles:
                     marquessPurchasable = 'Marquess: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 500:
+                    if int(coinBal) >= 500:
                         marquessPurchasable = f'Marquess: 500 {emoji_Coins}'
 
                 if hasDuke in user.roles:
                     dukePurchasable = 'Duke: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 1000:
+                    if int(coinBal) >= 1000:
                         dukePurchasable = f'Duke: 1000 {emoji_Coins}'
 
                 if hasPrince in user.roles:
                     princePurchasable = 'Prince: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 2500:
+                    if int(coinBal) >= 2500:
                         princePurchasable = f'Prince: 2,500 {emoji_Coins}'
 
                 if hasKing in user.roles:
                     kingPurchasable = 'King: **🔓 Unlocked!**'
                 else:
-                    if int(coinBal) > 10000:
+                    if int(coinBal) >= 10000:
                         kingPurchasable = f'King: 10,000 {emoji_Coins}'
 
-                if int(coinBal) > 1000000:
+                if int(coinBal) >= 1000000:
                     if hasAdmin in user.roles:
                         adminPurchasable = 'Admin: **🔓 Unlocked!**'
 
@@ -1965,7 +1992,7 @@ async def coins(ctx):
                 value=finalSum,
                 inline=False)
                 if serverID in tester_guilds:
-                    embed.set_footer(text=(f'Type ".buy item" to buy your selected item!\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
+                    embed.set_footer(text=(f'Type ".buy item" to buy your selected item! For example, .buy citizen.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
                 else:
                     embed.set_footer(text=(f"Type .buy item to buy your selected item!\nYou can buy roles for Coins, and use {name_Nolwennium} to run commands for the bot (saved across all servers)."))
                 await ctx.send(embed=embed)
@@ -1989,7 +2016,7 @@ async def coins(ctx):
 async def buy(ctx):
     if ctx.guild.id in tester_guilds:
         canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
-        if "Admin" or canRunCommand in ctx.message.author.roles:
+        if hasAdmin or canRunCommand in ctx.message.author.roles:
             async with ctx.typing():
                 member = ctx.message.author
                 authorID = ctx.message.author.id
@@ -2023,7 +2050,7 @@ async def buy(ctx):
                     role = discord.utils.get(ctx.message.guild.roles, name="Citizen")
                     await member.add_roles(role)
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought Citizen for free! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value="• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus {name_Nolwennium}", inline=False)   
+                    embed.add_field(name="Perks", value=f"• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus {name_Nolwennium}", inline=False)   
                     await ctx.send(embed=embed)
                     return
 
@@ -2040,7 +2067,7 @@ async def buy(ctx):
                 hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', ctx.message.guild.roles)
                 if hasCitizen in member.roles:
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2054,7 +2081,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Create private threads", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Citizen before {roleName}.")
@@ -2077,7 +2104,7 @@ async def buy(ctx):
                 if hasKnight in member.roles:
                     #   Tests balance if user can afford the new role.
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2092,7 +2119,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Use external stickers\nBonus {name_Nolwennium}", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Knight before {roleName}.")
@@ -2115,7 +2142,7 @@ async def buy(ctx):
                 if hasBaron in member.roles:
                     #   Tests balance if user can afford the new role.
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2130,7 +2157,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Use TTS messages\nUse server activities", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Baron before {roleName}.")
@@ -2153,7 +2180,7 @@ async def buy(ctx):
                 if hasViscount in member.roles:
                     #   Tests balance if user can afford the new role.
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2168,7 +2195,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Add and edit server events", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Viscount before {roleName}.")
@@ -2191,7 +2218,7 @@ async def buy(ctx):
                 if hasEarl in member.roles:
                     #   Tests balance if user can afford the new role.
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2206,7 +2233,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Move members in voice channels\nAccess to history of <#865291106459844609>", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Earl before {roleName}.")
@@ -2229,7 +2256,7 @@ async def buy(ctx):
                 if hasMarquess in member.roles:
                     #   Tests balance if user can afford the new role.
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         requiredAmount = cost - int(coinBal)
                         await ctx.send(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
@@ -2244,7 +2271,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"View server statistics\nMute members\nManage threads", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send(f"You must buy Marquess before {roleName}.")
@@ -2264,7 +2291,7 @@ async def buy(ctx):
                 hasDuke = discord.utils.find(lambda r: r.name == 'Duke', ctx.message.guild.roles)
                 if hasDuke in member.roles:
                     coinBalTest = int(coinBal) - cost
-                    if coinBalTest < 0:
+                    if coinBalTest <= 0:
                         await ctx.send(f"You do not have enough Coins to buy {roleName}.")
                         return
                     coinBal = int(coinBal) - cost
@@ -2276,7 +2303,7 @@ async def buy(ctx):
                     role = discord.utils.get(ctx.message.guild.roles, name=roleName)
                     await member.add_roles(role)
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)   
+                    embed.add_field(name="Perks", value=f"Use Priority speaker in voice chat\nChange others' nicknames\nTime out members\nAdd emojis and stickers\nAdd custom channels", inline=False)   
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send("You must buy Knight before Prince.")
@@ -2308,7 +2335,7 @@ async def buy(ctx):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought King for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=f"{value_Placeholder}", inline=False)
+                    embed.add_field(name="Perks", value=f"Deafen members\nPin and manage messages\nAdd webhooks\nAdd bots\nAdd channels", inline=False)
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send("You must buy Prince before King.")
@@ -3322,73 +3349,59 @@ async def yt(ctx, url: str):
 @client.command(help="Streams a youtube video using the search term and plays the audio to the voice channel.", brief="[Audio] Streams YT audio. Sligthly buggy, may die randomly.", pass_context=True)
 async def yts(ctx):
     async with ctx.typing():
-        testForToggles = ctx.message.content
-        debugMode = False
-        if ("/d") in testForToggles.lower():
-            if ctx.message.author.guild_permissions.administrator == True:
-                debugMode = True
-            else:
-                await ctx.send("Your server administrator has disabled the option to use the debug mode toggle.")
-
-        try:
+        text = ctx.message.content
+        searchTerm = text.split(' ', 1)[-1]
+        millisecs = round(time.time() * 1000)
+        results = YoutubeSearch(searchTerm, max_results=1).to_dict()
+        for v in results:
+            result = ('https://www.youtube.com/watch?v=' + v['id'])
+            print(f"\nresult = {result}")
+            url = result
             text = ctx.message.content
-            searchTerm = text.split(' ', 1)[-1]
-            millisecs = round(time.time() * 1000)
-            results = YoutubeSearch(searchTerm, max_results=1).to_dict()
-            for v in results:
-                result = ('https://www.youtube.com/watch?v=' + v['id'])
-                print(f"\nresult = {result}")
-                if debugMode == True:
-                    await ctx.send(f"DEBUG: Loading: `{result}`")
-                url = result
-                text = ctx.message.content
-                
-                YTDL_OPTIONS = {
-                    'format': 'bestaudio/best',
-                    'extractaudio': True,
-                    'audioformat': 'mp3',
-                    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-                    'restrictfilenames': True,
-                    'noplaylist': True,
-                    'nocheckcertificate': True,
-                    'ignoreerrors': False,
-                    'logtostderr': False,
-                    'quiet': True,
-                    'no_warnings': True,
-                    'default_search': 'auto',
-                    'source_address': '0.0.0.0',
-                }
-                FFMPEG_OPTIONS = {
-                    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                    'options': '-vn',
-                }
 
-                with youtube_dl.YoutubeDL(YTDL_OPTIONS) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    URL = info['formats'][0]['url']
+            print("Got YTDL_OPTIONS")
+            with youtube_dl.YoutubeDL(YTDL_OPTIONS) as ydl:
+                info = ydl.extract_info(url, download=False)
+                URL = info['formats'][0]['url']
+                print(f"\n\n{URL}\n\n")
+            print("Extracted info")
 
-                voice_client = await connectToGuildChannel(ctx)
-                volume = await getServerVoiceVolume(ctx)
+            voice_client = await connectToGuildChannel(ctx)
+            volume = await getServerVoiceVolume(ctx)
 
-                voice_client.play(discord.FFmpegPCMAudio(URL, executable="D:\\Downloads\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\ffmpeg-2021-03-14-git-1d61a31497-full_build\\bin\\ffmpeg.exe", options=FFMPEG_OPTIONS))
-                voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
-                voice_client.source.volume = volume
-                
-                doneMillisecs = round(time.time() * 1000)
-                timeDelay = doneMillisecs - millisecs
-                nname = result.rsplit("=", 1)
-                #nTighem = datetime.time()
-                await ctx.send(f"Playing: {nname[1]}`time taken: {timeDelay}ms`")
-        except AttributeError:
-            await ctx.send("You are not in a voice channel. You need to be in one to use audio commands.")
-            return
-        except:
-            if debugMode == True:
-                await ctx.send('DEBUG: An error cccured, most likely the bot is not in a channel already. Reconnecting...')
-            channel = ctx.author.voice.channel
-            await channel.connect()
-            await yts(ctx)
+            print("Called volume and voiceclient")
 
+            voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS))
+            voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
+            voice_client.source.volume = volume
+
+            print("Playing audio")
+            voice_client.pause()
+            print("Paused audio")
+            await asyncio.sleep(0.3)
+            voice_client.resume()
+
+            print("Resumed audio")
+            
+
+            doneMillisecs = round(time.time() * 1000)
+            timeDelay = doneMillisecs - millisecs
+            video_title = info.get('title')
+            
+            duration = round((info.get('duration'))/60, 2)
+
+            embed=discord.Embed(title="Playing audio", description=f"**[{video_title}]({info.get('webpage_url')})**", colour=0x228B22)
+            embed.add_field(name="Channel", value=f"[{info.get('channel')}]({info.get('channel_url')})")
+            embed.add_field(name="Duration", value=f"{duration}  minutes")
+            embed.add_field(name="Views", value=f"{info.get('view_count')}")
+            embed.add_field(name="Likes", value=f"{info.get('like_count')}")
+            embed.add_field(name="Time taken", value=f"{timeDelay}ms (0.3s awaited)")
+            embed.add_field(name="Audio bitrate", value=f"{info.get('abr')} kbps")
+            embed.set_thumbnail(url=(info.get('thumbnail')))
+            await ctx.send(embed=embed)
+            print("Send embed")
+
+            
 #   Get links
 
 @client.command(help="Gets YouTube video raw links.", brief="Gets YouTube video's and raw audio URL", pass_context=True)
