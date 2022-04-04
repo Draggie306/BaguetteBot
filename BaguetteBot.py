@@ -1,8 +1,7 @@
 DraggieBot_version = "v1.2.1"
-revision = "a"
+revision = "b"
 
 print("Importing all modules...\n")
-from dis import Instruction
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
@@ -20,7 +19,7 @@ from        instadm import InstaDM
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename=f'D:\\BaguetteBot\\Logs\\{DraggieBot_version}{revision}-{time.time()}.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
@@ -168,6 +167,61 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     f.write(str(balance))
     f.close()
 
+    print(f"CURRENCY - {name_Nolwennium} > {ctx.message.author.id} now has {newNumberAfterFee} {name_Nolwennium}")
+
+async def changeCoinBalance(message, number_to_change_by):
+    coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins\\{message.author.id}.txt")
+    serverdir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins")
+    
+    if not os.path.exists(serverdir):
+        os.makedirs(serverdir)
+
+    try:
+        f = open(coinDir, 'r')
+        coins = f.read()
+        f.close()
+
+        if message.content != ".":
+            f = open(coinDir, 'w+')
+            coins = (int (str (coins))) + number_to_change_by
+            f.close()
+
+            with open(coinDir, 'a') as f:
+                f.write(str (coins))
+                f.close()
+
+    except FileNotFoundError:   #   User not found
+        with open(coinDir, 'a') as f:
+            print (f"\nSet coin value to 1, {message.author.name} is a new user.")
+            try:
+                f.write('1')
+                f.close()
+            except Exception:
+                f.write('1')
+                f.close()
+
+        sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+        my_file = Path(sendLogsDir)
+        if my_file.is_file():
+            try:
+                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                embed = discord.Embed(title="User First Message", 
+                description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                await bbLogChnlId.send(embed=embed)
+            except Exception:
+                print(f"Unable to send that a new user has joined. This server, {message.guild.name}, doesn't have a text channel called 'event-log-baguette'.")
+                guild = message.author.guild
+                await guild.create_text_channel('event-log-baguette')
+                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
+                await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
+                await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
+                embed = discord.Embed(title="User First Message", 
+                description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                await bbLogChnlId.send(embed=embed)
+    except ValueError:
+        f.write('1')
+        f.close()
+
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
     'extractaudio': True,
@@ -185,7 +239,7 @@ YTDL_OPTIONS = {
 }
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn',
+    'options': '-vn -report',
 }
 
 print("Done!\nSlash commands initialising...")
@@ -1248,16 +1302,6 @@ async def on_message(message):
                             await message.delete()
                             await message.channel.send(f"{message.author.mention}, you must have a higher role than that in order to send server invite links!")
 
-    if message.author.id == 854323313631559680:
-        blacklistCheck = message.content.lower()
-        with open("D:\\BaguetteBot\\JSONs\\antiFrench.json", "r", encoding="utf8") as file:
-            data = loads(file.read())
-            for word in data:
-                if word in blacklistCheck:
-                    person = message.author   
-                    await message.channel.send(f"Sorry but you can't say that, {person.mention}")
-                await message.delete()
-
     if message.channel.name == 'nolwennium-138':
         emoji = client.get_emoji(786177817993805844)
         await message.add_reaction(emoji)
@@ -1282,65 +1326,9 @@ async def on_message(message):
         else:
             print("not there")
 
-    authorID = message.author.id
-    person = message.author
-    boosterRole = discord.utils.find(lambda r: r.name == 'Server Booster', person.roles)
-    global currentMinute
-    global coinDir
-    
-    coinDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{authorID}.txt")
-    serverdir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins")
-    
-    if not os.path.exists(serverdir):
-        os.makedirs(serverdir)
+#   Coin adder.
 
-    try:
-        f = open(coinDir, 'r')
-        coins = f.read()
-        f.close()
-
-        if message.content != ".":
-            f = open(coinDir, 'w+')
-            coins = (int (str (coins))) + 1
-            f.close()
-
-            with open(coinDir, 'a') as f:
-                f.write(str (coins))
-                f.close()
-
-    except FileNotFoundError:   #   User not found
-        with open(coinDir, 'a') as f:
-            print (f"\nSet coin value to 1, {message.author.name} is a new user.")
-            try:
-                f.write('1')
-                f.close()
-            except Exception:
-                f.write('1')
-                f.close()
-
-        sendLogsDir = (f"D:\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
-        my_file = Path(sendLogsDir)
-        if my_file.is_file():
-            try:
-                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-
-                embed = discord.Embed(title="User First Message", 
-                description=(f"{person.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
-                await bbLogChnlId.send(embed=embed)
-            except Exception:
-                print(f"Unable to send that a new user has joined. This server, {serverName}, doesn't have a text channel called 'event-log-baguette'.")
-                guild = message.author.guild
-                await guild.create_text_channel('event-log-baguette')
-                bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
-                await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
-                embed = discord.Embed(title="User First Message", 
-                description=(f"{person.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
-                await bbLogChnlId.send(embed=embed)
-    except ValueError:
-        f.write('1')
-        f.close()
-    
+    await changeCoinBalance(message, 1)
 
 #   Generic commands.
 
@@ -2016,7 +2004,7 @@ async def coins(ctx):
 async def buy(ctx):
     if ctx.guild.id in tester_guilds:
         canRunCommand = discord.utils.find(lambda r: r.name == 'Member', ctx.message.guild.roles)
-        if hasAdmin or canRunCommand in ctx.message.author.roles:
+        if canRunCommand in ctx.message.author.roles:
             async with ctx.typing():
                 member = ctx.message.author
                 authorID = ctx.message.author.id
@@ -2776,7 +2764,7 @@ async def tts(ctx):
         voice_client = await connectToGuildChannel(ctx)
         
         volume = await getServerVoiceVolume(ctx)
-        voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3'))
+        voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3', executable="D:\\ffmpeg\\2\\bin\\ffmpeg.exe",))
         voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
         voice_client.source.volume = volume
 
@@ -3371,19 +3359,11 @@ async def yts(ctx):
 
             print("Called volume and voiceclient")
 
-            voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS))
-            voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
-            voice_client.source.volume = volume
-
-            print("Playing audio")
-            voice_client.pause()
-            print("Paused audio")
-            await asyncio.sleep(0.3)
-            voice_client.resume()
+            voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
+            voice_client.source = discord.PCMVolumeTransformer(voice_client.source, volume=volume)
 
             print("Resumed audio")
             
-
             doneMillisecs = round(time.time() * 1000)
             timeDelay = doneMillisecs - millisecs
             video_title = info.get('title')
@@ -3395,7 +3375,7 @@ async def yts(ctx):
             embed.add_field(name="Duration", value=f"{duration}  minutes")
             embed.add_field(name="Views", value=f"{info.get('view_count')}")
             embed.add_field(name="Likes", value=f"{info.get('like_count')}")
-            embed.add_field(name="Time taken", value=f"{timeDelay}ms (0.3s awaited)")
+            embed.add_field(name="Time taken", value=f"{timeDelay}ms")
             embed.add_field(name="Audio bitrate", value=f"{info.get('abr')} kbps")
             embed.set_thumbnail(url=(info.get('thumbnail')))
             await ctx.send(embed=embed)
