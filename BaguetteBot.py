@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.1"
-revision = "b"
+revision = "c"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
@@ -519,40 +519,47 @@ geo1Questions = ["Give one reason why tropical storms have a seasonal pattern [1
             ),
 
             create_option(
-            name="pos",
-            description="(Testers only) Enter PosInt for role colour display in hierarchy (dont touch me please!!)",
-            option_type=3,
+            name="delete",
+            description="do you want to delete your role? (ignores any hex code added)",
+            option_type=5,
             required=False,
             )])
-async def moverole(ctx, colour: str, pos=None):
+async def moverole(ctx, colour: str, **kwargs):
+    if "delete" in kwargs:
+        role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
+        if role is None:
+            await ctx.send(f"No role to delete. `'NoneType' has no attribute 'delete'.`")
+            return
+        await role.delete()
+        await ctx.send("Role deleted")
+        return
     roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.guild.roles)
-    roleTraineeMod = discord.utils.find(lambda r: r.name == 'Trainee Mod', ctx.guild.roles)
+    roleTraineeMod = discord.utils.get(ctx.guild.roles, name=f"Trainee Mod")
     roleKing = discord.utils.find(lambda r: r.name == 'King', ctx.guild.roles)
     roleCroissant = discord.utils.find(lambda r: r.name == 'Croissant', ctx.guild.roles)
     if roleCroissant in ctx.author.roles:
         await ctx.send("Your highest role **Croissant** is above Admin, so your custom colour will not show")
-    if roleBooster not in ctx.author.roles:
-        if roleTraineeMod or roleKing or roleCroissant not in ctx.author.roles:
-            await ctx.send("You aren't boosting the server or have a high enough role. Boost the server in order to unlock Custom Colours!")
-            return
-    number_of_roles = (len(ctx.guild.roles))
-    pos = number_of_roles - 16
-    role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
-    if role is None:
-        await ctx.guild.create_role(name=f"{ctx.author.name}")
+    if roleKing or roleTraineeMod or roleKing or roleCroissant or roleBooster in ctx.author.roles:
+        number_of_roles = (len(ctx.guild.roles))
+        pos = number_of_roles - 10
         role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
-        await ctx.send(f"Role added! at position {pos}")
-    try:
-        colour = int(colour, 16)
-        await role.edit(colour=discord.Colour(colour), position=int(pos))
-        await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
-    except discord.Forbidden:
-        await ctx.send("You do not have permission to do that")
-    except discord.HTTPException:
-        await ctx.send("Failed to move role")
-    except discord.InvalidArgument:
-        await ctx.send("Invalid argument")
-    await ctx.author.add_roles(role)
+        if role is None:
+            await ctx.guild.create_role(name=f"{ctx.author.name}")
+            role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
+            await ctx.send(f"Role added! at position {pos}")
+        try:
+            colour = int(colour, 16)
+            await role.edit(colour=discord.Colour(colour), position=int(pos))
+            await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
+        except discord.Forbidden:
+            await ctx.send("You do not have permission to do that")
+        except discord.HTTPException:
+            await ctx.send("Failed to move role")
+        except discord.InvalidArgument:
+            await ctx.send("Invalid argument")
+        await ctx.author.add_roles(role)
+    else:
+        await ctx.send("You aren't boosting the server or have a high enough role. Boost the server in order to unlock Custom Colours!")
 
 @slash.slash(name="nsfw",
             description="haha yes.",
@@ -736,7 +743,7 @@ async def on_member_join(member):
     if revision != "":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members| CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + {memoryUsage}%")))
 
 @client.event
 async def on_member_remove(member):
@@ -1028,6 +1035,22 @@ async def on_member_update(before, after):
 
     if before.status != after.status:
         if guild.id == 759861456300015657:
+            roleFN = discord.utils.get(after.guild.roles, name="Fortnite")
+            roleMC = discord.utils.get(after.guild.roles, name="Minecraft")
+            roleV = discord.utils.get(after.guild.roles, name="Valorant")
+            roleGTA = discord.utils.get(after.guild.roles, name="Valorant")
+            if after.activity and after.activity.name.lower() in "fortnite":
+                await after.add_roles(roleFN)
+                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
+            if after.activity and after.activity.name.lower() in "minecraft":
+                await after.add_roles(roleMC)
+                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
+            if after.activity and after.activity.name.lower() in "valorant":
+                await after.add_roles(roleV)
+                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
+            if after.activity and after.activity.name.lower() in "grand theft auto v":
+                await after.add_roles(roleGTA)
+                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
             croissant = discord.utils.get(after.guild.roles, name='Croissant')
             baguette = discord.utils.get(after.guild.roles, name='Baguette')
             if croissant in after.roles:
@@ -1119,8 +1142,7 @@ async def on_member_update(before, after):
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             #await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!') <<<<<<                   In Brigaders Helper
             #print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
-            print(f"JOIN >>> {after.name} has joined the server {after.guild.name}")
-
+            
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
         embed = discord.Embed(title=f"Changed roles", colour=0x5865F2)
