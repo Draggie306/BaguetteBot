@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.1"
-revision = "c"
+revision = "d"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
@@ -230,15 +230,15 @@ YTDL_OPTIONS = {
     'restrictfilenames': True,
     'noplaylist': True,
     'nocheckcertificate': True,
-    'ignoreerrors': False,
+    'ignoreerrors': True,
     'logtostderr': False,
-    'quiet': True,
+    'quiet': False,
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
 }
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'before_options': '-reconnect 99 -reconnect_streamed 99 -reconnect_delay_max 99',
     'options': '-vn -report',
 }
 
@@ -1033,24 +1033,49 @@ async def on_member_update(before, after):
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     guild = after.guild
 
-    if before.status != after.status:
+    if after.activity is not None:
         if guild.id == 759861456300015657:
+            print(f"OP WATCHDOG: ACTIVITY of {after.name} has been updated to {after.activity} at {datetime.now()}")
             roleFN = discord.utils.get(after.guild.roles, name="Fortnite")
             roleMC = discord.utils.get(after.guild.roles, name="Minecraft")
             roleV = discord.utils.get(after.guild.roles, name="Valorant")
             roleGTA = discord.utils.get(after.guild.roles, name="Valorant")
-            if after.activity and after.activity.name.lower() in "fortnite":
-                await after.add_roles(roleFN)
-                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
-            if after.activity and after.activity.name.lower() in "minecraft":
-                await after.add_roles(roleMC)
-                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
-            if after.activity and after.activity.name.lower() in "valorant":
-                await after.add_roles(roleV)
-                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
-            if after.activity and after.activity.name.lower() in "grand theft auto v":
-                await after.add_roles(roleGTA)
-                print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: {after.activity.name}.")
+            print(str(after.activities))
+            if "name='Fortnite'" in str(after.activities):
+                if roleFN in after.roles:
+                    pass
+                else:
+                    await after.add_roles(roleFN)
+                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Fortnite.")
+                    await after.send(f"You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+            if "name='Minecraft'" in str(after.activities):
+                if roleFN in after.roles:
+                    pass
+                else:
+                    await after.add_roles(roleMC)
+                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Minecraft.")
+                    await after.send(f"You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+            if "VALORANT" in str(after.activities):
+                if roleV in after.roles:
+                    pass
+                else:
+                    await after.add_roles(roleV)
+                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: VALORANT.")
+                    await after.send(f"You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+            if "Grand Theft Auto V" in str(after.activities):
+                if roleGTA in after.roles:
+                    pass
+                else:
+                    await after.add_roles(roleGTA)
+                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: GTAV.")
+                    await after.send(f"You're currently playing **Grand Theft Auto V**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **GTAV**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+
+    if before.status != after.status:
+        if guild.id == 759861456300015657:
             croissant = discord.utils.get(after.guild.roles, name='Croissant')
             baguette = discord.utils.get(after.guild.roles, name='Baguette')
             if croissant in after.roles:
