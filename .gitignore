@@ -4,3 +4,5 @@ BaguetteBot*.py
 Baguettes/test.txt
 pip.txt
 *.log
+Lavalink.jar
+*.pyc

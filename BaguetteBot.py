@@ -1,5 +1,5 @@
-DraggieBot_version = "v1.2.1"
-revision = "d"
+DraggieBot_version = "v1.2.2"
+revision = ""
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
@@ -272,6 +272,7 @@ async def test(ctx):
 @slash.slash(name="Ping", description="Shows bot latency to Discord's servers, using Discord WebSocket protocol.")
 async def _ping(ctx):
     print("ping'd")
+    GlobalLogDir=("D:\\BaguetteBot\\draggiebot\\GlobalLog.txt")
     if round(client.latency * 1000) <= 100:
         embed = discord.Embed(title="PING", description=f"Message delay is is **{round(client.latency *1000)}** milliseconds!", color=0x44ff44)
     elif round(client.latency * 1000) <= 150:
@@ -682,7 +683,8 @@ async def on_ready():
     print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
     global ready_start_time, roleMember, hasMember, hasAdmin
     ready_start_time = time.time()
-
+    client.load_extension('cogs.music')
+    print("Music cog loaded")
     channel = client.get_channel(838107252115374151) # Brigaders_channel
     await channel.send(f"Online at **{datetime.now()}**")
     f = open(GlobalLogDir, "a", encoding="utf-8")
@@ -1041,7 +1043,7 @@ async def on_member_update(before, after):
             roleV = discord.utils.get(after.guild.roles, name="Valorant")
             roleGTA = discord.utils.get(after.guild.roles, name="Valorant")
             print(str(after.activities))
-            if "name='Fortnite'" in str(after.activities):
+            if "Fortnite" in str(after.activities):
                 if roleFN in after.roles:
                     pass
                 else:
@@ -1049,8 +1051,8 @@ async def on_member_update(before, after):
                     print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Fortnite.")
                     await after.send(f"You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
                     await draggie.send(f"[Sent to {after.mention}] You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-            if "name='Minecraft'" in str(after.activities):
-                if roleFN in after.roles:
+            if "Minecraft" in str(after.activities):
+                if roleMC in after.roles:
                     pass
                 else:
                     await after.add_roles(roleMC)
@@ -3193,8 +3195,12 @@ async def addroles(ctx):
                 await member.send(f"Error: **`{r.name}` couldn't be given** to {member}: {e}")
         await member.send(f"Successfully gave {member} all the roles I could!")
 
-@client.command()
-async def adaptor(ctx, hidden = True):
+@client.command(help="Edit your BaguetteBot preferences here. Change DMs, role notifications, Coins earning and more.", brief="Edit your BaguetteBot preferences.")
+async def preferences(ctx):
+    print("test")
+
+@client.command(hidden = True)
+async def adaptor(ctx):
     if ctx.message.author.id == 382784106984898560:
         txt = ctx.message.content
         x = txt.split()
@@ -3406,10 +3412,12 @@ async def yts(ctx):
 
             print("Called volume and voiceclient")
 
-            voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
-            voice_client.source = discord.PCMVolumeTransformer(voice_client.source, volume=volume)
+            source = await discord.FFmpegOpusAudio.from_probe(URL, **FFMPEG_OPTIONS)
+            voice_client.play(source)    
+            voice_client.is_playing()
+            #voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
+            #voice_client.source = discord.PCMVolumeTransformer(voice_client.source, volume=volume)
 
-            print("Resumed audio")
             
             doneMillisecs = round(time.time() * 1000)
             timeDelay = doneMillisecs - millisecs
