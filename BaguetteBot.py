@@ -1,8 +1,8 @@
 DraggieBot_version = "v1.2.2"
-revision = ""
+revision = "a"
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
 from        discord import Embed
@@ -33,6 +33,9 @@ logger.addHandler(handler)
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
+print("Done!\nLoading Lavalink...")
+subprocess.Popen(['java', '-jar', 'Lavalink.jar'])
+
 print("Done!\nInitialising Bot...")
 global start_time
 start_time = time.time()
@@ -51,13 +54,23 @@ value_Placeholder = "TBD/tbd"
 name_Nolwennium = "Nolwennium"
 id_Draggie = 382784106984898560
 
+help_command = commands.DefaultHelpCommand(
+    no_category = 'Dot Commands'
+)
+
 PYTHONIOENCODING="utf-8"
 
 client = discord.Client()
 intents = discord.Intents().all()
 
 client = discord.Client(intents=intents)
-client = commands.Bot(command_prefix='.', case_insensitive=True, intents=intents)
+client = commands.Bot(
+    command_prefix = commands.when_mentioned_or('.'), 
+    case_insensitive=True, 
+    intents=intents,
+    description = f"BaguetteBot - version {DraggieBot_version}{revision}",
+    help_command = help_command
+    )
 
 slash = SlashCommand(client, sync_commands=True)
 
@@ -247,7 +260,6 @@ print("Done!\nSlash commands initialising...")
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
-
 
 @slash.slash(name="debug", description="Spits out debug info for debugging bugs")
 async def test(ctx):
@@ -684,7 +696,7 @@ async def on_ready():
     global ready_start_time, roleMember, hasMember, hasAdmin
     ready_start_time = time.time()
     client.load_extension('cogs.music')
-    print("Music cog loaded")
+    print("COG: Music loaded!")
     channel = client.get_channel(838107252115374151) # Brigaders_channel
     await channel.send(f"Online at **{datetime.now()}**")
     f = open(GlobalLogDir, "a", encoding="utf-8")
@@ -2776,10 +2788,9 @@ async def connectToGuildChannel(ctx):
 async def getServerVoiceVolume(ctx):
     try:
         f = open(f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
-        x = f.read()
+        volume = f.read()
         f.close()
-        volume = (float(x))
-        return volume
+        return int(volume)
     except FileNotFoundError:
         await setVolume(ctx)
 
@@ -3070,23 +3081,19 @@ async def setVolume(ctx):
     text = ctx.message.content
     sp1 = text.split(' ', 1)[-1]
     volume = sp1
-    try:
-        volume = float(volume)
-    except:
-        await ctx.send(f"```volume = float(volume)\n^^^^^^\nvolume is not a floating point (between 0 and 1)```")
     if os.path.exists(server_preference_directory):
         with open(server_preference_file, "w+") as e:
             e.close()
         f = open(server_preference_file, "a")
         f.write(str (volume))
-        await ctx.send(f"<a:AnimatedTick:956621591108804652> Volume set to {volume*100}%.")
+        await ctx.send(f"<a:AnimatedTick:956621591108804652> Volume set to {volume}%.\n*This will take effect next time an audio command is run.*")
         f.close()
     else:
         os.mkdir(server_preference_directory)
         with open(server_preference_file, "w+") as e:
             e.close()
         f = open(server_preference_file, "a")
-        f.write(str (0.5))
+        f.write(str (100))
         f.close()
         await ctx.send("<a:AnimatedTick:956621591108804652> Volume is now being controlled by the command `.volume`.")
 
@@ -3845,7 +3852,7 @@ async def ship(ctx):
 
 #   broadcast
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, hidden=True)
 async def broadcast(ctx, *, msg):
     if ctx.message.author.id == 382784106984898560:
         beans = 0

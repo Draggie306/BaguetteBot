@@ -6,3 +6,4 @@ pip.txt
 *.log
 Lavalink.jar
 *.pyc
+logs/*
