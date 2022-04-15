@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.2"
-revision = "b"
+revision = "c"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess
@@ -547,15 +547,25 @@ async def moverole(ctx, colour: str, **kwargs):
         await role.delete()
         await ctx.send("Role deleted")
         return
-    roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.guild.roles)
-    roleTraineeMod = discord.utils.get(ctx.guild.roles, name=f"Trainee Mod")
-    roleKing = discord.utils.find(lambda r: r.name == 'King', ctx.guild.roles)
-    roleCroissant = discord.utils.find(lambda r: r.name == 'Croissant', ctx.guild.roles)
+    access = False
+    roleStaff = discord.utils.get(ctx.guild.roles, name="Staff")
+    if roleStaff in ctx.author.roles:
+        access = True
+        await ctx.send("Your highest role **Staff** is above the Custom Colour section, so your custom colour will not show")
+        print(f"{ctx.author.name} has Staff")
+    roleKing = discord.utils.get(ctx.guild.roles, name="King")
+    if roleKing in ctx.author.roles:
+        access = True
+        print(f"{ctx.author.name} has King")
+    roleCroissant = discord.utils.get(ctx.guild.roles, name="Croissant")
     if roleCroissant in ctx.author.roles:
-        await ctx.send("Your highest role **Croissant** is above Admin, so your custom colour will not show")
-    if roleKing or roleTraineeMod or roleKing or roleCroissant or roleBooster in ctx.author.roles:
+        access = True
+        print(f"{ctx.author.name} has Croissant")
+        await ctx.send("Your highest role **Croissant** is above the Custom Colour section, so your custom colour will not show")
+    if access:
+        print(f"Allowed user {ctx.author.name} - {ctx.author.roles}")
         number_of_roles = (len(ctx.guild.roles))
-        pos = number_of_roles - 16
+        pos = number_of_roles - 18
         role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
         if role is None:
             await ctx.guild.create_role(name=f"CC: {ctx.author.name}")
@@ -566,7 +576,7 @@ async def moverole(ctx, colour: str, **kwargs):
                 try:
                     colour = int(colour, 16)
                 except Exception as e:
-                    await ctx.send(f"The colour inputted, {colour} is not a valid hex code. You can find a valid one on a site like https://htmlcolorcodes.com.")
+                    await ctx.send(f"The colour inputted, {colour}, is not a valid hex code. You can find a valid one on a site like https://htmlcolorcodes.com. Make sure it's just the code, not the hashtag.")
                     return
                 await role.edit(colour=discord.Colour(colour), position=int(pos))
                 await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
@@ -581,6 +591,9 @@ async def moverole(ctx, colour: str, **kwargs):
             await ctx.send("Invalid argument")
         await ctx.author.add_roles(role)
     else:
+        role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
+        if role:
+            await role.delete()
         await ctx.send("You are neither boosting the server nor have a high enough role. Boost the server in order to unlock Custom Colours!")
 
 @slash.slash(name="nsfw",
