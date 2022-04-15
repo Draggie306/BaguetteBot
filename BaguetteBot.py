@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.2"
-revision = "a"
+revision = "b"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess
@@ -34,7 +34,8 @@ logger.addHandler(handler)
 youtube_dl.utils.bug_reports_message = lambda: ''
 
 print("Done!\nLoading Lavalink...")
-subprocess.Popen(['java', '-jar', 'Lavalink.jar'])
+subprocess.Popen(['java', '-jar', 'D:\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\Lavalink.jar'])
+time.sleep(5)
 
 print("Done!\nInitialising Bot...")
 global start_time
@@ -219,7 +220,7 @@ async def changeCoinBalance(message, number_to_change_by):
             try:
                 bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 embed = discord.Embed(title="User First Message", 
-                description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                    description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
             except Exception:
                 print(f"Unable to send that a new user has joined. This server, {message.guild.name}, doesn't have a text channel called 'event-log-baguette'.")
@@ -229,7 +230,7 @@ async def changeCoinBalance(message, number_to_change_by):
                 await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
                 await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
                 embed = discord.Embed(title="User First Message", 
-                description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                    description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
     except ValueError:
         f.write('1')
@@ -251,8 +252,8 @@ YTDL_OPTIONS = {
     'source_address': '0.0.0.0',
 }
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 99 -reconnect_streamed 99 -reconnect_delay_max 99',
-    'options': '-vn -report',
+    'before_options': '-reconnect True -reconnect_streamed True -reconnect_delay_max 5',
+    'options': '-vn -report -loglevel debug',
 }
 
 print("Done!\nSlash commands initialising...")
@@ -533,13 +534,13 @@ geo1Questions = ["Give one reason why tropical storms have a seasonal pattern [1
 
             create_option(
             name="delete",
-            description="do you want to delete your role? (ignores any hex code added)",
+            description="do you want to delete your role? (ignores any hex code added) - ANYTHING HERE = DELETE!",
             option_type=5,
             required=False,
             )])
 async def moverole(ctx, colour: str, **kwargs):
     if "delete" in kwargs:
-        role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
+        role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
         if role is None:
             await ctx.send(f"No role to delete. `'NoneType' has no attribute 'delete'.`")
             return
@@ -554,16 +555,24 @@ async def moverole(ctx, colour: str, **kwargs):
         await ctx.send("Your highest role **Croissant** is above Admin, so your custom colour will not show")
     if roleKing or roleTraineeMod or roleKing or roleCroissant or roleBooster in ctx.author.roles:
         number_of_roles = (len(ctx.guild.roles))
-        pos = number_of_roles - 10
-        role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
+        pos = number_of_roles - 16
+        role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
         if role is None:
-            await ctx.guild.create_role(name=f"{ctx.author.name}")
-            role = discord.utils.get(ctx.guild.roles, name=f"{ctx.author.name}")
+            await ctx.guild.create_role(name=f"CC: {ctx.author.name}")
+            role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
             await ctx.send(f"Role added! at position {pos}")
         try:
-            colour = int(colour, 16)
-            await role.edit(colour=discord.Colour(colour), position=int(pos))
-            await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
+            if colour != "00acff":
+                try:
+                    colour = int(colour, 16)
+                except Exception as e:
+                    await ctx.send(f"The colour inputted, {colour} is not a valid hex code. You can find a valid one on a site like https://htmlcolorcodes.com.")
+                    return
+                await role.edit(colour=discord.Colour(colour), position=int(pos))
+                await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
+            else:
+                await ctx.send("That colour has been reserved. Choose another!")
+                return
         except discord.Forbidden:
             await ctx.send("You do not have permission to do that")
         except discord.HTTPException:
@@ -572,7 +581,7 @@ async def moverole(ctx, colour: str, **kwargs):
             await ctx.send("Invalid argument")
         await ctx.author.add_roles(role)
     else:
-        await ctx.send("You aren't boosting the server or have a high enough role. Boost the server in order to unlock Custom Colours!")
+        await ctx.send("You are neither boosting the server nor have a high enough role. Boost the server in order to unlock Custom Colours!")
 
 @slash.slash(name="nsfw",
             description="haha yes.",
@@ -1055,38 +1064,39 @@ async def on_member_update(before, after):
             roleV = discord.utils.get(after.guild.roles, name="Valorant")
             roleGTA = discord.utils.get(after.guild.roles, name="Valorant")
             print(str(after.activities))
-            if "Fortnite" in str(after.activities):
-                if roleFN in after.roles:
-                    pass
-                else:
-                    await after.add_roles(roleFN)
-                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Fortnite.")
-                    await after.send(f"You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-            if "Minecraft" in str(after.activities):
-                if roleMC in after.roles:
-                    pass
-                else:
-                    await after.add_roles(roleMC)
-                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Minecraft.")
-                    await after.send(f"You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-            if "VALORANT" in str(after.activities):
-                if roleV in after.roles:
-                    pass
-                else:
-                    await after.add_roles(roleV)
-                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: VALORANT.")
-                    await after.send(f"You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-            if "Grand Theft Auto V" in str(after.activities):
-                if roleGTA in after.roles:
-                    pass
-                else:
-                    await after.add_roles(roleGTA)
-                    print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: GTAV.")
-                    await after.send(f"You're currently playing **Grand Theft Auto V**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                    await draggie.send(f"[Sent to {after.mention}] You're currently playing **GTAV**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+            if 0 == 1:
+                if "Fortnite" in str(after.activities):
+                    if roleFN in after.roles:
+                        pass
+                    else:
+                        await after.add_roles(roleFN)
+                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Fortnite.")
+                        await after.send(f"You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                if "Minecraft" in str(after.activities):
+                    if roleMC in after.roles:
+                        pass
+                    else:
+                        await after.add_roles(roleMC)
+                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Minecraft.")
+                        await after.send(f"You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                if "VALORANT" in str(after.activities):
+                    if roleV in after.roles:
+                        pass
+                    else:
+                        await after.add_roles(roleV)
+                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: VALORANT.")
+                        await after.send(f"You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                if "Grand Theft Auto V" in str(after.activities):
+                    if roleGTA in after.roles:
+                        pass
+                    else:
+                        await after.add_roles(roleGTA)
+                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: GTAV.")
+                        await after.send(f"You're currently playing **Grand Theft Auto V**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
+                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **GTAV**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
 
     if before.status != after.status:
         if guild.id == 759861456300015657:
@@ -1101,7 +1111,7 @@ async def on_member_update(before, after):
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 print(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
-                await LoggingChannel.send(embed=embed)
+                #await LoggingChannel.send(embed=embed)
                 return
             if baguette in after.roles:
                 embed = discord.Embed(title=f"HIGH PROFILE status update", colour=0x00acff)
@@ -1112,7 +1122,7 @@ async def on_member_update(before, after):
                 embed.add_field(name='Date/Time', value=tighem)
                 LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [BAGUETTE]: `{tighem}`")
-                await LoggingChannel.send(embed=embed)
+                #await LoggingChannel.send(embed=embed)
                 return
 
         embed = discord.Embed(title=f"Status updated", colour=0x5865F2)
@@ -1120,8 +1130,8 @@ async def on_member_update(before, after):
         embed.add_field(name='Before', value=before.status)
         embed.add_field(name='After', value=after.status)
         embed.add_field(name='Date/Time', value=tighem)
-        send = True
-        print(f"OP WATCHDOG: STATUS of {after} has been updated FROM {before.status} TO {after.status} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        send = False
+        print(f"STATUS of {after} has been updated FROM {before.status} TO {after.status} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.nick != after.nick:
         embed = discord.Embed(title=f"Changed nick", colour=0x5865F2)
@@ -1177,7 +1187,7 @@ async def on_member_update(before, after):
                 newCoins = int(f.read())
                 f.close()
 
-                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /boostercolour for more information.")
+                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             #await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!') <<<<<<                   In Brigaders Helper
             #print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
@@ -2391,33 +2401,7 @@ async def buy(ctx):
                 return
             
             if determiner == 'admin':
-                hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', ctx.message.guild.roles)
-                if hasAdmin in member.roles:
-                    await ctx.send("You can't buy Admin, you already have it!")
-                    return
-                coinBalTest = int(coinBal) - 1000000
-
-                if coinBalTest < 1000000:
-                    await ctx.send("You do not have enough Coins to buy Admin.")
-                    return
-                hasCroissant = discord.utils.find(lambda r: r.name == 'Croissant', ctx.message.guild.roles)
-                hasBaguette = discord.utils.find(lambda r: r.name == 'Baguette', ctx.message.guild.roles)
-                if hasBaguette or hasCroissant in member.roles:
-                    coinBal = int(coinBal) - 1000000
-                    f = open(filedir, 'w+')
-                    f.close()
-                    with open(filedir, 'a') as f:
-                        f.write(str (coinBal))
-                        f.close()
-                    
-                    embed = discord.Embed(title="The Shop", description=(f"You've just bought Admin for 1,000,000 {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", value=r"value = f'{ctx.guild.Administrator}'", inline=False)
-                    role = discord.utils.get(ctx.message.guild.roles, name="Admin")
-                    await member.add_roles(role)
-                    await ctx.send(embed=embed)
-                    return
-                else:
-                    await ctx.send("You aren't French")
+                await ctx.send("Item disabled")
             else:
                 await ctx.send(f"**{determiner}** isn't a valid item to buy. Try `Citizen/Knight/Baron/Viscount/Earl/Marquess/Duke/Prince/King/Admin`!")
         else:
@@ -3175,6 +3159,77 @@ async def download(ctx, url: str):
             print("Done!")
             await ctx.send("Done!")
 
+
+@client.command(hidden=True, brief="Backup server emojis", help="Backs up your server emojis. This will be retrievable soon.")
+async def emojis(ctx):
+    if ctx.message.author.id == 382784106984898560:
+        message = (ctx.message.content).split()
+        try:
+            guild_id = int((message[1]))
+            newGuild = client.get_guild(guild_id)
+            await ctx.send(f"Getting emojis for {newGuild.id} // {newGuild.name}")
+            emoji_list = []
+            emojis = 0
+            for emoji in newGuild.emojis:
+                emojis += 1
+                emoji_list.append(f"{emoji.name} - {emoji.url}") 
+                x = requests.get(emoji.url)
+                emoji_exturl = emoji.url._url
+                emoji_exturl = emoji_exturl.split(".")
+                extension = (emoji_exturl[1])
+
+                if os.path.exists(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\'):
+                    with open(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                        f.write(x.content)
+                        print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
+                else:
+                    os.mkdir(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\')
+                    print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
+                    with open(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                        f.write(x.content)
+                        print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
+            try:
+                await ctx.send(emoji_list)
+            except Exception as e:
+                await ctx.send(f"Probably too many emojis. `{e}`")
+            await ctx.send("Done!")
+
+        except Exception:
+            await ctx.send("Running on all guilds")
+            emojis = 0
+            guilds = 0
+            for guild in client.guilds:
+                guilds += 1
+                newGuild = client.get_guild(guild.id)
+                await ctx.send(f"Getting emojis for {newGuild.id} // {newGuild.name}")
+                emoji_list = []
+                for emoji in newGuild.emojis:
+                    emojis += 1
+                    emoji_list.append(f"{emoji.name} - {emoji.url}") 
+                    x = requests.get(emoji.url)
+                    emoji_exturl = emoji.url._url
+                    emoji_exturl = emoji_exturl.split(".")
+                    extension = (emoji_exturl[1])
+
+                    if os.path.exists(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\'):
+                        with open(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                            f.write(x.content)
+                            print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
+                    else:
+                        os.mkdir(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\')
+                        print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
+                        with open(f'D:\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                            f.write(x.content)
+                            print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
+                try:
+                    if str(emoji_list) == "[]":
+                        await ctx.send(f"No emojis in guild {newGuild.id}")
+                    else:
+                        await ctx.send(emoji_list)
+                except Exception as e:
+                    await ctx.send(f"Probably too many emojis. `{e}`")
+            await ctx.send(f"Done! Archived {emojis} from {guilds} guilds.")
+    
 #   Invite link
 
 @client.command(hidden=True)
