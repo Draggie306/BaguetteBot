@@ -1,42 +1,33 @@
 from discord.ext import commands
 from discord import utils, Embed
-from time import time
-import lavalink
-import os
+from time import time, sleep
+import lavalink, random, os
 
-
-async def setVolume(ctx):
-    server_preference_directory = f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences"
-    server_preference_file = f"{server_preference_directory}\\Voice_Chat_Volume.txt"
-    text = ctx.message.content
-    sp1 = text.split(' ', 1)[-1]
-    volume = sp1
-    if os.path.exists(server_preference_directory):
-        with open(server_preference_file, "w+") as e:
-            e.close()
-        f = open(server_preference_file, "a")
-        f.write(str(volume))
-        await ctx.send(f"<a:AnimatedTick:956621591108804652> Volume set to {volume}%.\n*This will take effect next time an audio command is run.*")
-        f.close()
-    else:
-        os.mkdir(server_preference_directory)
-        with open(server_preference_file, "w+") as e:
-            e.close()
-        f = open(server_preference_file, "a")
-        f.write(str(100))
-        f.close()
-        await ctx.send("<a:AnimatedTick:956621591108804652> Volume is now being controlled by the command `.volume`.")
-
+emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
+name_Nolwennium = "Nolwennium"
+Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
 
 async def getServerVoiceVolume(ctx):
     try:
         f = open(
-            f"D:\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
+            f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
         volume = f.read()
         f.close()
         return int(volume)
-    except FileNotFoundError:
-        await setVolume(ctx)
+    except Exception as e:
+        print(f"Exception {e} in getServerVoiceVolume")
+        with open(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "w+") as f:
+            print(f"w+")
+            f.close()
+
+        f = open(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "w")
+        f.write("50")
+        print(f"wrote 50")
+        f.close()
+        
+        await ctx.send(f"<a:AnimatedTick:956621591108804652> Server volume set to 50% (first run)")
+        return(50)
+        #await ctx.send(f"Error occured while getting server voice chat volume! This may be because it was not set or was not stopped corerctly. Try setting the volume by typing .volume [percentage].\n\n`{e}`")
 
 
 class Music(commands.Cog):
@@ -44,7 +35,8 @@ class Music(commands.Cog):
         self.bot = bot
         self.bot.music = lavalink.Client(self.bot.user.id)
         self.bot.music.add_node(
-            'localhost', 7193, 'testing', 'eu', 'music-node')
+            "localhost", 2332, "sussyamogus", "na", None, 600, None, 10
+        )
         self.bot.add_listener(
             self.bot.music.voice_update_handler, 'on_socket_response')
         self.bot.music.add_event_hook(self.track_hook)
@@ -55,7 +47,14 @@ class Music(commands.Cog):
             volume = await getServerVoiceVolume(ctx)
             millisecs = round(time() * 1000)
             text = ctx.message.content
+            test1 = text.split()
+            try:
+                tester = test1[1]
+            except IndexError as e:
+                await ctx.send("No search term specified.")
+                return
             search_term = text.split(' ', 1)[-1]
+            print(f"Search term in {ctx.guild.name}: {search_term}")
             player = self.bot.music.player_manager.get(ctx.guild.id)
             if "http" not in search_term:
                 query = f"ytsearch:{search_term}"
@@ -106,12 +105,99 @@ class Music(commands.Cog):
         else:
             await ctx.send("Not playing any audio to stop.")
 
-    async def change_volume_instantly(self, ctx):
+    @commands.command(name='lock', aliases=["lockvolume", "unlock"], help="Locks a Voice Chat's volume from being changed. Admin permissions required.",  brief="Locks server voice volume.")
+    async def lockvolume(self, ctx):
+        if ctx.message.author.guild_permissions.administrator:
+            server_preference_directory = f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences"
+            check_lock = f"{server_preference_directory}\\volume.locked"
+            if not os.path.isfile(check_lock):
+                sp1 = (ctx.message.content).split(' ', 1)[-1]
+                await ctx.send(f"Locking volume to {sp1}%...")
+                try:
+                    sp1=int(sp1)
+                except Exception:
+                    await ctx.send(f"<a:AnimatedCross:956621593113665536> No volume specified to lock at!")
+                    return
+                
+                server_preference_file = f"{server_preference_directory}\\Voice_Chat_Volume.txt"
+                with open(server_preference_file, "w+") as e:
+                    e.write("")
+                    e.close()
+                    print("Wrote 0 in w+ during locking")
+                f = open(server_preference_file, "a")
+                f.write(str (sp1))
+
+                with open(check_lock, "w+") as e:
+                    e.close()
+                    await ctx.send("Locked successfully.")
+                
+                player = self.bot.music.player_manager.get(ctx.guild.id)
+                if player is not None:
+                    if player.is_connected:
+                        if player.is_playing:
+                            await player.set_volume(sp1)
+            else:
+                os.remove(check_lock)
+                await ctx.send("Removed lock.")
+        else:
+            await ctx.send("You cannot lock the volume as you are missing the Administrator permission.")
+                
+
+    @commands.command(name='volume', aliases=["setvolume"])
+    async def volume(self, ctx):
+        server_preference_directory = f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences"
+        server_preference_file = f"{server_preference_directory}\\Voice_Chat_Volume.txt"
+        check_lock = f"{server_preference_directory}\\volume.locked"
+        text = ctx.message.content
+        sp1 = text.split(' ', 1)[-1]
+        volume = sp1
+
+        filedir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{ctx.message.author.id}.txt")
+        try:
+            with open(filedir, 'r') as f:
+                balance = f.read()
+                f.close()
+        except FileNotFoundError:
+            e = open(filedir, 'w+')
+            e.write("0")
+            e.close()
+        new_balance = float(balance) - 1
+        if new_balance <= 0:
+            await ctx.send(f"You do not have enough {name_Nolwennium} {emoji_Nolwennium} to change the volume. It will cost 1 and you have {balance}. You can type `.mine` to get some.")
+            return
+        else:
+            f = open(filedir, 'w+')
+            f.write(str (new_balance))
+            f.close()
+
+        if os.path.exists(server_preference_directory):
+            if not os.path.isfile(check_lock):
+                with open(server_preference_file, "w+") as e:
+                    e.close()
+                f = open(server_preference_file, "a")
+                f.write(str (volume))
+                await ctx.send(f"<a:AnimatedTick:956621591108804652> Server volume set to {volume}%.")
+                f.close()
+            else:
+                f = open(server_preference_file, 'r')
+                set_volume = f.read()
+                f.close()
+                await ctx.send(f"<a:AnimatedCross:956621593113665536> Server volume could not be set. It has been locked to {set_volume}% by an admin and must be unlocked first.")
+        else:
+            os.mkdir(server_preference_directory)
+            with open(server_preference_file, "w+") as e:
+                e.close()
+            f = open(server_preference_file, "a")
+            f.write("100")
+            f.close()
+            await ctx.send("<a:AnimatedTick:956621591108804652> Volume is now being controlled by the command `.volume`.")
+
         player = self.bot.music.player_manager.get(ctx.guild.id)
-        if player.is_connected:
-            if player.is_playing:
-                volume = await getServerVoiceVolume(ctx)
-                await player.set_volume(volume)
+        if player is not None:
+            if player.is_connected:
+                if player.is_playing:
+                    volume = await getServerVoiceVolume(ctx)
+                    await player.set_volume(volume)
 
     async def track_hook(self, event):
         if isinstance(event, lavalink.events.QueueEndEvent):
