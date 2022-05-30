@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.4"
-revision = ""
+revision = "a"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math
@@ -15,13 +15,14 @@ from        datetime import datetime#                                           
 from        json import loads
 from        pathlib import Path
 from        mcstatus import MinecraftServer
-from        instadm import InstaDM
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename=f'D:\\Draggie Programs\\BaguetteBot\\Logs\\{DraggieBot_version}{revision}-{time.time()}.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+subprocess.Popen(['java', '-jar', 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\Lavalink.jar'])
 
 """
     To do:
