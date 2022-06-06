@@ -2,6 +2,7 @@ from discord.ext import commands
 from discord import utils, Embed
 from time import time, sleep
 import lavalink, random, os
+from discord_slash import SlashCommand
 
 emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
 name_Nolwennium = "Nolwennium"
@@ -41,7 +42,7 @@ class Music(commands.Cog):
             self.bot.music.voice_update_handler, 'on_socket_response')
         self.bot.music.add_event_hook(self.track_hook)
 
-    @commands.command(name='newplay')
+    @commands.command(name='newplay', help="BaguetteBot's new audio playing feature. Type '.newplay' followed by your YouTube search term while in a voice chat to start playing audio!", brief="Joins and plays auido in a Voice Channel.")
     async def newplay(self, ctx):
         try:
             volume = await getServerVoiceVolume(ctx)
@@ -96,7 +97,7 @@ class Music(commands.Cog):
                     await ctx.send(f"Joined Voice Channel <#{vc.id}>")
             await Music.newplay(self, ctx)
 
-    @commands.command(name='stop')
+    @commands.command(name='stop', help="Stops the bot playing audio in Voice Chat.", brief="Stops playing audio.")
     async def stop(self, ctx):
         player = self.bot.music.player_manager.get(ctx.guild.id)
         if player.is_playing:

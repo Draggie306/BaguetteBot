@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.4"
-revision = "a"
+revision = "b"
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math
@@ -143,31 +143,42 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     SharedServerBonus = 0
     BoosterBonus = 0
     bonuses = 0
+
     for guild in shared_guilds:
         shared_number += 1
 
     embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
 
-    if roleBooster in person.roles:
-        BoosterBonus = random.randint(5,15)
+    if ctx.author.premium_since:
+        BoosterBonus = random.randint(30, 150)
         embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
         balance = balance + BoosterBonus
         bonuses += BoosterBonus
+    else:
+        print("Ok, the user isn't boosting.")
+        if ctx.guild.id in tester_guilds:
+            print("Ok, the guild is okay.")
+            if ctx.author.avatar_url is not None:
+                if ctx.author.is_avatar_animated():
+                    print("Ok, the user has nitro.")
+                    embed.add_field(name="**If you were Boosting, you would have gained an extra:**", value=(f"{random.randint(30, 150)} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+            else:
+                print("Ok, the user doesn't have nitro.")
 
     if shared_number > 1:
-        SharedServerBonus = random.randint(1,shared_number)
+        SharedServerBonus = random.randint(1, shared_number)
         embed.add_field(name="**Shared Servers Bonus**", value=(f"{SharedServerBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
         balance = balance + SharedServerBonus
         bonuses += SharedServerBonus
 
-    print(f"Total bonuses: {bonuses} - {SharedServerBonus} server, {BoosterBonus} booster")
+    print(f"Total in bonuses: {bonuses} - {SharedServerBonus} server, {BoosterBonus} booster")
 
     embed.add_field(name="**Fees Paid**", value=f"{fee} to <@{random.choice(Croissants)}>", inline=False)
 
     balance = balance + newNumberAfterFee
 
     embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
-    embed.set_footer(text=f"User ID: {ctx.message.author.id} | Total extra bonuses: {bonuses}")
+    embed.set_footer(text=f"ID: {ctx.message.author.id} | Total in bonuses: {bonuses}")
 
     await ctx.send(embed=embed)
 
@@ -507,6 +518,33 @@ async def _components(ctx, enable:str, disable:str):
 
 geo1Questions = ["Give one reason why tropical storms have a seasonal pattern [1 mark]", "Suggest why some tropical storms have severe primary and secondary effects.\n\nUse Figure 3 and your own understanding. [6 marks] https://cdn.discordapp.com/attachments/895390385440952352/947549285128495154/unknown.png"]
 
+@slash.slash(name="verify",
+            description="Allow users into the private side of Baguette Brigaders.",
+            guild_ids = tester_guilds,
+            options = [
+            create_option(
+                name="user",
+                description="User to allow into the private side.",
+                option_type=6,
+                required=True,
+            )])
+async def verify(ctx, user: discord.Member):
+    member_role = discord.utils.get(ctx.guild.roles, name=f"Member")
+    members_role = discord.utils.get(ctx.guild.roles, name=f"Members")
+    unverified_private_role = discord.utils.get(ctx.guild.roles, name=f"Private Unverified")
+    if member_role in ctx.author.roles:
+        if member_role not in user.roles:
+            await user.send(f"Hello! A kind member of Baguette Brigader's private side, {ctx.author}, has allowed you access to view its contents. Please hit the verification tick and you'll have access to it.")
+            await user.remove_roles(members_role)
+            await user.add_roles(unverified_private_role)
+            await ctx.send(f"The user, {user.mention}, has been given access to the private side.")
+        else:
+            await ctx.send(f"They already have access to the private side.")
+    else:
+        await ctx.send("You cannot execute this. Request logged.")
+
+
+
 @slash.slash(name="NameColour",
             description="Change the colour of your name!",
             guild_ids = tester_guilds,
@@ -547,15 +585,17 @@ async def moverole(ctx, colour: str, **kwargs):
         access = True
         print(f"{ctx.author.name} has Croissant")
         await ctx.send("Your highest role **Croissant** is above the Custom Colour section, so your custom colour will not show")
+    if ctx.author.premium_since:
+        access = True
     if access:
         print(f"Allowed user {ctx.author.name} - {ctx.author.roles}")
         number_of_roles = (len(ctx.guild.roles))
         pos = number_of_roles - 18
         role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
         if role is None:
-            await ctx.guild.create_role(name=f"CC: {ctx.author.name}", reason=f"Command ran by {ctx.message.author.name} at {datetime.now()} - Response was OK, passed role checks..")
+            await ctx.guild.create_role(name=f"CC: {ctx.author.name}", reason=f"Command ran by {ctx.author.name} at {datetime.now()} - Response was OK, passed role checks..")
             role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
-            await ctx.send(f"Role added! at position {pos}")
+            print(ctx.send(f"Role added! at position {pos}"))
         try:
             if colour != "00acff":
                 try:
@@ -563,7 +603,7 @@ async def moverole(ctx, colour: str, **kwargs):
                 except Exception as e:
                     await ctx.send(f"The colour inputted, {colour}, is not a valid hex code. You can find a valid one on a site like https://htmlcolorcodes.com. Make sure it's just the code, not the hashtag.")
                     return
-                await role.edit(colour=discord.Colour(colour), position=int(pos), reason=f"Slash Command ran by {ctx.message.author.name} at {datetime.now()}.")
+                await role.edit(colour=discord.Colour(colour), position=int(pos), reason=f"Slash Command ran by {ctx.author.name} at {datetime.now()}.")
                 await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
             else:
                 await ctx.send("That colour has been reserved. Choose another!")
@@ -759,6 +799,7 @@ async def on_voice_state_update(member, before, after):
                 os.mkdir(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice')
             except Exception:
                 print("Area already exists.")
+            print(f"User joined VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()} ")
             x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\voice_info.txt', 'w')
             x.close()
     except:
@@ -788,8 +829,7 @@ async def on_voice_state_update(member, before, after):
             print("It's in Baguette Brigaders!")
 
             #   Calculate the amount to add using the special formula
-            coins_to_add = (math.sqrt(time_spent))
-
+            coins_to_add = round(((math.sqrt(time_spent)/10))*2 + (math.sqrt(time_spent)/2))
             if time_spent < 120:
                 new_time_spent = time_spent
                 units = "seconds"
@@ -797,7 +837,7 @@ async def on_voice_state_update(member, before, after):
                 new_time_spent = round(time_spent/60)
                 units = "minutes"
 
-            if time_spent < 3600:
+            if time_spent > 3600:
                 new_time_spent = round(time_spent/3600)
                 if new_time_spent == 1:
                     units = "hour"
@@ -805,11 +845,20 @@ async def on_voice_state_update(member, before, after):
                     units = "hours"
                 
             try:
-                await member.send(f"You have earned {coins_to_add} Coins {emoji_Coins} in Baguette Brigaders for spending {new_time_spent} {units} in a voice chat.\n\n*Type .coins there to see what you can buy!*")
+                x = (random.randint(1,3))
+                if x == 2:
+                    if coins_to_add > 5:
+                        #spam_channel = client.get_channel(785620979300302869)
+                        string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `.coins` to see what you can buy!*")
+                        #await spam_channel.send(string)
+                        #await draggie.send(f"[Sent to {member.mention}] {string}")
+                        print(string)
+                    else:
+                        print(f"Not going to Stage 3 of alerting earned sum was only {coins_to_add}.")
+                else:
+                    print(f"Not going to Stage 2 of alerting as the number was not 2, it was {x}")
             except AttributeError:
                 print("Could not send the message as the member is probably a bot or has blocked the bot.")
-        
-            await draggie.send(f"[Sent to {member.mention}] You have earned {coins_to_add} Coins {emoji_Coins} in Baguette Brigaders for spending {new_time_spent} {units} in a voice chat.\n\n*Type .coins there to see what you can buy!*")
 
             await changeCoinBalance(member, coins_to_add)
 
@@ -844,7 +893,7 @@ async def on_voice_state_update(member, before, after):
 async def on_member_join(member):
     sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
     if member.guild.id == 759861456300015657:
-        await member.send(f"Hello! Welcome to Baguette Brigaders. If you joined from the vanity link, welcome! Please verify yourself. Also, feel free to add BaguetteBot to your server! >> https://www.ibaguette.com/p/bots.html")
+        await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
         print("Welcomed user")
         await draggie.send(f"Welcomed user {member}")
     servers = len(client.guilds)
@@ -891,6 +940,7 @@ async def on_raw_reaction_add(payload=None):
         roleMember = discord.utils.get(guild.roles, name='Member')
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
         roleUnverified = discord.utils.get(guild.roles, name='Unverified')
+        role_private_unverified = discord.utils.get(guild.roles, name='Private Unverified')
         roleSMP = discord.utils.get(guild.roles, name='SMP')
         robloxDev = discord.utils.get(guild.roles, name="Roblox Developer")
         roleNew = discord.utils.get(guild.roles, name='New Baguette')
@@ -944,15 +994,25 @@ async def on_raw_reaction_add(payload=None):
                     print(f"{payload.member.name} already has Members role, removing it.")
                     await payload.member.remove_roles(roleAllRandoms)
                     await payload.member.send(f"{random.choice(choices)}")
+    
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
-                    for word in protectedNames:#            Check protected name list.
-                        if word in authorName:
-                            await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in <#842046293504819200>.")
-                            await asyncio.sleep(8)
-                            await channel.purge(limit=1)
-                            return
+                    if payload.member.name in protectedNames:
+                        await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in DMs to <@&963738031863525436>.")
+                        await asyncio.sleep(8)
+                        await channel.purge(limit=1)
+                        return
+                    else:
+                        await payload.member.add_roles(roleMember)
+                        await payload.member.add_roles(roleNew)
+                        await channel.send(f"Welcome, {payload.member.mention}! You have been verified! Maybe check out <#759861456761258045> now?")
+                        await payload.member.remove_roles(role_private_unverified)
+                        await payload.member.remove_roles(roleUnverified)
+                        await asyncio.sleep(8)
+                        await channel.purge(limit=1)
+                        print(f"And it's gone in {channel}")
+
             if payload.message_id == vaccinatedID:
                 if str(payload.emoji) == "✅":
                     await payload.member.add_roles(roleVaccinated)
@@ -972,7 +1032,7 @@ async def on_raw_reaction_add(payload=None):
                     #await payload.member.remove_roles(roleUnverified)
                     #await asyncio.sleep(5)
                     #await channel.purge(limit=1)
-                    #print("And it's gone in", channel)
+
 
     if payload.guild_id == 384403250172133387:#     Must, while reaction roles are not available for all servers.
         if payload.message_id == 907318418712170538:
@@ -1025,7 +1085,7 @@ async def discorddm(ctx):
     userID = (x[1])
     user = client.get_user(int (userID))
     await user.send(f"{sp1}")
-    await draggie.send(f"Successfully set {sp1} to user {user.name}")
+    await ctx.send(f"Successfully sent {sp1} to user {user.name}")
 
 def InstaDMSend(ctx):
     message = ctx.message.content
@@ -1440,7 +1500,7 @@ async def on_message(message):
             return
         if message.content.startswith("."):
             await message.channel.send("Please use commands in a server with me in it for them to run correctly. Sorry!")
-        await draggie.send(f"\n'{message}' DMed by {person} at {datetime.now()}")
+        #await draggie.send(f"\n'{message}' DMed by {person} at {datetime.now()}")
         print(f"\n'{message.content}' DMed by {person} at {datetime.now()}")
 
         dmLocation = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\DMs\\{personID}.txt")
@@ -4097,13 +4157,6 @@ async def mine(ctx):
     global balance
     global myuuid
     global address
-    channelID = ctx.message.channel.id
-    serverID = ctx.message.guild.id
-
-    if serverID == 759861456300015657:
-        if channelID != 785620979300302869:
-            await ctx.send("You can't do that here! Try <#785620979300302869>.")
-            return
 
     newNumber = random.randint(10, 100)
 
