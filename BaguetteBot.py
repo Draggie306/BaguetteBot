@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.2.4"
+DraggieBot_version = "v1.2.5"
 revision = "b"
 
 print("Importing all modules...\n")
@@ -38,7 +38,8 @@ start_time = time.time()
 
 sys.setrecursionlimit(99999999)
 
-global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker, roleMember, hasMember, hasAdmin
+global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker, roleMember, hasMember, hasAdmin, bot_events
+bot_events = 0
 voiceVolume = 0.3
 Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -50,6 +51,13 @@ emoji_random_lmao = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "�
 value_Placeholder = "TBD/tbd"
 name_Nolwennium = "Nolwennium"
 id_Draggie = 382784106984898560
+discord_snowflake = 175928847299117063
+discord_epoch = 1420070400000
+YTAPI_Status = "Enabled"
+SCAPI_Status = "Mixed results"
+audio_subsystem = "Lavalink/music.py Cog"
+
+#print(datetime.utcfromtimestamp((discord_epoch + int(((f"{(discord_snowflake):b}")[:-22]), 2)) / 1000).strftime('Year: %Y\nMonth: %m\nDay: %d\nHour: %H\nMinute: %M\nSecond: %S'))
 
 class roles:
     Roles_order_List = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
@@ -79,18 +87,19 @@ help_command = commands.DefaultHelpCommand(
     no_category = 'Dot Commands'
 )
 
-PYTHONIOENCODING="utf-8"
+
+PYTHONIOENCODING = "utf-8"
 
 client = discord.Client()
 intents = discord.Intents().all()
 
 client = discord.Client(intents=intents)
 client = commands.Bot(
-    command_prefix = commands.when_mentioned_or('.'), 
-    case_insensitive=True, 
+    command_prefix=commands.when_mentioned_or('.'),
+    case_insensitive=True,
     intents=intents,
-    description = f"BaguetteBot - version {DraggieBot_version}{revision}",
-    help_command = help_command
+    description=f"BaguetteBot - version {DraggieBot_version}{revision} - d.py {discord.__version__}",
+    help_command=help_command
     )
 
 slash = SlashCommand(client, sync_commands=True)
@@ -111,6 +120,10 @@ def nolwenniumUserDirectory(ctx):
 def coinDirectory(ctx):
     global coinDir
     coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{ctx.author.id}.txt")
+
+async def bot_runtime_events(event_int):
+    global bot_events
+    bot_events = bot_events + event_int
 
 async def changeNolwenniumBalance(ctx, number_to_change_by):
     person = ctx.message.author
@@ -137,7 +150,6 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
         e.close()
         minedString = f"Mined {number_to_change_by} {emoji_Nolwennium} {name_Nolwennium}!"
 
-    roleBooster = discord.utils.find(lambda r: r.name == 'Server Booster', ctx.message.guild.roles)
     shared_guilds = ctx.author.mutual_guilds
     shared_number = 0
     SharedServerBonus = 0
@@ -147,7 +159,7 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     for guild in shared_guilds:
         shared_number += 1
 
-    embed=discord.Embed(title="⛏️ Miner ⛏️", description = minedString, colour =0x44ff44)
+    embed = discord.Embed(title="⛏️ Miner ⛏️", description=minedString, colour=0x44ff44)
 
     if ctx.author.premium_since:
         BoosterBonus = random.randint(30, 150)
@@ -178,12 +190,12 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     balance = balance + newNumberAfterFee
 
     embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
-    embed.set_footer(text=f"ID: {ctx.message.author.id} | Total in bonuses: {bonuses}")
+    embed.set_footer(text=f"ID: {ctx.message.author.id} | Total: {bonuses + number_to_change_by} ({bonuses} bonus + {number_to_change_by})")
 
     await ctx.send(embed=embed)
 
     f = open(filedir, 'w+')
-    f.write(str (balance))
+    f.write(str(balance))
     f.close()
 
     f = open(GlobalLogDir, "a", encoding='utf-8')
@@ -211,14 +223,15 @@ async def changeNolwenniumBalance(ctx, number_to_change_by):
     f = open(randomcroissant, 'w+')
     f.write(str(balance))
     f.close()
-
+    await bot_runtime_events(1)
     print(f"CURRENCY - {name_Nolwennium} > {ctx.message.author.id} now has {newNumberAfterFee} {name_Nolwennium}")
 
 async def changeCoinBalance(message, number_to_change_by):
+    await bot_runtime_events(1)
     try:
         coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins\\{message.author.id}.txt")
         serverdir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins")
-    except AttributeError:
+    except:
         coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins\\{message.id}.txt")
         serverdir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins")
 
@@ -231,14 +244,15 @@ async def changeCoinBalance(message, number_to_change_by):
         f.close()
 
         f = open(coinDir, 'w+')
-        coins = (int (str (coins))) + number_to_change_by
+        coins = (int(coins)) + number_to_change_by
         f.close()
 
         with open(coinDir, 'a') as f:
-            f.write(str (coins))
+            f.write(str(coins))
             f.close()
 
     except FileNotFoundError:   #   User not found
+        await bot_runtime_events(1)
         with open(coinDir, 'a') as f:
             print (f"\nSet coin value to 1, {message.author.name} is a new user.")
             try:
@@ -251,10 +265,10 @@ async def changeCoinBalance(message, number_to_change_by):
         sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
         my_file = Path(sendLogsDir)
         if my_file.is_file():
+            await bot_runtime_events(1)
             try:
                 bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                embed = discord.Embed(title="User First Message", 
-                    description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                embed = discord.Embed(title="User First Message", description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
             except Exception:
                 print(f"Unable to send that a new user has joined. This server, {message.guild.name}, doesn't have a text channel called 'event-log-baguette'.")
@@ -263,12 +277,12 @@ async def changeCoinBalance(message, number_to_change_by):
                 bbLogChnlId = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await bbLogChnlId.set_permissions(message.guild.default_role, VIEW_CHANNEL=False)
                 await bbLogChnlId.send("Logging channel created. You can do whatever you want with this channel but deleting it may cause some issues in the future :)")
-                embed = discord.Embed(title="User First Message", 
-                    description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
+                embed = discord.Embed(title="User First Message", description=(f"{message.author.mention} has sent their first message. Their coins balance has been set to 1."), colour=0x00ff00)
                 await bbLogChnlId.send(embed=embed)
     except ValueError:
         f.write('1')
         f.close()
+    await bot_runtime_events(1)
 
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -298,6 +312,7 @@ print("Done!\nSlash commands initialising...")
 
 @slash.slash(name="debug", description="Spits out debug info for debugging bugs")
 async def test(ctx):
+    await bot_runtime_events(1)
     nolwenniumUserDirectory(ctx)
     my_file = Path(nolwenniumUserDir)
     if not my_file.is_file():
@@ -315,13 +330,15 @@ async def test(ctx):
     shard_id = ctx.guild.shard_id
     await ctx.send(f"Debug info: S: {ctx.guild.id} in C: {ctx.channel.id} - A: {ctx.author.id}, hA: {x}, {name_Nolwennium}: {nolly} + l:{client.latency}s, iID: {uuid.uuid4()}, sO: {ctx.guild.owner.id}, bbPremium = False, usesEmilite: False, sID: {shard_id}")#\n<a:HmmThinkSpin:857307788572098610> *Unsure what this is?* These are just guild/channel ids, send this to Draggie#3060 if you have issues")
     #                                Server ID           Channel ID            Message author ID   HasAdmin?         NolwenniumBalance     Ping          Random UUID          Server Owner       
+    await bot_runtime_events(1)
     
 @slash.slash(name="Ping", description="Shows bot latency to Discord's servers, using Discord WebSocket protocol.", guild_ids=tester_guilds)
 async def _ping(ctx):
     print("ping'd")
+    await bot_runtime_events(1)
     GlobalLogDir=("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GlobalLog.txt")
     startTime = round(time.time() * 1000)
-    await ctx.reply_("Ping: Testing connection...")
+    await ctx.reply("Ping: Testing connection...")
     #message = ctx.channel.last_message
     EmbedGetTime = round(time.time() * 1000)
     nTighem = EmbedGetTime - startTime
@@ -329,16 +346,17 @@ async def _ping(ctx):
     if round(client.latency * 1000) <= 100:
         string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Very good!)\nAdditional logic operations took {nTighem}ms. ")
     elif round(client.latency * 1000) <= 150:
-        string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Good.)\nAdditional logic operations took {nTighem}ms. ")
+        string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Good)\nAdditional logic operations took {nTighem}ms. ")
     elif round(client.latency * 1000) <= 150:
-        string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Bad.)\nAdditional logic operations took {nTighem}ms. ")
+        string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Bad)\nAdditional logic operations took {nTighem}ms. ")
     else:
         string = (f"Ping: Total message delay is **{round(client.latency *1000)}** milliseconds. (Very bad!)\nAdditional logic operations took {nTighem}ms. ")
     message = ctx.channel.last_message
-    await message.edit(content=string, delete_after=3)
+    await message.edit(content=string)
     f = open(GlobalLogDir, "a", encoding="utf8")
     f.write(f"\nCOMMAND RAN -> '.ping' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
+    await bot_runtime_events(1)
 
 @slash.slash(name="whitelist",
             description="MC Server Whitelist Command.",
@@ -353,6 +371,7 @@ async def _whitelist(ctx, add:str):
     console = client.get_channel(912429726562418698)
     await console.send(message)
     await ctx.send(f"**{add}** has been added to the whitelist. Please rejoin the Minecraft server!")
+    await bot_runtime_events(1)
 
 @slash.slash(name="cuisine",
             description="Cuisine.",
@@ -367,66 +386,22 @@ async def _whitelist(ctx, add:str):
                         create_choice(name="Italy", value="italy")])])
 async def _cuisine(ctx, country:str):
     await ctx.send(f"You chose {country}.")
-
-@slash.slash(name="dm",
-    description="DM an Instagram user.",
-    guild_ids=tester_guilds,
-    options=[create_option(
-            name="user",
-            description="User @ to DM",
-            option_type=3,
-            required=True,
-            ),
-            create_option(
-            name="message",
-            description="Message to send to @user",
-            option_type=3,
-            required=True
-            )])
-async def _dm(ctx, user:str, message:str):
-    msg = message
-    accounts = ("`draggiefn`, `nolwenntighe`, `charli3_s3w`, `xxnova_smokexx`, `ismail_ahmed_06_2`, `sam_partridge._`, `b3nny_b0oze`, `_reuben_72`, `therealwillbyrne`, `unicornkid_72`, `riaz_bari_`, `drevilo.19`, `some_one_acctually`, `harrigeorg`")
-    if user not in accounts:
-        await ctx.send(f"Sorry! I can only send DMs to the following accounts: {accounts}")
-        return
-    x = open ("D:\\Draggie Programs\\BaguetteBot\\User.txt", 'w')
-    x.write(f"{user}")
-    x.close()
-    await ctx.send(f"OK! Trying to send **{msg}** to Instagram user @**{user}**. This may take over 30 seconds.")
-    await ctx.send(f"Successfully loaded @{user} from cache in {random.randint(1,10)}ms. URL: https://www.instagram.com/{user}/")
-
-    t1 = threading.Thread(target=InstaDMSendForSlashy, args=[ctx, user, msg])
-    t1.start()
-    await asyncio.sleep(2)
-    await ctx.send(f"Initialising DM instance")
-    await asyncio.sleep(2)
-    await ctx.send(f"Sending DM to **{user}**")
-
-def InstaDMSendForSlashy(ctx, user, msg):
-    with open("D:\\Draggie Programs\\BaguetteBot\\TextValues\\password.txt", encoding="utf-8") as f:
-        password = f.read()
-    try:
-        if __name__ == '__main__':
-            insta = InstaDM(username='draggie306', password=password, headless=False)
-            insta.sendMessage(user=f'{user}', message=f'{msg}')
-    except Exception as e:
-        print(f"An unexpected error occured: {e}")
+    await bot_runtime_events(1)
 
 @slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = tester_guilds)
 async def _rgb(ctx):
-    rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
-    admin = discord.utils.get(ctx.guild.roles, name="Admin")
-    mod = discord.utils.get(ctx.guild.roles, name="Mod")
+    #rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
+    #admin = discord.utils.get(ctx.guild.roles, name="Admin")
+    #mod = discord.utils.get(ctx.guild.roles, name="Mod")
     print(f"RGB ran by {ctx.author.name}")
-    if rgb or mod or admin in ctx.author.roles:
-        guild=ctx.guild
-        colour = random.randint(1000,16777215)
-        colour = discord.Color(colour)
-        role = discord.utils.get(guild.roles, name="RGB Advisor")
-        await role.edit(server=guild, role=role, colour=colour, reason=f"RGB advisor role update command ran, by {ctx.message.author.name}.")
-        await ctx.send(f"<@&838114273879261194> updated to {colour}")
-    else:
-        await ctx.send("no")
+    #if rgb or mod or admin in ctx.author.roles:
+    guild=ctx.guild
+    colour = random.randint(1000,16777215)
+    colour = discord.Color(colour)
+    role = discord.utils.get(guild.roles, name="RGB Advisor")
+    await role.edit(server=guild, role=role, colour=colour, reason=f"RGB advisor role update command ran, by {ctx.author.name}")
+    await ctx.send(f"{role.mention} set to colour {colour}")
+    await bot_runtime_events(1)
     
 @slash.slash(name="components",
     description="Enables/disables specified BaguetteBot components.",
@@ -515,6 +490,7 @@ async def _components(ctx, enable:str, disable:str):
             await ctx.send("Nothing was changed.")
     else:
         await ctx.send("You are not admin, or do not have Admin as an assigned role")
+    await bot_runtime_events(1)
 
 geo1Questions = ["Give one reason why tropical storms have a seasonal pattern [1 mark]", "Suggest why some tropical storms have severe primary and secondary effects.\n\nUse Figure 3 and your own understanding. [6 marks] https://cdn.discordapp.com/attachments/895390385440952352/947549285128495154/unknown.png"]
 
@@ -542,7 +518,7 @@ async def verify(ctx, user: discord.Member):
             await ctx.send(f"They already have access to the private side.")
     else:
         await ctx.send("You cannot execute this. Request logged.")
-
+    await bot_runtime_events(1)
 
 
 @slash.slash(name="NameColour",
@@ -595,7 +571,7 @@ async def moverole(ctx, colour: str, **kwargs):
         if role is None:
             await ctx.guild.create_role(name=f"CC: {ctx.author.name}", reason=f"Command ran by {ctx.author.name} at {datetime.now()} - Response was OK, passed role checks..")
             role = discord.utils.get(ctx.guild.roles, name=f"CC: {ctx.author.name}")
-            print(ctx.send(f"Role added! at position {pos}"))
+            #await ctx.send(f"Role added! at position {pos}").
         try:
             if colour != "00acff":
                 try:
@@ -604,7 +580,7 @@ async def moverole(ctx, colour: str, **kwargs):
                     await ctx.send(f"The colour inputted, {colour}, is not a valid hex code. You can find a valid one on a site like https://htmlcolorcodes.com. Make sure it's just the code, not the hashtag.")
                     return
                 await role.edit(colour=discord.Colour(colour), position=int(pos), reason=f"Slash Command ran by {ctx.author.name} at {datetime.now()}.")
-                await ctx.send(f"Role colour updated to '0x{colour}' and position moved to {pos}.")
+                await ctx.send(f"Your custom role colour updated to '0x{colour}' and position moved to {pos}.")
             else:
                 await ctx.send("That colour has been reserved. Choose another!")
                 return
@@ -620,6 +596,7 @@ async def moverole(ctx, colour: str, **kwargs):
         if role:
             await role.delete()
         await ctx.send("You are neither boosting the server nor have a high enough role. Boost the server in order to unlock Custom Colours!")
+    await bot_runtime_events(1)
 
 @slash.slash(name="nsfw",
             description="haha yes.",
@@ -691,6 +668,7 @@ async def _CodeSearch(ctx, term: str):
     f = open(GlobalLogDir, "a")
     f.write(f"\nSLASH COMMAND RAN -> 'CodeSearch' ran by {ctx.author} at {str (datetime.now())}")
     f.close()
+    await bot_runtime_events(1)
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
@@ -752,6 +730,7 @@ async def on_ready():
     f.close()
     servers = len(client.guilds)
     members = 0
+    bot_runtime_events(7)
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
@@ -770,6 +749,7 @@ async def on_ready():
     roleMember = discord.utils.get(guild.roles, name='Member')
     downvote = client.get_emoji(803578918464258068)
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
+    await bot_runtime_events(1)
     await StatusAutoUpdator()
 
 async def StatusAutoUpdator():
@@ -781,19 +761,23 @@ async def StatusAutoUpdator():
     memoryUsage = psutil.virtual_memory().percent
     if revision !="":
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{revision} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+        await bot_runtime_events(1)
     else:
+        await bot_runtime_events(1)
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     print(f"Updated status - {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
     #await asyncio.sleep(random.randint(100,500))
+    await bot_runtime_events(1)
     await asyncio.sleep(60)
     await StatusAutoUpdator()
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    print(f"VoiceChatEvent in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
+    print(f"\nVoiceChatEvent in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}\n")
     #if member.bot: #checking this before anything else will reduce unneeded file operations etc
     #    return
-    try:
+    await bot_runtime_events(1)
+    if after.channel:
         if not os.path.isfile(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\voice_info.txt'):
             try:
                 os.mkdir(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice')
@@ -802,21 +786,17 @@ async def on_voice_state_update(member, before, after):
             print(f"User joined VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()} ")
             x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\voice_info.txt', 'w')
             x.close()
-    except:
+    else:
         print(f"User left VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
     new_user = str(member.id)
-    #guild_id = str(member.guild.id)
-    #startTime = round(time.time() * 1000)
-    #endTime = round(time.time() * 1000)
-    #nTighem = endTime - startTime
-    if(before.channel == None): #When VC joined.
+
+    if not before.channel: #When VC joined.
         join_time = round(time.time())
         x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\tempuserstate_{new_user}.txt', 'w')
         x.write(str(join_time))
         x.close
-    try:
-        teste122 = str(after.channel.guild.id) #this will check if the channel they're in after the event (we wanna record the time passed if its None or a different guild, both of which will get triggered by this)
-    except:
+    if not after.channel:
+        await bot_runtime_events(1)
         leave_time = round(time.time())
         x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Voice\\tempuserstate_{new_user}.txt', 'r')
         start_time = int(x.read())
@@ -826,6 +806,7 @@ async def on_voice_state_update(member, before, after):
         print(f"{member.name} just spent {time_spent} in a Voice Chat.")
 
         if before.channel.guild.id == 759861456300015657:
+            await bot_runtime_events(1)
             print("It's in Baguette Brigaders!")
 
             #   Calculate the amount to add using the special formula
@@ -891,11 +872,12 @@ async def on_voice_state_update(member, before, after):
 
 @client.event
 async def on_member_join(member):
+    await bot_runtime_events(1)
     sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
     if member.guild.id == 759861456300015657:
-        await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
-        print("Welcomed user")
-        await draggie.send(f"Welcomed user {member}")
+        #await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
+        print("Not welcomed user")
+        #await draggie.send(f"Welcomed user {member}")
     servers = len(client.guilds)
     members = 0
     for guild in client.guilds:
@@ -909,6 +891,7 @@ async def on_member_join(member):
 
 @client.event
 async def on_member_remove(member):
+    await bot_runtime_events(1)
     sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         try:
@@ -929,6 +912,7 @@ async def on_member_remove(member):
     
 @client.event
 async def on_raw_reaction_add(payload=None):
+    await bot_runtime_events(1)
     if payload.guild_id == 759861456300015657:#     Must, while reaction roles are not available for all servers.
         msgID = 835227251695288391
         msgRandomId = 931577920512725083
@@ -1040,6 +1024,7 @@ async def on_raw_reaction_add(payload=None):
 
 @client.event
 async def on_reaction_remove(reaction, user):
+    await bot_runtime_events(1)
     print(reaction, user)
 
 
@@ -1052,6 +1037,7 @@ async def on_guild_remove(guild):
 
 @client.event
 async def on_message_delete(message):
+    await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     sendRedactionsInChannel = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
@@ -1121,6 +1107,7 @@ async def dm(ctx):
 
 @client.event
 async def on_message_edit(before, after):
+    await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
@@ -1161,6 +1148,7 @@ async def on_message_edit(before, after):
     
 @client.event
 async def on_typing(channel, user, when):
+    await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
@@ -1209,64 +1197,30 @@ async def on_typing(channel, user, when):
 
 @client.event
 async def on_user_update(before, after):
+    await bot_runtime_events(1)
     if after.avatar != before.avatar:
         print("avatarupdated")
 
 @client.event
 async def on_member_ban(guild, user):
+    await bot_runtime_events(1)
     print("test")
 
 @client.event
 async def on_member_update(before, after):
     #print(f"Member updated - BEFORE = {before} AFTER = {after} - {datetime.now()}")
+    await bot_runtime_events(1)
     send = False
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     guild = after.guild
 
     if after.activity is not None:
-        if guild.id == 759861456300015657:
-            print(f"OP WATCHDOG: ACTIVITY of {after.name} has been updated to {after.activity} at {datetime.now()}")
-            roleFN = discord.utils.get(after.guild.roles, name="Fortnite")
-            roleMC = discord.utils.get(after.guild.roles, name="Minecraft")
-            roleV = discord.utils.get(after.guild.roles, name="Valorant")
-            roleGTA = discord.utils.get(after.guild.roles, name="Valorant")
-            print(str(after.activities))
-            if 0 == 1:
-                if "Fortnite" in str(after.activities):
-                    if roleFN in after.roles:
-                        pass
-                    else:
-                        await after.add_roles(roleFN)
-                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Fortnite.")
-                        await after.send(f"You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **Fortnite**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                if "Minecraft" in str(after.activities):
-                    if roleMC in after.roles:
-                        pass
-                    else:
-                        await after.add_roles(roleMC)
-                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: Minecraft.")
-                        await after.send(f"You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **Minecraft**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                if "VALORANT" in str(after.activities):
-                    if roleV in after.roles:
-                        pass
-                    else:
-                        await after.add_roles(roleV)
-                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: VALORANT.")
-                        await after.send(f"You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **VALORANT**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                if "Grand Theft Auto V" in str(after.activities):
-                    if roleGTA in after.roles:
-                        pass
-                    else:
-                        await after.add_roles(roleGTA)
-                        print(f"[Test] >>> BRIGADERS TESTING UNIT >>> {after.name} has been given role for game: GTAV.")
-                        await after.send(f"You're currently playing **Grand Theft Auto V**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-                        await draggie.send(f"[Sent to {after.mention}] You're currently playing **GTAV**, so you have been given the role for it in {after.guild.name}!\n*Note: this is a test, and this action was performed automatically.*")
-
+        await bot_runtime_events(1)
+        print(f"ACTIVITY of {after.name} has been updated to {after.activity} at {datetime.now()}")
+        print(str(after.activities))
     if before.status != after.status:
+        await bot_runtime_events(1)
         if guild.id == 759861456300015657:
             croissant = discord.utils.get(after.guild.roles, name='Croissant')
             baguette = discord.utils.get(after.guild.roles, name='Baguette')
@@ -1431,6 +1385,7 @@ async def on_member_update(before, after):
 @client.event
 async def on_message(message):
     global roleMember, hasMember, hasAdmin
+    await bot_runtime_events(1)
     if "UUID of player EmileTigger is d0b393de-e783-45b6-9d13-19ba56c5451e" in message.content:
         termcolor.cprint("Emile joined", 'red', attrs=['blink'])
         await asyncio.sleep(3)
@@ -1551,7 +1506,7 @@ async def on_message(message):
         
     if message.channel.id == 809112184902778890 or message.channel.id == 967114002347986954:
         if ("http") in message.content.lower() or len(message.attachments) >= 1:
-            print("Yes  ")
+            print("Yes")
             upvote = client.get_emoji(803578918488768552)
             await message.add_reaction(upvote)
             downvote = client.get_emoji(803578918464258068)
@@ -1761,6 +1716,21 @@ async def sa(ctx):
     channel = client.get_channel((int (msgchannel)))
     await channel.send(str (sp1))
     return
+
+@client.command()
+async def snowflake(ctx):
+    x = ctx.message.content.split()
+    try: #      Try and change the message content after the '.snowflake' into an integer.
+        snowflake = int(x[1])
+        unix_timestamp = ((1420070400000 + int(((f"{(snowflake):b}")[:-22]), 2)) / 1000)
+        stringe = datetime.utcfromtimestamp(unix_timestamp).strftime('%Y,%m,%d,%H,%M,%S')
+        stringe = stringe.split(",")
+        string_to_send = (f"Exact: <t:{round(unix_timestamp)}>:{stringe[5]}. Relative: <t:{round(unix_timestamp)}:R>.")
+        await ctx.send(string_to_send)
+        print(string_to_send)
+    except:#    If it doesn't work, then we can deduce that a number hasn't been inputted.
+        await ctx.reply("That isn't a valid integer to converrt into a date.")
+    
 
 #   Kahoot botter
 
@@ -2861,7 +2831,60 @@ async def saveanddelete(ctx):
     await asyncio.sleep(5)
     await message.channel.delete()
 
+@client.command()
+async def save_messages(ctx):
+    channel = ctx.channel
+    count = 0
+    errors = 0
+    attachments = 0
+    error_details = []
+    tighe1 = round(time.time() * 1000)
+    await ctx.message.delete()
 
+    def line_prepender(filename, line, content1):
+        if not os.path.isfile(filename):
+            with open(filename, 'w+') as e:
+                e.write(f"\n\nGenerated at {datetime.now()}. Requested by {ctx.author.name} in {ctx.message.guild.name}.")
+        with open(filename, 'r+', encoding="utf-8") as fp:
+            lines = fp.readlines()     # lines is list of line, each element '...\n'
+            lines.insert(0, content1)  # you can use any index if you know the line index
+            fp.seek(0)                 # file pointer locates at the beginning to write the whole file again
+            fp.writelines(lines)       # write whole lists again to the same file
+    message_total = ""
+    async for message in channel.history(limit=None):
+        if len(message.attachments) < 1: # Checks if there is an attachment on the message
+            if "https" not in message.content:
+                line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> MESSAGE: Sent at {(message.created_at)} by {message.author}: '{message.content}'")
+                count = count + 1
+            else:
+                line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> LINK:    Sent at {(message.created_at)} by {message.author}: {message.content}")
+        else: # If there is it gets the filename from message.attachments
+            try:
+                with open((f"Z:\\{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
+                    line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> MEDIA:   Sent at {(message.created_at)} by {message.author}: {message.attachments[0].url}")
+                attachmentsDir = (f"Z:\\{message.channel.name}\\Attachments\\")
+                if not os.path.exists(attachmentsDir):
+                    os.makedirs(f"Z:\\{message.channel.name}\\Attachments\\")
+                    print("Made directory" + (attachmentsDir))
+                nameOfFile = str(message.attachments).split("filename='")[1]
+                filename = str(nameOfFile).split("' ")[0]
+                beans = (f"{attachmentsDir}{filename}")
+                if os.path.isfile(beans):
+                    filename = str(nameOfFile).split("' ")[0]
+                    beans = (f"{attachmentsDir}{uuid.uuid4()}-name={filename}")
+                await message.attachments[0].save(fp=beans)
+                count = count + 1
+                attachments = attachments + 1
+            except Exception as e:
+                errors = errors + 1
+                error_details.append(e)
+        message_total = f"{message.content} {message_total}"
+    print(f"'{message_total}'")
+    tighe2 = round(time.time() * 1000)
+    nTighe = tighe2 - tighe1
+    await draggie.send(f"Counted {count} messages and {attachments} attachments ({errors} errors) in {nTighe}ms in server {message.guild.name}. Deleted <#{message.channel.id}> (#{message.channel.name})")
+    if error_details != []:
+        await draggie.send(f"Error info: {error_details}")
 
 #   brawlstars
 
@@ -2899,9 +2922,7 @@ async def log(ctx):
 
 @slash.slash(name="stats", description="Useful bot statistics.")
 async def _stats(ctx):
-    YTAPI_Status = "Enabled"
-    SCAPI_Status = "Mixed results"  
-
+    await bot_runtime_events(1)
     if round(client.latency * 1000) <= 100:
         pingColour = (0x44ff44)
     elif round(client.latency * 1000) <= 150:
@@ -2914,27 +2935,18 @@ async def _stats(ctx):
     fileSizeBytes = os.path.getsize('D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py')
 
     num_lines = sum(1 for line in open ("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
-
-    global secsOrMins1
-    global secsOrMins2
-    secsOrMins2 = "seconds"
     secsOrMins1 = "seconds"
     current_time = time.time()
     uptimeInSeconds = int(round(current_time - start_time))
 
-    uptime_stillInSeconds = uptimeInSeconds
-
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-
+    secsOrMins2 = "seconds"
     if uptimeInSeconds > 60:
         uptimeInSeconds = int(round(uptimeInSeconds / 60))
         secsOrMins2 = "minutes"
 
     real_uptimeInSeconds = int(round(current_time - ready_start_time))
-    if real_uptimeInSeconds > 60:
-        real_uptimeInSeconds = int(round(real_uptimeInSeconds / 60))
-        secsOrMins1 = "minutes"
 
     ping = round(client.latency * 1000)
 
@@ -2947,20 +2959,23 @@ async def _stats(ctx):
     cachedVideos = (len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]))
 
     embed = discord.Embed(title="_**Bot Stats**_\n", colour=pingColour)
-    embed.add_field(name="CPU Usage", value=f"{cpuPercentage}%", inline=False)  
-    embed.add_field(name="RAM Usage", value=f"{memoryUsage}%", inline=False)  
-    embed.add_field(name="Lines of Code", value=f"{num_lines} lines", inline=False)    
-    embed.add_field(name="File Size", value=(f"{fileSizeBytes} bytes"), inline=False)    
-    embed.add_field(name="**Uptime:**", value=(f"{real_uptimeInSeconds} {secsOrMins1} ({uptimeInSeconds} {secsOrMins2} since run)"), inline=False)
-    embed.add_field(name="**Ping:**", value=(f"{ping} ms"), inline=False)
-    embed.add_field(name="**YouTube Videos Loaded:**", value=cachedVideos, inline=False)
-    embed.add_field(name="**Servers :**", value=(servers), inline=False)
-    embed.add_field(name="**Members in All Servers:**", value=members, inline=False)
-    embed.add_field(name="\n**Debug Mode:**", value="Disabled")
+    embed.add_field(name="CPU Usage", value=f"{cpuPercentage}%")  
+    embed.add_field(name="RAM Usage", value=f"{memoryUsage}%")  
+    embed.add_field(name="Lines of Code", value=f"{num_lines} lines")    
+    embed.add_field(name="File Size", value=(f"{fileSizeBytes} bytes"))    
+    embed.add_field(name="**Uptime:**", value=(f"{uptimeInSeconds} {secsOrMins2} ({real_uptimeInSeconds}s ago)"))
+    embed.add_field(name="**Ping:**", value=(f"{ping} ms"))
+    embed.add_field(name="**Videos Loaded:**", value=cachedVideos)
+    embed.add_field(name="**Servers :**", value=(servers))
+    embed.add_field(name="**Total Members:**", value=members)
+    embed.add_field(name="**Bot Events**", value=bot_events)
+    embed.add_field(name="**Bot Events/sec:**", value=f"{round((bot_events / real_uptimeInSeconds), 3)}")
+    embed.add_field(name="**Debug Mode:**", value="Disabled")
     embed.add_field(name="**Command Logging:**", value="Enabled")
     embed.add_field(name="**Message Logging:**", value="Enabled")
     embed.add_field(name="**Voice Channels:**", value="Enabled")
     embed.add_field(name="**YouTube Player:**", value=YTAPI_Status)
+    embed.add_field(name="**Audio Subsystem:**", value=audio_subsystem)
     embed.add_field(name="**Supercell API:**", value=SCAPI_Status)
 
     embed.set_footer(text=(f"\nDraggieBot.py | {DraggieBot_version}"))
@@ -3779,20 +3794,10 @@ async def max_bitrate(ctx):
 
 #   join/leave voice
 
-#@client.command(help="Joins message author's voice channel", brief="[Audio] Joins voice chat", pass_context=True)
-#async def join(ctx):#    Joins
-#    try:
-#        channel = ctx.author.voice.channel
-#        await channel.connect()
-#        await ctx.send((str ("Joined voice channel *")) + (str (channel)) + (str ("*.")))
-#    except:
-#        await ctx.send("You are not in a voice channel, please join one before running the command.")
-#        return
-#    f = open(GlobalLogDir, "a")
-#    f.write((str ("\nAUDIO COMMAND RAN -> '.join' ran by ")) + (str (ctx.message.author)) + (str (" at ") + (str (datetime.now()))))
-#    f.close()
-#    print ((str ("\nAUDIO COMMAND RAN -> '.join' ran by ")) + (str (ctx.message.author)))  
-
+@client.command(help="Joins message author's voice channel", brief="[Audio] Joins voice chat", pass_context=True)
+async def join(ctx):#    Joins
+    await ctx.reply("• You need to be in a Voice Chat to play audio.\n• You don't need to make me join - search for any audio and I'll play it automatically.") if not ctx.author.voice else await ctx.reply("You don't need to make me join: search for any audio and I'll play it automatically.")
+    
 #@client.command(help="Leaves message author's voice channel", brief="[Audio] Leaves voice chat", pass_context=True)
 #async def leave(ctx):#  Leaves
 #    try:
@@ -3809,7 +3814,7 @@ async def max_bitrate(ctx):
 #   Purge
 
 @client.command(help="Purges a specified amount of messages", brief="Delets x messages", pass_context=True)
-@commands.has_any_role('Admin', 'Mod', 'King')
+#@commands.has_any_role('Admin', 'Mod', 'King')
 async def purge(ctx):
     if ctx.message.author.id == 382784106984898560:
         async with ctx.typing():
@@ -3817,6 +3822,25 @@ async def purge(ctx):
             x = txt.split()
             print(x[1])
             y = (int (x[1])) + 1
+            current_time_for_deletes = time.time()
+            async for message in ctx.message.channel.history(limit=y):
+                if len(message.attachments) < 1: # Checks if there is an attachment on the message
+                    with open((f"Z:\\{message.channel.name}_log{current_time_for_deletes}.txt"), "a", encoding='utf-8') as logAllMessages:
+                        logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}")
+                        print(f"\n'{message.content}' sent by {message.author}")
+                        logAllMessages.close()
+                else: # If there is it gets the filename from message.attachments
+                    attachmentsDir = (f"Z:\\{message.channel.name}\\Attachments\\")
+                    if not os.path.exists(attachmentsDir):
+                        os.makedirs(f"Z:\\{message.channel.name}\\Attachments\\")
+                        print("Made directory" + (attachmentsDir))
+                    nameOfFile = str(message.attachments).split("filename='")[1]
+                    filename = str(nameOfFile).split("' ")[0]
+                    beans = (f"{attachmentsDir}{filename}")
+                    if os.path.isfile(beans):
+                        filename = str(nameOfFile).split("' ")[0]
+                        beans = (f"{attachmentsDir}{uuid.uuid4()}-name={filename}")
+                        await message.attachments[0].save(fp=beans)
             if (x[1]) == 1:
                 await ctx.channel.purge(limit = y)
                 await ctx.send(f"Deleted {x[1]} message!")
@@ -3824,8 +3848,7 @@ async def purge(ctx):
                 await ctx.channel.purge(limit = y)
                 await ctx.send(f"Deleted {x[1]} messages!")
                 f = open(GlobalLogDir, "a")
-            #else:
-            #    await ctx.send("You are trying to delete too many messages at once!")
+
             f = open(GlobalLogDir, "a")
             f.write(f"\nCOMMAND RAN -> '.purge' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
             f.close()
@@ -4170,6 +4193,7 @@ async def mine(ctx):
 
 @client.event
 async def on_slash_command_error(ctx, error):
+    await bot_runtime_events(1)
     randomCry = random.randint(1,7)
     if randomCry == 1:
         cry = '<:AmberCry:828577834146594856>'
@@ -4190,6 +4214,7 @@ async def on_slash_command_error(ctx, error):
 
 @client.event
 async def on_command_error(ctx, error):
+    await bot_runtime_events(1)
     if "is not found" in str(error):
         print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
         return
