@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.2.5"
-revision = "b"
+revision = ""
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math
