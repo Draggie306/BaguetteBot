@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord import utils, Embed
 from time import time, sleep
-import lavalink, random, os
+import lavalink, random, os, math, discord
 from discord_slash import SlashCommand
 
 emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
@@ -105,6 +105,24 @@ class Music(commands.Cog):
             await ctx.send("Stopped playing audio.")
         else:
             await ctx.send("Not playing any audio to stop.")
+        
+    @commands.command(name='queue')
+    async def queue(self, ctx, page: int = 1):
+        player = self.bot.music.player_manager.get(ctx.guild.id)
+
+        items_per_page = 10
+        pages = math.ceil(len(player.queue) / items_per_page)
+
+        start = (page - 1) * items_per_page
+        end = start + items_per_page
+
+        queue_list = ''
+        for index, track in enumerate(player.queue[start:end], start=start):
+            queue_list += f'`{index + 1}.` [**{track.title}**]({track.uri})\n'
+
+            embed = discord.Embed(colour=discord.Color.blurple(), description=f'**{len(player.queue)} tracks**\n\n{queue_list}')
+            embed.set_footer(text=f'Viewing page {page}/{pages}')
+            await ctx.send(embed=embed)
 
     @commands.command(name='lock', aliases=["lockvolume", "unlock"], help="Locks a Voice Chat's volume from being changed. Admin permissions required.",  brief="Locks server voice volume.")
     async def lockvolume(self, ctx):
