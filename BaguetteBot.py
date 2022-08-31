@@ -1,8 +1,8 @@
-DraggieBot_version = "v1.2.6"
-revision = ""
+DraggieBot_version = "v1.2.8"
+revision = "a"
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, kahoot, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math, openai
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math, openai
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
 from        discord import Embed
@@ -13,18 +13,66 @@ from        youtube_search import YoutubeSearch#                                
 from        datetime import datetime#                                           UPDATE PIP:     python -m pip install --upgrade pip
 from        json import loads
 from        pathlib import Path
-from        mcstatus import MinecraftServer
 from        io import StringIO
 
+global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, roleMember, hasMember, hasAdmin, bot_events
+bot_events = 0
+voiceVolume = 0.3
+Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
+croissant_names = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
+tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
+brigaders = [759861456300015657]
+random_word = ["Expulser!", "Troubador!", "Delenda!", "Vincit1", "Consilium!", "Renovatur!", "Acheronta!", "Oderint!"]
+emoji_Coins = "<:Coins:852664685270663194>"
+emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
+emoji_random_lmao = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "😳"]
+emoji_loading = "<a:loading:935623554215591936>"
+value_Placeholder = "TBD/tbd"
+name_Nolwennium = "Nolwennium"
+id_Draggie = 382784106984898560
+discord_snowflake = 175928847299117063
+discord_epoch = 1420070400000
+YTAPI_Status = "Disabled"
+SCAPI_Status = "Disabled"
+audio_subsystem = "Disabled" # Modified repl.it
+
+#   Check directories
+nolwennium_checker_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
+nolwenniumDirChecker = Path(nolwennium_checker_directory)
+if nolwenniumDirChecker.is_file():
+    running_locally = True
+    print("Running locally! Using enhanced features.")
+    minified_base_directory = "D:\\Draggie Programs\\BaguetteBot\\"
+    base_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\"
+    base_directory_minus_slash = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
+    s_slash = "\\"
+    json_dir = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+    temp_folder = f"Z:{s_slash}"
+    logger = logging.getLogger('discord')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(filename=f'{minified_base_directory}Logs\\{DraggieBot_version}{revision}-{time.time()}.log', encoding='utf-8', mode='w')
+    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    logger.addHandler(handler)
+else:
+    running_locally = False
+    print(f"Not running locally, coins and {name_Nolwennium} values may not be up to date and some features may be disabled")
+    base_directory = "/"
+    base_directory_minus_slash = ""
+    s_slash = "/"
+    json_dir = "JSONs/"
+    temp_folder = f"Temp{s_slash}"
+    minified_base_directory = "D:\\Draggie Programs\\BaguetteBot\\.useful"
+    logger = logging.getLogger('discord')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(filename=f'.useful{s_slash}{DraggieBot_version}{revision}-{time.time()}.log', encoding='utf-8', mode='w')
+    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    logger.addHandler(handler)
+    import keep_alive
+    keep_alive.keep_alive()
 
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename=f'D:\\Draggie Programs\\BaguetteBot\\Logs\\{DraggieBot_version}{revision}-{time.time()}.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
-subprocess.Popen(['java', '-jar', 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\Lavalink.jar'])
+if running_locally:
+    subprocess.Popen(['java', '-jar', f'{base_directory}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 """
     To do:
@@ -39,28 +87,6 @@ global start_time
 start_time = time.time()
 
 sys.setrecursionlimit(99999999)
-
-global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, repl_checker, roleMember, hasMember, hasAdmin, bot_events
-bot_events = 0
-voiceVolume = 0.3
-Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
-croissant_names = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
-tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
-brigaders = [759861456300015657]
-random_word = ["Expulser!", "Troubador!", "Delenda!", "Vincit1", "Consilium!","Renovatur!", "Acheronta!", "Oderint!"]
-emoji_Coins = "<:Coins:852664685270663194>"
-emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
-emoji_random_lmao = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "😳"]
-emoji_loading = "<a:loading:935623554215591936>"
-value_Placeholder = "TBD/tbd"
-name_Nolwennium = "Nolwennium"
-id_Draggie = 382784106984898560
-discord_snowflake = 175928847299117063
-discord_epoch = 1420070400000
-YTAPI_Status = "Enabled"
-SCAPI_Status = "Mixed results"
-audio_subsystem = "Lavalink/music.py Cog"
-
 
 class roles:
     Roles_order_List = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
@@ -107,24 +133,15 @@ client = commands.Bot(
 
 slash = SlashCommand(client, sync_commands=True)
 
-nolwennium_checker_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
-nolwenniumDirChecker = Path(nolwennium_checker_directory)
-if nolwenniumDirChecker.is_file():
-    repl_checker = False
-    print("Not running in a repl")
-else:
-    repl_checker = True
-    print(f"Running in a repl, coins and {name_Nolwennium} values may not be up to date")
-
 
 def nolwenniumUserDirectory(ctx):
     global nolwenniumUserDir
-    nolwenniumUserDir = f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{ctx.author.id}.txt"
+    nolwenniumUserDir = f"{base_directory}Nolwennium{s_slash}{ctx.author.id}.txt"
 
 
 def coinDirectory(ctx):
     global coinDir
-    coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{ctx.author.id}.txt")
+    coinDir = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}Coins{s_slash}{ctx.author.id}.txt")
 
 
 async def bot_runtime_events(event_int):
@@ -150,16 +167,16 @@ async def error_code(ctx, code, *note, **raw_error):
     await ctx.send(embed=embed)
 
     if raw_error:
-        with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\errors.txt", "a") as f:
+        with open(f"{base_directory}errors.txt", "a") as f:
             f.write(f"\nERROR: An error occured! Original command initialised by {ctx.message.author} at {datetime.now()}. ERROR MESSAGE: {str(raw_error)}")
 
 
 async def changeNolwenniumBalance(ctx, base_mined_amount):
-    #   Nolwennium UPDATED LOCATION 2/11/2021: D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\
-    filedir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{ctx.message.author.id}.txt")
+    #   Nolwennium UPDATED LOCATION 2/11/2021: {base_directory}Nolwennium{s_slash}
+    filedir = (f"{base_directory}Nolwennium{s_slash}{ctx.message.author.id}.txt")
 
     #   Calculate fees first, so the calculations after account for it.
-    fee = base_mined_amount / random.randint(50, 200)
+    fee = base_mined_amount / random.randint(10, 40)
     newNumberAfterFee = base_mined_amount - fee
     newNumberAfterFee = round(newNumberAfterFee, 3)
     fee = round(fee, 3)
@@ -194,7 +211,7 @@ async def changeNolwenniumBalance(ctx, base_mined_amount):
         balance = balance + BoosterBonus
         bonuses += BoosterBonus
     else:
-        print("Ok, the user isn't boosting.")
+        #print("Ok, the user isn't boosting.")
         if ctx.guild.id in tester_guilds:
             print("Ok, the guild is in the tester_guilds list.")
             if ctx.author.avatar_url is not None:
@@ -230,24 +247,24 @@ async def changeNolwenniumBalance(ctx, base_mined_amount):
 
     #   'balance' takes into account existing balance, read from a file, and bonuses.
     #   'newNumberAfterFee' is calculated initially from the base amount mined.
-    balance = balance + newNumberAfterFee
+    new_balance = balance + newNumberAfterFee
 
     #   Set fields and footers, then send the final compiled result.
-    embed.add_field(name="**Total Balance**", value=(f"{(round (balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+    embed.add_field(name="**Total Balance**", value=(f"{(round (new_balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
     embed.set_footer(text=f"ID: {ctx.message.author.id} | Total: {bonuses} bonus + {base_mined_amount} = {bonuses + base_mined_amount}")
 
     await ctx.send(embed=embed)
 
     #   Write balance and globally log it!
     f = open(filedir, 'w+')
-    f.write(str(balance))
+    f.write(str(new_balance))
     f.close()
     f = open(GlobalLogDir, "a", encoding='utf-8')
     f.write(f"COMMAND RAN -> '.mine' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
 
-    #   Add the fees to the afor
-    randomcroissant = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{croissant_paid}.txt")
+    #   Add the fees to the aforementioned croissant
+    randomcroissant = (f"{base_directory}Nolwennium{s_slash}{croissant_paid}.txt")
     try:
         e = open(randomcroissant, 'r')
         balance = float(e.read())
@@ -267,16 +284,16 @@ async def changeNolwenniumBalance(ctx, base_mined_amount):
     f.write(str(balance))
     f.close()
     await bot_runtime_events(1)
-    print(f"CURRENCY - {name_Nolwennium} > {ctx.message.author.id} now has {newNumberAfterFee} {name_Nolwennium}")
+    print(f"CURRENCY - {name_Nolwennium} > {ctx.message.author.id} has gained {newNumberAfterFee} {name_Nolwennium} (fee: {fee}). Their total is {new_balance}")
 
 async def changeCoinBalance(message, number_to_change_by):
     await bot_runtime_events(1)
     try:
-        coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins\\{message.author.id}.txt")
-        serverdir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins")
+        coinDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Coins{s_slash}{message.author.id}.txt")
+        serverdir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Coins")
     except:
-        coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins\\{message.id}.txt")
-        serverdir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Coins")
+        coinDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Coins{s_slash}{message.id}.txt")
+        serverdir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Coins")
 
     if not os.path.exists(serverdir):
         os.makedirs(serverdir)
@@ -305,7 +322,7 @@ async def changeCoinBalance(message, number_to_change_by):
                 f.write('1')
                 f.close()
 
-        sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+        sendLogsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt")
         my_file = Path(sendLogsDir)
         if my_file.is_file():
             await bot_runtime_events(1)
@@ -383,20 +400,20 @@ async def openai_prompt(ctx, prompt: str, model: int, limit: int):
 #   Check owner to quickly enable/disable it in case of abuse
     if ctx.author.id == 382784106984898560:
         if prompt == "disable":
-            x = open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\openai", "w")
+            x = open(f"{base_directory}openai", "w")
             x.close()
             await ctx.send("Disabled OpenAI integration subsystem.")
             return
         if prompt == "enable":
             try:
-                os.remove("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\openai")
+                os.remove(f"{base_directory}openai")
             except OSError:
                 await ctx.send("The subsystem is already enabled")
                 return
             await ctx.send("Enabled OpenAI integration subsystem.")
             return
 
-    if os.path.isfile("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\openai"):
+    if os.path.isfile(f"{base_directory}openai"):
         await ctx.send("The OpenAI subsystem has been disabled.")
         return
     if ctx.author.id not in allowed_users:
@@ -416,9 +433,9 @@ async def openai_prompt(ctx, prompt: str, model: int, limit: int):
 
     #   Now defer as it may take a long time lmao
     await ctx.defer()
-    with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\openai_api_key.txt", 'r', encoding="UTF-8") as api:
+    with open(f"{base_directory}openai_api_key.txt", 'r', encoding="UTF-8") as api:
         openai.api_key = api.read()
-    with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\openai_organisation.txt", 'r', encoding="UTF-8") as org:
+    with open(f"{base_directory}openai_organisation.txt", 'r', encoding="UTF-8") as org:
         openai.organization = org.read()
 
     #   Get moderation dats
@@ -477,7 +494,7 @@ async def test(ctx):
 async def _ping(ctx):
     print("ping'd")
     await bot_runtime_events(1)
-    GlobalLogDir=("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GlobalLog.txt")
+    GlobalLogDir=("{base_directory}GlobalLog.txt")
     startTime = round(time.time() * 1000)
     await ctx.reply("Ping: Testing connection...")
     #message = ctx.channel.last_message
@@ -586,7 +603,7 @@ async def _components(ctx, enable:str, disable:str):
                 LoggingChannel = discord.utils.get(ctx.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
                 await LoggingChannel.send("**Logging enabled**")
 
-                sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
+                sendLogsDir = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}sendMessages.txt")
                 x = open(sendLogsDir, "a", encoding='utf-8')
                 x.close()
                 await ctx.send(f"Enabled logging for server {ctx.guild.id}")
@@ -602,7 +619,7 @@ async def _components(ctx, enable:str, disable:str):
             
         if "log" in disable:
             try:
-                sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt")
+                sendLogsDir = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}sendMessages.txt")
                 os.remove(sendLogsDir)
                 await ctx.send(f"Disabled sending logs for server {ctx.guild.id}. The following messages in the log channel will not be sent:\nMessages in the log channel when a user joins, types, changes status, activity, username\nMessages deleted\nDMs to users welcoming them when they join.\n")
             except Exception as e:
@@ -615,15 +632,15 @@ async def _components(ctx, enable:str, disable:str):
             #delete file here
 
         if "redactions" in enable:
-            sendRedactions = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+            sendRedactions = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}sendRedactions.txt")
             x = open(sendRedactions, "a", encoding='utf-8')
             x.close()
             await ctx.send("Redacted messages have been enabled. Announcements showing a message's deletion will be sent in DMs and broadcasted in the channel.")
         if "redactions" in disable:
             try:
-                sendRedactions = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendRedactions.txt")
+                sendRedactions = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}sendRedactions.txt")
                 os.remove(sendRedactions)
-                x = "enabled" if os.path.isfile(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\sendMessages.txt") else "disabled"
+                x = "enabled" if os.path.isfile(f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}sendMessages.txt") else "disabled"
                 await ctx.send(f"Redacted messages have been disabled. Messages will not be sent in the channel or to DMs. Logging is {x}.")
             except Exception:
                 await ctx.send("Cannot perform that function. `sendRedactions` is `disabled`")
@@ -760,7 +777,7 @@ async def nsfw(ctx, character: str):
     async def beanery():
         if character == "Wattson":
             randomiser = random.randint(1,290)
-            await ctx.send(file=discord.File(f"D:\\Draggie Programs\\BaguetteBot\\MaximumWattage\\wattson ({randomiser}).png", filename="SPOILER_wattson{randomiser}.png"))
+            await ctx.send(file=discord.File(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\MaximumWattage\\wattson ({randomiser}).png", filename="SPOILER_wattson{randomiser}.png"))
         if character == "Chun-Li":
             await ctx.send("Omg you are so down bad 😂😂😂😂")
     await beanery()
@@ -796,9 +813,9 @@ async def _CodeSearch(ctx, term: str):
     await ctx.defer()
     message = term
     searchTerm = message.lower()
-    file=open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding="UTF-8").read().lower()
+    file=open(f"{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py", encoding="UTF-8").read().lower()
     num_chars = sum(1 for line in file)
-    num_lines = sum(1 for line in open ("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open (f"{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py", encoding='utf-8'))
 
     count=file.count(searchTerm)
     embed = discord.Embed()
@@ -818,51 +835,56 @@ async def _CodeSearch(ctx, term: str):
 DisabledComponents = "Unknown"
 EnabledComponents = "Unknown"
 
-GlobalLogDir=("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GlobalLog.txt")
+if running_locally:
+  GlobalLogDir=(f"{base_directory}GlobalLog.txt")
+else:
+  GlobalLogDir=("GlobalLog.txt")
 
 """ BULK READ JSONS so it doesn't have to read the file every time a message is sent
     people = nolTighe (p1, g, b, T), oliver, sam (g), jack (r, g), joe (g), charlie (g), haydn, maisy, flo (a), ish, maya, boris (gl), josephTighe (p13, g, c, T)
     "g = grouped", "r = remade", "a = affiliated", "gl = global" 
 """
 
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\NollyMention.json", "r", encoding="utf8") as file:
+
+#	Modified in repl.it
+
+with open(f"{json_dir}NollyMention.json", "r", encoding="utf8") as file:
     nollyWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\OliverMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}OliverMention.json", "r", encoding="utf8") as file:
     oliverWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\SamMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}SamMention.json", "r", encoding="utf8") as file:
     samWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\JackMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}JackMention.json", "r", encoding="utf8") as file:
     jackWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\JoeMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}JoeMention.json", "r", encoding="utf8") as file:
     joeWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\HaydnMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}HaydnMention.json", "r", encoding="utf8") as file:
     haydnWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\MaisyMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}MaisyMention.json", "r", encoding="utf8") as file:
     maisyWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\BenMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}BenMention.json", "r", encoding="utf8") as file:
     benWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\FloMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}FloMention.json", "r", encoding="utf8") as file:
     floWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\IshMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}IshMention.json", "r", encoding="utf8") as file:
     ishWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\BorisMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}BorisMention.json", "r", encoding="utf8") as file:
     borisWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\MayaMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}MayaMention.json", "r", encoding="utf8") as file:
     mayaWords = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\JosephTigheMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}JosephTigheMention.json", "r", encoding="utf8") as file:
     josephTighe = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\JSONs\\CharlieMention.json", "r", encoding="utf8") as file:
+with open(f"{json_dir}CharlieMention.json", "r", encoding="utf8") as file:
     charlieSewards = loads(file.read())
-with open("D:\\Draggie Programs\\BaguetteBot\\JSONs\\names.json", "r", encoding="utf8") as file:
-    protectedNames = loads(file.read())
+
 
 @client.event
 async def on_ready():
     print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
     global ready_start_time, roleMember, hasMember, hasAdmin
     ready_start_time = time.time()
-    client.load_extension('cogs.music')
-    print("COG: Music loaded!")
+    #client.load_extension('GitHub.BaguetteBot.cogs.music') Modified repl.it
+    #print("COG: Music loaded!")
     channel = client.get_channel(838107252115374151) # Brigaders_channel
     await channel.send(f"Online at **{datetime.now()}**")
     f = open(GlobalLogDir, "a", encoding="utf-8")
@@ -871,7 +893,7 @@ async def on_ready():
     f.close()
     servers = len(client.guilds)
     members = 0
-    bot_runtime_events(7)
+    await bot_runtime_events(7)
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
@@ -884,12 +906,27 @@ async def on_ready():
     general = client.get_channel(759861456761258045)#  Brigaders_channel 
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
+    draggie_guild = client.get_guild(759861456300015657)
     upvote = client.get_emoji(803578918488768552)
     hasMember = discord.utils.find(lambda r: r.name == 'Member', guild.roles)
     hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
     roleMember = discord.utils.get(guild.roles, name='Member')
     downvote = client.get_emoji(803578918464258068)
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
+
+    await asyncio.sleep(2)
+    global test__bb_voice_channel
+    test__bb_voice_channel = client.get_channel(1013893596493119488)
+    test_voice_time = await test__bb_voice_channel.history().flatten()
+
+    voice_time = test_voice_time[0].content
+
+    x = open(f'{base_directory}Servers{s_slash}759861456300015657{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+')
+    x.write(voice_time)
+    x.close()
+
+    print(f"Calibrated Voice Chat time to {voice_time} seconds")
+
     await bot_runtime_events(1)
     await StatusAutoUpdator()
 
@@ -919,13 +956,13 @@ async def on_voice_state_update(member, before, after):
     #    return
     await bot_runtime_events(1)
     if after.channel:
-        if not os.path.isfile(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\voice_info.txt'):
+        if not os.path.isfile(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt'):
             try:
-                os.mkdir(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice')
+                os.mkdir(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice')
             except Exception:
                 print("Area already exists.")
             print(f"User joined VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()} ")
-            x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\voice_info.txt', 'w')
+            x = open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt', 'w')
             x.close()
     else:
         print(f"User left VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
@@ -933,16 +970,16 @@ async def on_voice_state_update(member, before, after):
 
     if not before.channel: #When VC joined.
         join_time = round(time.time())
-        x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.channel.guild.id}\\Voice\\tempuserstate_{new_user}.txt', 'w')
+        x = open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'w')
         x.write(str(join_time))
         x.close
     if not after.channel:
         await bot_runtime_events(1)
         leave_time = round(time.time())
-        x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Voice\\tempuserstate_{new_user}.txt', 'r')
+        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'r')
         start_time = int(x.read())
         x.close()
-        #os.remove(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Voice\\tempuserstate_{new_user}.txt')
+        #os.remove(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt')
         time_spent = leave_time - start_time
         print(f"{member.name} just spent {time_spent} in a Voice Chat.")
 
@@ -986,12 +1023,12 @@ async def on_voice_state_update(member, before, after):
 
         # Get total guild time spent in Voice Chat
         # Firstly, if there is not a record of voice chat time, create the file
-        if not os.path.isfile(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Logs\\TotalUserVoiceTime.txt'):
-            x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Logs\\TotalUserVoiceTime.txt', 'w')
+        if not os.path.isfile(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt'):
+            x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w')
             x.close()
         
         #   Then, open up the file for reading.
-        x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Logs\\TotalUserVoiceTime.txt', 'r')
+        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'r')
         try:
             #   Try and convert the value into an integer. If error, then the value would be zero.
             preTime = int(x.read())
@@ -1004,17 +1041,20 @@ async def on_voice_state_update(member, before, after):
         print(f"Total time spent in VCs in {member.guild.name}: {total_guild_time_spent} seconds.")
         
         #   Write new sum to the file for later reading.
-        x = open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{before.channel.guild.id}\\Logs\\TotalUserVoiceTime.txt', 'w+')
+        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+')
         x.write(str(total_guild_time_spent))
         x.close()
 
+        if before.channel.guild.id == 759861456300015657:
+            await test__bb_voice_channel.send(total_guild_time_spent)
+
         #   Finally, send sum to me as a test.
-        await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent")
+        await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
     await bot_runtime_events(1)
-    sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
     if member.guild.id == 759861456300015657:
         #await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
         print("Not welcomed user")
@@ -1033,7 +1073,7 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     await bot_runtime_events(1)
-    sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{member.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         try:
             channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -1123,20 +1163,14 @@ async def on_raw_reaction_add(payload=None):
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
-                    if payload.member.name in protectedNames:
-                        await channel.send(f"Sorry {payload.member.mention} your account has been flagged as [Protected username], please send proof of identity in DMs to <@&963738031863525436>.")
-                        await asyncio.sleep(8)
-                        await channel.purge(limit=1)
-                        return
-                    else:
-                        await payload.member.add_roles(roleMember)
-                        await payload.member.add_roles(roleNew)
-                        await channel.send(f"Welcome, {payload.member.mention}! You have been verified! Maybe check out <#759861456761258045> now?")
-                        await payload.member.remove_roles(role_private_unverified)
-                        await payload.member.remove_roles(roleUnverified)
-                        await asyncio.sleep(8)
-                        await channel.purge(limit=1)
-                        print(f"And it's gone in {channel}")
+                    await payload.member.add_roles(roleMember)
+                    await payload.member.add_roles(roleNew)
+                    await channel.send(f"Welcome, {payload.member.mention}! You have been verified! Maybe check out <#759861456761258045> now?")
+                    await payload.member.remove_roles(role_private_unverified)
+                    await payload.member.remove_roles(roleUnverified)
+                    await asyncio.sleep(8)
+                    await channel.purge(limit=1)
+                    print(f"And it's gone in {channel}")
 
             if payload.message_id == vaccinatedID:
                 if str(payload.emoji) == "✅":
@@ -1172,7 +1206,7 @@ async def on_reaction_remove(reaction, user):
 @client.event
 async def on_guild_remove(guild):
     print(f"Removed from guild {guild}")
-    await draggie.send(f"DEV MODE: removed from guild {guild}")
+    await draggie.send(f"DEV MODE: removed from guild {guild} ({guild.id})")
 
 #   Client evenys
 
@@ -1181,7 +1215,7 @@ async def on_message_delete(message):
     await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendRedactionsInChannel = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendRedactions.txt")
+    sendRedactionsInChannel = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendRedactions.txt")
     print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
     if message.channel.id == 825470734453047297:
         if message.author.bot == False:
@@ -1192,7 +1226,7 @@ async def on_message_delete(message):
             await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
             user = client.get_user(int(message.author.id))
             await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
-    if os.path.isfile(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt"):
+    if os.path.isfile(f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt"):
         LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         embed = discord.Embed(title=f"User's message deleted", colour=0xFF0000)
         embed.add_field(name="User", value=message.author.mention)
@@ -1214,44 +1248,12 @@ async def discorddm(ctx):
     await user.send(f"{sp1}")
     await ctx.send(f"Successfully sent {sp1} to user {user.name}")
 
-def InstaDMSend(ctx):
-    message = ctx.message.content
-    x = message.split()
-    user = (x[1])
-    msg = message.split(' ', 2)[-1]
-    with open("D:\\Draggie Programs\\BaguetteBot\\TextValues\\password.txt", encoding="utf-8") as f:
-        password = f.read()
-    try:
-        if __name__ == '__main__':
-            insta = InstaDM(username='draggie306', password=password, headless=False)
-            insta.sendMessage(user=f'{user}', message=f'{msg}')
-    except Exception as e:
-        print(f"An unexpected error occured: {e}")
-
-@client.command(pass_context=True, hidden=True)
-async def dm(ctx):
-    message = ctx.message.content
-    x = message.split()
-    user = (x[1])
-    msg = message.split(' ', 2)[-1]
-    if ctx.message.author.id == 382784106984898560:
-        accounts = ("`draggiefn`, `nolwenntighe`, `charli3_s3w`, `xxnova_smokexx`, `ismail_ahmed_06_2`, `sam_partridge._`, `b3nny_b0oze`, `_reuben_72`, `therealwillbyrne`, `unicornkid_72`, `riaz_bari_`, `drevilo.19`, `some_one_acctually`, `harrigeorg`")
-        if user not in accounts:
-            await ctx.send(f"Sorry! I can only send DMs to the following accounts: {accounts}")
-            return
-
-        await ctx.send(f"OK! Trying to send **{msg}** to Instagram user @**{user}**. This may take over 30 seconds.")
-        t1 = threading.Thread(target=InstaDMSend, args=[ctx])
-        t1.start()
-    else:
-        await ctx.send(f"you don't have permission to message {user} ")
-
 @client.event
 async def on_message_edit(before, after):
     await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
@@ -1293,7 +1295,7 @@ async def on_typing(channel, user, when):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{channel.guild.id}\\sendMessages.txt")
+        sendLogsDir = (f"{base_directory}Servers{s_slash}{channel.guild.id}{s_slash}sendMessages.txt")
     except Exception as e:
         print(e)
         await draggie.send(f"{user.mention} ({user}) is DMing me")
@@ -1358,8 +1360,8 @@ async def on_member_update(before, after):
 
     if after.activity is not None:
         await bot_runtime_events(1)
-        print(f"ACTIVITY of {after.name} has been updated to {after.activity} at {datetime.now()}")
-        print(str(after.activities))
+        print(f"ACTIVITY of {after.name} has been updated to {after.activity.name} at {datetime.now()}")
+        #print(str(after.activities)) modified repl.it
     if before.status != after.status:
         await bot_runtime_events(1)
         if guild.id == 759861456300015657:
@@ -1421,8 +1423,8 @@ async def on_member_update(before, after):
         print(f"OP WATCHDOG: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         if after.guild.id == 759861456300015657 or after.guild.id == 384403250172133387:
             if new_role.name == "Server Booster":
-                coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\Coins\\{after.guild.id}.txt")
-                nolwenniumUserDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{after.id}.txt")
+                coinDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}Coins{s_slash}{after.guild.id}.txt")
+                nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{after.id}.txt")
                 my_file = Path(nolwenniumUserDir)
                 if not my_file.is_file():
                     with open(nolwenniumUserDir, 'a') as f:
@@ -1488,7 +1490,7 @@ async def on_member_update(before, after):
         send = True
         print(f"OP WATCHDOG: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
-    sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{after.guild.id}\\sendMessages.txt")
+    sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         if send == True:
             LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -1544,15 +1546,15 @@ async def on_message(message):
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
             try:
-                attachmentsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Attachments\\")
+                attachmentsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Attachments{s_slash}")
                 if not os.path.exists(attachmentsDir):
-                    os.makedirs(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\Attachments\\")
+                    os.makedirs(f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Attachments{s_slash}")
                     print("Made directory" + (attachmentsDir))
             except AttributeError:
                 print("Attachment sent in DMs.")
-                attachmentsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\DMs\\Attachments\\{message.author.id}\\")
+                attachmentsDir = (f"{base_directory}DMs{s_slash}Attachments{s_slash}{message.author.id}{s_slash}")
                 if not os.path.exists(attachmentsDir):
-                    os.makedirs(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\DMs\\Attachments\\{message.author.id}\\")
+                    os.makedirs(f"{base_directory}DMs{s_slash}Attachments{s_slash}{message.author.id}{s_slash}")
                     print("Made directory" + (attachmentsDir))
             nameOfFile = str(message.attachments).split("filename='")[1]
             filename = str(nameOfFile).split("' ")[0]
@@ -1566,13 +1568,14 @@ async def on_message(message):
 
             try:
                 LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+                sendLogsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt")
                 if os.path.isfile(sendLogsDir):
                     await LoggingChannel.send(f"Attachment sent in <#{message.channel.id}>: **{filename}**: {attachment.url}")
             except:
                 pass
 
-    await DLstuff()
+    if running_locally: #	Modified in repl.it
+      await DLstuff()
 
     if message.author.bot:
        return
@@ -1599,7 +1602,7 @@ async def on_message(message):
         #await draggie.send(f"\n'{message}' DMed by {person} at {datetime.now()}")
         print(f"\n'{message.content}' DMed by {person} at {datetime.now()}")
 
-        dmLocation = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\DMs\\{personID}.txt")
+        dmLocation = (f"{base_directory}DMs{s_slash}{personID}.txt")
         logAllMessages = open(dmLocation, "a", encoding='utf-8')
         logAllMessages.write(f"\n'{message}' DMed by {person} at {datetime.now()}")
         logAllMessages.close()
@@ -1614,9 +1617,12 @@ async def on_message(message):
     channelName = message.channel.name
     channelID = message.channel.id
 
-    filedir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\")
+    filedir = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
     if not os.path.exists(filedir):
-        os.makedirs(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\")
+      if running_locally: # Modified repl.it
+        os.makedirs(f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
+      else:
+        os.makedirs(f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
 
     
     try:
@@ -1633,7 +1639,7 @@ async def on_message(message):
         except Exception as e:
                 errorMsg = str(f"\nCRITICAL ERROR!!!! Server file corruption has occured!!! cc: <@382784106984898560>, server ID is {serverID} / {channelID}\nDM Draggie#3060 if this does not get resolved in 10 minutes\nError: {e}")
                 print(errorMsg)
-                await message.channel.send(errorMsg)
+                await draggie.send(errorMsg)
 
     print(f"\n'{message.content}' sent by {message.author} in [{serverName}- #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
 
@@ -1872,16 +1878,6 @@ async def snowflake(ctx, snowflake: int):
         await ctx.reply("That isn't a valid integer to converrt into a date.")
     
 @client.command()
-async def xp(ctx, id:str):
-    x = client.get_user(int(id))
-    try:
-        with open(f"D:\\Draggie Programs\\XP\\{id}.txt") as f:
-            xp = f.read()
-        await ctx.send(f"{x.name} has {xp} XP.")
-    except:
-        await ctx.send(f"{x.name} has no XP recorded.")
-
-@client.command()
 async def bb_xp(ctx):
     if ctx.author.id == 382784106984898560:
         guild = client.get_guild(759861456300015657)
@@ -1891,8 +1887,8 @@ async def bb_xp(ctx):
                 print(f"Now indexing <#{channel.id}>")
                 await ctx.send(f"Now indexing <#{channel.id}>")
                 async for message in channel.history(limit=None): # Async through the messages
-                    if os.path.isfile(f"Z:\\XP\\{message.author.id}\\xp.txt"):
-                        with open (f"Z:\\XP\\{message.author.id}\\xp.txt", 'r') as f:
+                    if os.path.isfile(f"Z:{s_slash}XP{s_slash}{message.author.id}{s_slash}xp.txt"):
+                        with open (f"Z:{s_slash}XP{s_slash}{message.author.id}{s_slash}xp.txt", 'r') as f:
                             xp = f.read()
                             f.close()
                         try:
@@ -1900,13 +1896,13 @@ async def bb_xp(ctx):
                         except:
                             xp_to_add = 10
 
-                        with open (f"Z:\\XP\\{message.author.id}\\xp.txt", 'w+') as f:
+                        with open (f"Z:{s_slash}XP{s_slash}{message.author.id}{s_slash}xp.txt", 'w+') as f:
                             f.write(str(xp_to_add))
                             print(f"Given {xp_to_add} to {message.author.id}")
 
                     else:
-                        os.mkdir(f"Z:\\XP\\{message.author.id}")
-                        x = open(f"Z:\\XP\\{message.author.id}\\xp.txt", 'w')
+                        os.mkdir(f"Z:{s_slash}XP{s_slash}{message.author.id}")
+                        x = open(f"Z:{s_slash}XP{s_slash}{message.author.id}{s_slash}xp.txt", 'w')
                         x.write("10")
                         x.close()
                         print(f"Created {message.author.id}")
@@ -1992,7 +1988,7 @@ async def convert(ctx):
     url = 'https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=1&symbol=ETH'
     #await ctx.send("IDE detected! Unable to run command. Aborting.")
     #return
-    with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\cmc_api_key.txt", encoding="utf-8") as f:
+    with open(f"{base_directory}cmc_api_key.txt", encoding="utf-8") as f:
         api_key = f.read()
 
     parameters = {}
@@ -2056,7 +2052,7 @@ async def getBBboosters(ctx):
         hasPrince = discord.utils.find(lambda r: r.name == 'Prince', ctx.message.guild.roles)
         hasKing = discord.utils.find(lambda r: r.name == 'King', ctx.message.guild.roles)
         for member in ctx.guild.members:
-            coinDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Coins\\{member.id}.txt")
+            coinDir = (f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}Coins{s_slash}{member.id}.txt")
             refresher = False
             if hasCitizen in member.roles:
                 await member.remove_roles(hasCitizen)
@@ -2101,7 +2097,7 @@ async def getBBboosters(ctx):
             await asyncio.sleep(0.1)
 
             if role in member.roles:
-                nolwenniumUserDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{member.id}.txt")
+                nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{member.id}.txt")
                 my_file = Path(nolwenniumUserDir)
                 if not my_file.is_file():
                     with open(nolwenniumUserDir, 'a') as f:
@@ -2170,7 +2166,7 @@ async def coins(ctx):
             coinBal = f.read()
             f.close()
 
-            nolwenniumUserDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{authorID}.txt")
+            nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{authorID}.txt")
             my_file = Path(nolwenniumUserDir)
 
             if not my_file.is_file():
@@ -2201,7 +2197,7 @@ async def coins(ctx):
                             if ctx.message.author.guild_permissions.administrator == True:
                                 userID = (str (x[2]))
                                 amount = (str (x[3]))
-                                usersCoins = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+                                usersCoins = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{userID}.txt")
                                 oc = open(usersCoins, 'r')
                                 oldCoins = oc.read()
                                 oc.close()
@@ -2229,7 +2225,7 @@ async def coins(ctx):
                                 userID = (str (x[2]))
                                 amountToAdd = (str (x[3]))
 
-                                usersCoins = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+                                usersCoins = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{userID}.txt")
 
                                 oc = open(usersCoins, 'r')
                                 oldCoins = oc.read()
@@ -2258,12 +2254,12 @@ async def coins(ctx):
                             if ctx.message.author.guild_permissions.administrator == True:
                                 userID = (str (x[2]))
 
-                                usersCoins = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{userID}.txt")
+                                usersCoins = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{userID}.txt")
                                 oc = open(usersCoins, 'r')
                                 coinAmount = oc.read()
                                 oc.close()
 
-                                nolwenniumUserDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\{userID}.txt")
+                                nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{userID}.txt")
                                 my_file = Path(nolwenniumUserDir)
 
                                 if not my_file.is_file():
@@ -2436,7 +2432,7 @@ async def buy(ctx):
                 except Exception as e:
                     await ctx.send("Please enter an item to buy.")
                     return
-                filedir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Coins\\{authorID}.txt")
+                filedir = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{authorID}.txt")
                 f = open(filedir, 'r')
                 coinBal = f.read()
                 f.close()
@@ -2864,7 +2860,7 @@ async def radio(ctx):
     def after_audio():
         voice_client = ctx.guild.voice_client
         randomnumber = random.randint(1,69)
-        musicDir = (f"D:\\App Files\\Brawl Music\\py\\music_{randomnumber}.ogg")
+        musicDir = (f"D:{s_slash}App Files{s_slash}Brawl Music{s_slash}py{s_slash}music_{randomnumber}.ogg")
         voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
         print(f"RADIO: Playing 'music_{randomnumber} in [{serverName} / {channel}] Debug data: in after_audio")
         if debugMode == True:
@@ -2879,7 +2875,7 @@ async def radio(ctx):
             voice_client.stop()
             await asyncio.sleep(0.2)
             randomnumber = random.randint(1,69)
-            musicDir = (f"D:\\App Files\\Brawl Music\\py\\music_{randomnumber}.ogg")
+            musicDir = (f"D:{s_slash}App Files{s_slash}Brawl Music{s_slash}py{s_slash}music_{randomnumber}.ogg")
             voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
             print(f"RADIO: Playing 'music_{randomnumber}' in [{serverName}/{channel}] Debug data: in BaguetteBot v1.2.py/funcion/playtheaudio/try")
             if debugMode == True:
@@ -2983,16 +2979,16 @@ async def saveanddelete(ctx):
         await ctx.message.add_reaction('<a:AnimatedTick:956621591108804652>')
         async for message in channel.history(limit=None):
             if len(message.attachments) < 1: # Checks if there is an attachment on the message
-                with open((f"Z:\\{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
+                with open((f"{temp_folder}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
                     logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}")
                     print(f"\n'{message.content}' sent by {message.author}")
                     logAllMessages.close()
                     count = count + 1
             else: # If there is it gets the filename from message.attachments
                 try:
-                    attachmentsDir = (f"Z:\\{message.channel.name}\\Attachments\\")
+                    attachmentsDir = (f"{temp_folder}{message.channel.name}{s_slash}Attachments{s_slash}")
                     if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"Z:\\{message.channel.name}\\Attachments\\")
+                        os.makedirs(f"{temp_folder}{message.channel.name}{s_slash}Attachments{s_slash}")
                         print("Made directory" + (attachmentsDir))
                     nameOfFile = str(message.attachments).split("filename='")[1]
                     filename = str(nameOfFile).split("' ")[0]
@@ -3006,7 +3002,7 @@ async def saveanddelete(ctx):
                     await message.delete()
 
                     #LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                    #sendLogsDir = (f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{message.guild.id}\\sendMessages.txt")
+                    #sendLogsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt")
                     #if os.path.isfile(sendLogsDir):
                         #await LoggingChannel.send(f"Attachment sent in <#{message.channel.id}>: **{filename}**: {attachment.url}")
                     count = count + 1
@@ -3047,17 +3043,17 @@ async def save_messages(ctx):
         async for message in channel.history(limit=None):
             if len(message.attachments) < 1: # Checks if there is an attachment on the message
                 if "https" not in message.content:
-                    line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> MESSAGE: Sent at {(message.created_at)} by {message.author}: '{message.content}'")
+                    line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> MESSAGE: Sent at {(message.created_at)} by {message.author}: '{message.content}'")
                     count = count + 1
                 else:
-                    line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> LINK:    Sent at {(message.created_at)} by {message.author}: {message.content}")
+                    line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> LINK:    Sent at {(message.created_at)} by {message.author}: {message.content}")
             else: # If there is it gets the filename from message.attachments
                 try:
-                    with open((f"Z:\\{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
-                        line_prepender(f"Z:\\{channel.name}_log.txt", 1, f"\n>> MEDIA:   Sent at {(message.created_at)} by {message.author}: {message.attachments[0].url}")
-                    attachmentsDir = (f"Z:\\{message.channel.name}\\Attachments\\")
+                    with open((f"Z:{s_slash}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
+                        line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> MEDIA:   Sent at {(message.created_at)} by {message.author}: {message.attachments[0].url}")
+                    attachmentsDir = (f"Z:{s_slash}{message.channel.name}{s_slash}Attachments{s_slash}")
                     if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"Z:\\{message.channel.name}\\Attachments\\")
+                        os.makedirs(f"Z:{s_slash}{message.channel.name}{s_slash}Attachments{s_slash}")
                         print("Made directory" + (attachmentsDir))
                     nameOfFile = str(message.attachments).split("filename='")[1]
                     filename = str(nameOfFile).split("' ")[0]
@@ -3084,7 +3080,7 @@ async def save_messages(ctx):
 @client.command(help="?", brief="?", pass_context=True, hidden=True)
 async def BrawlStars(ctx):
     if ctx.guild.id == 759861456300015657:
-        num_lines = sum(1 for line in open ("C:\\Users\\Draggie\\iCloudDrive\\iCloud~is~workflow~my~workflows\\Brawl Stars Counter.txt"))
+        num_lines = sum(1 for line in open ("C:{s_slash}Users{s_slash}Draggie{s_slash}iCloudDrive{s_slash}iCloud~is~workflow~my~workflows{s_slash}Brawl Stars Counter.txt"))
         await ctx.send(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
         f = open(GlobalLogDir, "a")
         f.write(f"\nCOMMAND RAN -> '.lines' ran by {ctx.message.author} at {datetime.now()}")
@@ -3099,7 +3095,7 @@ async def log(ctx):
     searchTerm = searchTerm.lower()
     serverID = ctx.message.guild.id
     serverName = ctx.message.guild.name
-    file=open((f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{serverID}\\Logs\\MessageLog.txt"),encoding="UTF-8").read().lower()
+    file=open((f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}MessageLog.txt"),encoding="UTF-8").read().lower()
     count=file.count(searchTerm)
 
     count = count - 1
@@ -3125,9 +3121,9 @@ async def _stats(ctx):
     else:
         pingColour = (0x990000)
 
-    fileSizeBytes = os.path.getsize('D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py')
+    fileSizeBytes = os.path.getsize(f'{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py')
 
-    num_lines = sum(1 for line in open ("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open (f"{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py", encoding='utf-8'))
     secsOrMins1 = "seconds"
     current_time = time.time()
     uptimeInSeconds = int(round(current_time - start_time))
@@ -3148,7 +3144,7 @@ async def _stats(ctx):
     for guild in client.guilds:
         members += guild.member_count - 1
 
-    DIR = 'D:\\Draggie Programs\\BaguetteBot\\AudioCache\\'
+    DIR = 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\AudioCache\\'
     cachedVideos = (len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))]))
 
     embed = discord.Embed(title="_**Bot Stats**_\n", colour=pingColour)
@@ -3216,205 +3212,6 @@ async def tts(ctx):
         voice_client.play(discord.FFmpegPCMAudio(source=f'Z:\\{x}.MP3', executable="D:\\ffmpeg\\2\\bin\\ffmpeg.exe",))
         voice_client.source = discord.PCMVolumeTransformer(voice_client.source)
 
-@client.command(help="Starts or querys a server instance.\n\nSyntax:\n.server - Shows details about the server mc.ibaguette.com.\n.server [smp | test] - Starts the specified server", brief="Starts or querys a server instance.", pass_context=True)
-async def server(ctx):
-    txt = ctx.message.content
-    x = txt.split()
-    try:
-        version = (str (x[1]))
-
-        if version == '1.17':
-        
-            os.chdir("D:\\Minecraft Server\\1.17 Fabric\\")
-            os.startfile("D:\\Minecraft Server\\1.17 Fabric\\start.bat")
-            embed_1 = Embed(title='Server status', description="Checking dependances...")
-            await ctx.send(embed=embed_1)
-
-            message = ctx.channel.last_message
-            
-            try:
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await asyncio.sleep(1)
-
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-            except Exception:
-                await message.delete()
-                await asyncio.sleep(6)
-                f = open("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                e = f.read()
-                f.close()
-
-                good = ("done")
-                bad = ("fatal")
-
-                print (e.lower())
-                if good in e.lower():
-                    print("Done!")
-                    await ctx.send("Done!")
-
-                if bad in e.lower():
-                    await ctx.send("Fatal error occured. Output:")
-                    file=discord.File("D:\\Minecraft Server\\1.17 Fabric\\logs\\latest.log")
-                    await ctx.send(file=file)
-            os.chdir("D:\\Draggie Programs\\BaguetteBot\\draggiebot")
-
-        if version == 'smp':
-        
-            os.chdir("D:\\Minecraft Server\\SMP standalone\\")
-            os.startfile("D:\\Minecraft Server\\SMP standalone\\start.bat")
-            embed_1 = Embed(title='Server status', description="Checking dependances...")
-            await ctx.send(embed=embed_1)
-
-            message = ctx.channel.last_message
-            
-            try:
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-
-                await asyncio.sleep(1)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await asyncio.sleep(1)
-
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                log = f.read()
-                newEmbed = Embed(title='Server Status', description=(log))
-                f.close()
-                await message.edit(embed=newEmbed)
-            except Exception:
-                await message.delete()
-                await asyncio.sleep(6)
-                f = open("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                e = f.read()
-                f.close()
-
-                good = ("done")
-                bad = ("fatal")
-
-                print (e.lower())
-                if good in e.lower():
-                    print("Done!")
-                    await ctx.send("Done!")
-
-                if bad in e.lower():
-                    await ctx.send("Fatal error occured. Output:")
-                    file=discord.File("D:\\Minecraft Server\\SMP standalone\\logs\\latest.log")
-                    await ctx.send(file=file)
-            os.chdir("D:\\Draggie Programs\\BaguetteBot\\draggiebot")
-    except:
-        server = MinecraftServer.lookup("mc.ibaguette.com")
-        status = server.status()
-        await ctx.send("mc.ibaguette.com: Players online: `{0}`".format(status.players.online))
-        latency = server.ping()
-        await ctx.send("mc.ibaguette.com: Server ping: `{0} ms`".format(latency))
-        query = server.query()
-        messagetosend = ("mc.ibaguette.com: Players connected: `{0}`".format(", ".join(query.players.names)))
-        if messagetosend == ('mc.ibaguette.com: Players connected: ``'):
-            await ctx.send("No players online")
-        else:
-            await ctx.send(messagetosend)
-
 #   play
 
 @client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
@@ -3425,19 +3222,19 @@ async def sfx(ctx):
 
     term = x[1]
     if "french" in term.lower():
-        toPlay = "D:\\Draggie Programs\\BaguetteBot\\QuickAudio\\FrenchAccordion"
+        toPlay = f"{base_directory}ExternalAssets\\QuickAudio\\FrenchAccordion"
     elif "end2" in term.lower():
-        toPlay = "D:\\Draggie Programs\\BaguetteBot\\QuickAudio\\NightNight2"
+        toPlay = f"{base_directory}ExternalAssets\\QuickAudio\\NightNight2"
     elif "seasonx" in term.lower():
-        toPlay = "D:\\Draggie Programs\\BaguetteBot\\QuickAudio\\SeasonX.weba"
+        toPlay = f"{base_directory}ExternalAssets\\QuickAudio\\SeasonX.weba"
     elif "seasonx" in term.lower():
-        toPlay = "D:\\Draggie Programs\\BaguetteBot\\QuickAudio\\BrawlidaysOrchestral"
+        toPlay = f"{base_directory}ExternalAssets\\QuickAudio\\BrawlidaysOrchestral"
     else:
         await ctx.send(f"No valid sound file found for *{term}*.\n```french, end2, seasonx, brawlidays```")
         return
 
     try:
-        f = open(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "r")
+        f = open(f"{base_directory}Servers{s_slash}{ctx.guild.id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", "r")
         x = f.read()
         f.close()
         volume = (float(x))
@@ -3521,7 +3318,7 @@ async def url(ctx, url: str):
 @client.command(help="Downloads a youtube video.", brief="Downloads an entire YouTube video", pass_context=True)
 async def download(ctx, url: str):
     async with ctx.typing():
-        os.chdir("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\youtube-dl")
+        os.chdir("D:\\Draggie Programs\\BaguetteBot\\youtube-dl")
         text = ctx.message.content
         sp1 = text.split(' ', 1)[-1]
         ydl_opts = {
@@ -3556,14 +3353,14 @@ async def emojis(ctx):
                 emoji_exturl = emoji_exturl.split(".")
                 extension = (emoji_exturl[1])
 
-                if os.path.exists(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\'):
-                    with open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                if os.path.exists(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}'):
+                    with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
                         f.write(x.content)
                         print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
                 else:
-                    os.mkdir(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\')
+                    os.mkdir(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}')
                     print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
-                    with open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                    with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
                         f.write(x.content)
                         print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
             try:
@@ -3589,14 +3386,14 @@ async def emojis(ctx):
                     emoji_exturl = emoji_exturl.split(".")
                     extension = (emoji_exturl[1])
 
-                    if os.path.exists(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\'):
-                        with open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                    if os.path.exists(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}'):
+                        with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
                             f.write(x.content)
                             print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
                     else:
-                        os.mkdir(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\')
+                        os.mkdir(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}')
                         print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
-                        with open(f'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{newGuild.id}\\Emojis\\{emoji.name}.{extension}', 'wb') as f:
+                        with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
                             f.write(x.content)
                             print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
                 try:
@@ -4051,9 +3848,9 @@ async def purge(ctx):
 async def uwu(ctx):
     uwuwu = random.randint(1,2)
     if uwuwu == 1:
-        await ctx.send(file=discord.File(r"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
+        await ctx.send(file=discord.File(f"{base_directory}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
     if uwuwu == 2:
-        await ctx.send(file=discord.File(r"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
+        await ctx.send(file=discord.File(f"{base_directory}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
     f = open(GlobalLogDir, "a")
     f.write(f"\nCOMMAND RAN -> '.uwu' ran by {ctx.message.author} in {ctx.guild.id} at {datetime.now()}")
     f.close()
@@ -4090,7 +3887,7 @@ async def bs(ctx):
         if (x[2]) == 'brawlers':
             url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}')
             print(f'url = {url}')
-            with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+            with open(f"{base_directory}supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
 
             headers = {
@@ -4125,7 +3922,7 @@ async def bs(ctx):
         if (x[2]) == 'battles':
             url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}/battlelog')
 
-            with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\supercell_api_key.txt", encoding="utf-8") as f:
+            with open(f"{base_directory}supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
             headers = {
             'Accept': 'application/json',
@@ -4160,7 +3957,7 @@ async def birthday(ctx):
             birthDate = text.split(' ', 2)[-1]
             x = text.split()
             if x[1] == "file":
-                with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\logs\\birthdays.txt") as file:
+                with open(f"{base_directory}logs{s_slash}birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -4174,7 +3971,7 @@ async def birthday(ctx):
                 return
 
             if x[1] == "file":
-                with open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\logs\\birthdays.txt") as file:
+                with open(f"{base_directory}logs{s_slash}birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -4183,14 +3980,14 @@ async def birthday(ctx):
 
             if x[1] == "set":
                 author = (str (ctx.message.author.id))
-                file=open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Logs\\birthdays.txt",encoding="UTF-8").read()
+                file=open(f"{base_directory}Logs{s_slash}birthdays.txt",encoding="UTF-8").read()
                 count=file.count(author)
                 print (count)
                 if count != 0:
                     await ctx.send("Error! You have already added your birthday to the file. Please ask an admin to remove it if you believe this is an error.")    
                     return
 
-                f = open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\logs\\birthdays.txt", "a")
+                f = open(f"{base_directory}logs{s_slash}birthdays.txt", "a")
                 f.write(f"\n<@!{ctx.message.author.id}>'s birthday is on the {birthDate}")
                 f.close()
                 await ctx.send(f"\n{ctx.message.author}'s birthday has been set to `{birthDate}`. A custom message will be sent, enjoy!")
@@ -4362,19 +4159,20 @@ async def broadcast(ctx, *, msg):
 #   Nolwennium mine
 
 @client.command(help=f"Mines a random amount of {name_Nolwennium}.", brief=f"Mines {name_Nolwennium}.", pass_context=True)
-@commands.cooldown(1, 30, commands.BucketType.user)
+@commands.cooldown(1, 29, commands.BucketType.user)
 async def mine(ctx):
+    print(f"CURRENCY - {name_Nolwennium} > {ctx.author} is mining")
     global balance
     global myuuid
     global address
 
-    newNumber = random.randint(1, 100)
-
+    newNumber = random.randint(-5, 99)
+    
     await changeNolwenniumBalance(ctx, newNumber)
 
 #   YouTube audio EPIC VERSION
 
-#   Temporarily removed
+#    removed
 
 #   ON ERROR
 
@@ -4431,14 +4229,15 @@ async def on_command_error(ctx, error):
     f = open(GlobalLogDir, "a")
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.message.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
-    f = open("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\errors.txt", "a")
+    f = open(f"{base_directory}errors.txt", "a")#	Modified in repl.it
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.message.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
 
-dotenvPath = 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\.env'
-load_dotenv(dotenv_path=dotenvPath)
-if dotenvPath != 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\.env':
-    print("\n\n\n\n\nRUNNING IN TEST MODE!\n\n\n\n\n")
-client.run(os.getenv('TOKEN'))
+if running_locally:
+    dotenvPath = 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\.env'
+    load_dotenv(dotenv_path=dotenvPath)
+    client.run(os.getenv('TOKEN'))
+else:
+    client.run(os.getenv('TOKEN'))
 
 #   poggerspogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpog
