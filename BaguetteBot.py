@@ -1,11 +1,10 @@
-DraggieBot_version = "v1.2.8"
-revision = "a"
+DraggieBot_version = "v1.2.9"
+revision = ""
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, threading, psutil, secrets, logging, subprocess, math, openai
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, subprocess, math, openai
 from        discord_slash import SlashCommand
 from        discord_slash.utils.manage_commands import create_option, create_choice
-from        discord import Embed
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite: py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite: py -3 -m pip install -U python-dotenv
@@ -88,6 +87,7 @@ start_time = time.time()
 
 sys.setrecursionlimit(99999999)
 
+
 class roles:
     Roles_order_List = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
     Roles_Cost = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
@@ -112,9 +112,8 @@ class roles:
 
     Admin: 1000000
 
-help_command = commands.DefaultHelpCommand(
-    no_category = 'Dot Commands'
-)
+
+help_command = commands.DefaultHelpCommand(no_category='Dot Commands')
 
 
 PYTHONIOENCODING = "utf-8"
@@ -211,7 +210,7 @@ async def changeNolwenniumBalance(ctx, base_mined_amount):
         balance = balance + BoosterBonus
         bonuses += BoosterBonus
     else:
-        #print("Ok, the user isn't boosting.")
+        # print("Ok, the user isn't boosting.")
         if ctx.guild.id in tester_guilds:
             print("Ok, the guild is in the tester_guilds list.")
             if ctx.author.avatar_url is not None:
@@ -286,6 +285,7 @@ async def changeNolwenniumBalance(ctx, base_mined_amount):
     await bot_runtime_events(1)
     print(f"CURRENCY - {name_Nolwennium} > {ctx.message.author.id} has gained {newNumberAfterFee} {name_Nolwennium} (fee: {fee}). Their total is {new_balance}")
 
+
 async def changeCoinBalance(message, number_to_change_by):
     await bot_runtime_events(1)
     try:
@@ -314,7 +314,7 @@ async def changeCoinBalance(message, number_to_change_by):
     except FileNotFoundError:   #   User not found
         await bot_runtime_events(1)
         with open(coinDir, 'a') as f:
-            print (f"\nSet coin value to 1, {message.author.name} is a new user.")
+            print(f"\nSet coin value to 1, {message.author.name} is a new user.")
             try:
                 f.write('1')
                 f.close()
@@ -516,6 +516,7 @@ async def _ping(ctx):
     f.close()
     await bot_runtime_events(1)
 
+
 @slash.slash(name="whitelist",
             description="MC Server Whitelist Command.",
             guild_ids = brigaders,
@@ -531,30 +532,32 @@ async def _whitelist(ctx, add:str):
     await ctx.send(f"**{add}** has been added to the whitelist. Please rejoin the Minecraft server!")
     await bot_runtime_events(1)
 
+
 @slash.slash(name="cuisine",
-            description="Cuisine.",
-            guild_ids = brigaders,
-            options=[create_option(
-                    name="country",
-                    description="Choose country.",
-                    option_type=3,
-                    required=True,
-                    choices=[
-                        create_choice(name="France",value="france"),
-                        create_choice(name="Italy", value="italy")])])
-async def _cuisine(ctx, country:str):
+             description="Cuisine.",
+             guild_ids=brigaders,
+             options=[create_option(
+                  name="country",
+                  description="Choose country.",
+                  option_type=3,
+                  required=True,
+                  choices=[
+                      create_choice(name="France", value="france"),
+                      create_choice(name="Italy", value="italy")])])
+async def _cuisine(ctx, country: str):
     await ctx.send(f"You chose {country}.")
     await bot_runtime_events(1)
 
-@slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids = tester_guilds)
+
+@slash.slash(name="rgb", description="Updates rgb advisor colour.", guild_ids=tester_guilds)
 async def _rgb(ctx):
-    #rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
-    #admin = discord.utils.get(ctx.guild.roles, name="Admin")
-    #mod = discord.utils.get(ctx.guild.roles, name="Mod")
+    #   rgb = discord.utils.get(ctx.guild.roles, name="RGB Advisor")
+    #   admin = discord.utils.get(ctx.guild.roles, name="Admin")
+    #   mod = discord.utils.get(ctx.guild.roles, name="Mod")
     print(f"RGB ran by {ctx.author.name}")
-    #if rgb or mod or admin in ctx.author.roles:
-    guild=ctx.guild
-    colour = random.randint(1000,16777215)
+    #   if rgb or mod or admin in ctx.author.roles:
+    guild = ctx.guild
+    colour = random.randint(1000, 16777215)
     colour = discord.Color(colour)
     role = discord.utils.get(guild.roles, name="RGB Advisor")
     await role.edit(server=guild, role=role, colour=colour, reason=f"RGB advisor role update command ran, by {ctx.author.name}")
@@ -883,10 +886,14 @@ async def on_ready():
     print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
     global ready_start_time, roleMember, hasMember, hasAdmin
     ready_start_time = time.time()
-    #client.load_extension('GitHub.BaguetteBot.cogs.music') Modified repl.it
-    #print("COG: Music loaded!")
-    channel = client.get_channel(838107252115374151) # Brigaders_channel
-    await channel.send(f"Online at **{datetime.now()}**")
+    if running_locally:
+        try:
+            client.load_extension('cogs.music')# Modified repl.it
+            print("COG: Music loaded!")
+        except Exception as e:
+            print(f"Unable to load extension: {e}")
+    log_channel = client.get_channel(838107252115374151) # Brigaders_channel
+    await log_channel.send(f"Online at **{datetime.now()}**")
     f = open(GlobalLogDir, "a", encoding="utf-8")
     f.write(f"\n\nREADY at {datetime.now()}")
     f.write(' - Logged in as {0.user}'.format(client))
@@ -907,11 +914,15 @@ async def on_ready():
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
     draggie_guild = client.get_guild(759861456300015657)
-    upvote = client.get_emoji(803578918488768552)
     hasMember = discord.utils.find(lambda r: r.name == 'Member', guild.roles)
     hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
     roleMember = discord.utils.get(guild.roles, name='Member')
+    upvote = client.get_emoji(803578918488768552)
     downvote = client.get_emoji(803578918464258068)
+    epic_memes = client.get_channel(809112184902778890)
+    public_memes = client.get_channel(930488945144397905)
+
+    memes_channels = [epic_memes, public_memes]
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
 
     await asyncio.sleep(2)
@@ -924,6 +935,25 @@ async def on_ready():
     x = open(f'{base_directory}Servers{s_slash}759861456300015657{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+')
     x.write(voice_time)
     x.close()
+
+    for message in await epic_memes.history().flatten():
+        if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
+            #print(message.reactions)
+            if ("http") in message.content.lower():
+                await message.add_reaction(upvote)
+                await message.add_reaction(downvote)
+                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'http' in '{message.content.lower()}'")
+            if len(message.attachments) >= 1:
+                await message.add_reaction(upvote)
+                await message.add_reaction(downvote)
+                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
+            else:
+                print("Skipped message to react to")
+        if len(message.reactions) == 0:
+            if ("http") in message.content.lower() or len(message.attachments) >= 1:
+                await message.add_reaction(upvote)
+                await message.add_reaction(downvote)
+                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'no reactions on message' or 'has attachment'")
 
     print(f"Calibrated Voice Chat time to {voice_time} seconds")
 
@@ -951,7 +981,7 @@ async def StatusAutoUpdator():
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    print(f"\nVoiceChatEvent in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}\n")
+    print(f"\nVoiceChatEvent in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
     #if member.bot: #checking this before anything else will reduce unneeded file operations etc
     #    return
     await bot_runtime_events(1)
@@ -1007,9 +1037,10 @@ async def on_voice_state_update(member, before, after):
                 x = (random.randint(1,3))
                 if x == 2:
                     if coins_to_add > 5:
-                        #spam_channel = client.get_channel(785620979300302869)
-                        string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `.coins` to see what you can buy!*")
-                        #await spam_channel.send(string)
+                        if member.id == 792850689533542420:
+                            return
+                        string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `.coins` in Baguette Brigaders to see what you can buy!*")
+                        await member.send(string)
                         #await draggie.send(f"[Sent to {member.mention}] {string}")
                         print(string)
                     else:
@@ -1342,7 +1373,7 @@ async def on_typing(channel, user, when):
 async def on_user_update(before, after):
     await bot_runtime_events(1)
     if after.avatar != before.avatar:
-        print("avatarupdated")
+        print(f"INFO >>> {before.name} updated their avatar, affecting {before.guild}.")
 
 @client.event
 async def on_member_ban(guild, user):
@@ -1360,44 +1391,11 @@ async def on_member_update(before, after):
 
     if after.activity is not None:
         await bot_runtime_events(1)
-        print(f"ACTIVITY of {after.name} has been updated to {after.activity.name} at {datetime.now()}")
+    #    print(f"ACTIVITY of {after.name} has been updated to {after.activity.name} at {datetime.now()}")
         #print(str(after.activities)) modified repl.it
     if before.status != after.status:
         await bot_runtime_events(1)
-        if guild.id == 759861456300015657:
-            croissant = discord.utils.get(after.guild.roles, name='Croissant')
-            baguette = discord.utils.get(after.guild.roles, name='Baguette')
-            if croissant in after.roles:
-                embed = discord.Embed(title=f"HIGH PROFILE status update", colour=0xc27c0e)
-                embed.add_field(name='User', value=before.mention)
-                embed.add_field(name='Before', value=before.status)
-                embed.add_field(name='After', value=after.status)
-                embed.add_field(name='Trigger', value="high profile role [Croissant]")
-                embed.add_field(name='Date/Time', value=tighem)
-                LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                print(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [CROISSANT]: `{tighem}`")
-                #await LoggingChannel.send(embed=embed)
-                return
-            if baguette in after.roles:
-                embed = discord.Embed(title=f"HIGH PROFILE status update", colour=0x00acff)
-                embed.add_field(name='User', value=before.mention)
-                embed.add_field(name='Before', value=before.status)
-                embed.add_field(name='After', value=after.status)
-                embed.add_field(name='Trigger', value="high profile role [Baguette]")
-                embed.add_field(name='Date/Time', value=tighem)
-                LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                await draggie.send(f"{before.mention} has been seen **STATUS CHANGING {before.status} -> {after.status}** in {before.guild.name}! Triggered by [BAGUETTE]: `{tighem}`")
-                #await LoggingChannel.send(embed=embed)
-                return
-
-        embed = discord.Embed(title=f"Status updated", colour=0x5865F2)
-        embed.add_field(name='User', value=before.mention)
-        embed.add_field(name='Before', value=before.status)
-        embed.add_field(name='After', value=after.status)
-        embed.add_field(name='Date/Time', value=tighem)
-        send = False
-        print(f"STATUS of {after} has been updated FROM {before.status} TO {after.status} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
-
+        
     elif before.nick != after.nick:
         embed = discord.Embed(title=f"Changed nick", colour=0x5865F2)
         embed.add_field(name='User', value=before.mention)
@@ -1405,7 +1403,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.nick)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"OP WATCHDOG: NICK of {after} has been updated FROM {before.nick} TO {after.nick} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"Events Listener: NICK of {after} has been updated FROM {before.nick} TO {after.nick} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif len(before.roles) < len(after.roles):
         new_role = next(role for role in after.roles if role not in before.roles)
@@ -1420,7 +1418,7 @@ async def on_member_update(before, after):
         embed.add_field(name='Role added', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"OP WATCHDOG: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"Events Listener: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         if after.guild.id == 759861456300015657 or after.guild.id == 384403250172133387:
             if new_role.name == "Server Booster":
                 coinDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}Coins{s_slash}{after.guild.id}.txt")
@@ -1470,7 +1468,7 @@ async def on_member_update(before, after):
         embed.add_field(name='Role removed', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"OP WATCHDOG: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"Events Listener: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.name != after.name:
         embed = discord.Embed(title=f"Changed name", colour=0x5865F2)
@@ -1479,7 +1477,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.name)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"OP WATCHDOG: NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"Events Listener: NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.discriminator != after.discriminator:
         embed = discord.Embed(title=f"Changed discriminator", colour=0x5865F2)
@@ -1488,7 +1486,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.discriminator)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"OP WATCHDOG: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"Events Listener: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
     sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
@@ -1779,54 +1777,55 @@ async def on_message(message):
     if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
         if hasMember in person.roles:
             messageContent = message.content.lower()
-            for word in messageContent.split():
-                if word in nollyWords:
-                    await message.add_reaction("<:nolly:786177817993805844>")
-                    print(f"Matched word in message! {word}")
-                if word in oliverWords:
-                    await message.add_reaction("<:oliver:790576109795409920>")
-                    print(f"Matched word in message! {word}")
-                if word in jackWords:
-                    await message.add_reaction("<:jacc:786275811405070337>")
-                    print(f"Matched word in message! {word}")
-                if word in joeWords:
-                    await message.add_reaction("<:CuteJoe:897467228545503242>")
-                    print(f"Matched word in message! {word}")
-                if word in haydnWords:
-                    await message.add_reaction("<:haydn:786276584671412244>")
-                    print(f"Matched word in message! {word}")
-                if word in maisyWords:
-                    await message.add_reaction("<:maisy:786276271809101840>")
-                    print(f"Matched word in message! {word}")
-                if word in benWords:
-                    await message.add_reaction("<:bennybooze:788311580768075786>")
-                    print(f"Matched word in message! {word}")
-                if word in ishWords:
-                    await message.add_reaction("<:ish:791381704278540369>")
-                    print(f"Matched word in message! {word}")
-                if word in mayaWords:
-                    await message.add_reaction("<:maya:785942478448230470>") 
-                    print(f"Matched word in message! {word}")
-                if word in samWords:
-                    await message.add_reaction("<:samf:785942793280815114>")
-                    print(f"Matched word in message! {word}")
-            for word in josephTighe:
-                if word in messageContent:
-                    print(f"Matched word in message! {word}")
-                    integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
-                    if integer == 1:
-                        await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
-                    if integer == 2:
-                            await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
-            for word in charlieSewards:
-                if word in messageContent:
-                    print(f"Matched word in message! {word}")
-                    integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
-                    if integer == 1:
-                        await message.add_reaction("<:charlie:903324276147499041>")
-                    if integer == 2:
-                        await message.add_reaction("<:CharlieUwU:857907947371495424>")
-
+            #for word in messageContent.split():
+            #    print("")
+            #    if word in nollyWords:
+            ##        await message.add_reaction("<:nolly:786177817993805844>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in oliverWords:
+            #        await message.add_reaction("<:oliver:790576109795409920>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in jackWords:
+            #        await message.add_reaction("<:jacc:786275811405070337>")
+             #       print(f"Matched word in message! {word}")
+            ##    if word in joeWords:
+            #        await message.add_reaction("<:CuteJoe:897467228545503242>")
+            ##        print(f"Matched word in message! {word}")
+            #    if word in haydnWords:
+            #        await message.add_reaction("<:haydn:786276584671412244>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in maisyWords:
+            #        await message.add_reaction("<:maisy:786276271809101840>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in benWords:
+            #        await message.add_reaction("<:bennybooze:788311580768075786>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in ishWords:
+            ##        await message.add_reaction("<:ish:791381704278540369>")
+            #        print(f"Matched word in message! {word}")
+            #    if word in mayaWords:
+            #        await message.add_reaction("<:maya:785942478448230470>") 
+            #        print(f"Matched word in message! {word}")
+            #    if word in samWords:
+            #        await message.add_reaction("<:samf:785942793280815114>")
+            #        print(f"Matched word in message! {word}")
+            #for word in josephTighe:
+            ##    if word in messageContent:
+            #        print(f"Matched word in message! {word}")
+            #        integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
+            #        if integer == 1:
+            #            await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
+            ##        if integer == 2:
+            #                await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
+            #for word in charlieSewards:
+            #    if word in messageContent:
+            #        print(f"Matched word in message! {word}")
+           ##         integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
+           #         if integer == 1:
+            #            await message.add_reaction("<:charlie:903324276147499041>")
+            #        if integer == 2:
+            #            await message.add_reaction("<:CharlieUwU:857907947371495424>")
+#
     #  here we can do global server ones because its funny
 
     messageContent = message.content.lower()
@@ -1910,70 +1909,6 @@ async def bb_xp(ctx):
                 await ctx.send(f"Credited XP for {messages} messages.")
     else:
         await ctx.send("Developer only command.")
-
-#   Kahoot botter
-
-@client.command(hidden=True, help="Attempts to bot a Kahoot lobby.")
-async def bot(ctx):
-    global name
-    text = ctx.message.content
-
-    namerator = requests.get('https://apis.kahoot.it/namerator.json')
-    nameratorContent = namerator.content
-
-    f = json.loads(nameratorContent)
-    nameratorName = f["name"]
-    #await ctx.send(nameratorName)
-
-    x = text.split()
-
-    try:
-        code = (x[1])
-        botNum = int(x[2])
-        ogName = text.split(' ', 3)[-1]
-    except:
-        await ctx.send("I'm not sure you have the correct syntax. Use `.bot <CODE> <AMOUNT> <NAME/random>`. The `<NAME>` section can be set to `random`, this will auto generate a Kahoot 'safe' name.\nExample: `.bot 8261910 138 Test player`\n\nNote: Bots do not answer questions, *yet*.")
-        return
-
-    (f"Attempting to add `{botNum}` bots to game ID `{code}`... <a:loading:935623554215591936>")
-
-    clients = []
-
-    joins = 0
-    targetJoins = (int(botNum))
-
-    def getName():
-        global name
-        namerator = requests.get('https://apis.kahoot.it/namerator.json')
-        nameratorContent = namerator.content
-        f = json.loads(nameratorContent)
-        name = f["name"]
-        
-    for client in range(botNum):
-        if ogName == 'random':
-            getName()
-        else:
-            global name
-            name = ogName
-
-        clients.append(kahoot.client())
-
-        if ogName == 'random':
-            clients[client].join(code,name)
-            print(name)
-            joins = joins + 1
-            if joins == targetJoins:
-                print("Done!")
-                await ctx.send(f"Done! `{joins}` bots have been added to `{code}`. It may take a few seconds for the bots to appear on the screen depending on the connection speed.")
-
-        else:
-            clients[client].join(code,name+str(client+1))
-            #await ctx.send(f"Joined as `{name}{client+1}`.")#clients[client].join(code,name+str(client+1))
-            print(name+str(client+1))
-            joins = joins + 1
-            if joins == targetJoins:
-                print("Done!")
-                await ctx.send(f"Done! `{joins}` bots have been added to `{code}`. It may take a few seconds for the bots to appear on the screen depending on the connection speed.")
 
 #   Elon musk
 
@@ -2383,14 +2318,15 @@ async def coins(ctx):
                             value=finalSum,
                             inline=False
                             )
-                        if next_available_role_cost >= 0:
+                        if next_available_role_cost > 0:
                             embed.add_field(
                                 name="Next item available to buy in:",
                                 value=f"{next_available_role_cost - int(coinBal)} {emoji_Coins} Coins (**{nextRole}**)",
                                 inline=False
                                 )
-                        else:
+                        elif next_available_role_cost <= 0:
                             embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {emoji_Coins} Coins are needed until the next role.")
+
                         if serverID in tester_guilds:
                             embed.set_footer(text=(f'Type ".buy item" to buy your selected item! For example, .buy citizen.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
                         else:
@@ -3809,14 +3745,14 @@ async def purge(ctx):
             current_time_for_deletes = time.time()
             async for message in ctx.message.channel.history(limit=y):
                 if len(message.attachments) < 1: # Checks if there is an attachment on the message
-                    with open((f"Z:\\{message.channel.name}_log{current_time_for_deletes}.txt"), "a", encoding='utf-8') as logAllMessages:
-                        logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}")
+                    with open((f"Z:\\{message.channel.id}_log{current_time_for_deletes}.txt"), "a", encoding='utf-8') as logAllMessages:
+                        logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}", encoding="UTF-8")
                         print(f"\n'{message.content}' sent by {message.author}")
                         logAllMessages.close()
                 else: # If there is it gets the filename from message.attachments
-                    attachmentsDir = (f"Z:\\{message.channel.name}\\Attachments\\")
+                    attachmentsDir = (f"Z:\\{message.channel.id}\\Attachments\\")
                     if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"Z:\\{message.channel.name}\\Attachments\\")
+                        os.makedirs(f"Z:\\{message.channel.id}\\Attachments\\")
                         print("Made directory" + (attachmentsDir))
                     nameOfFile = str(message.attachments).split("filename='")[1]
                     filename = str(nameOfFile).split("' ")[0]

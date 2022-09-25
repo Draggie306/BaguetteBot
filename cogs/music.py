@@ -23,10 +23,10 @@ async def getServerVoiceVolume(ctx):
 
         f = open(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\{ctx.guild.id}\\Preferences\\Voice_Chat_Volume.txt", "w")
         f.write("50")
-        print(f"wrote 50")
+        print("wrote 50")
         f.close()
         
-        await ctx.send(f"<a:AnimatedTick:956621591108804652> Server volume set to 50% (first run)")
+        await ctx.send("<a:AnimatedTick:956621591108804652> Server volume set to 50% (first run)")
         return(50)
         #await ctx.send(f"Error occured while getting server voice chat volume! This may be because it was not set or was not stopped corerctly. Try setting the volume by typing .volume [percentage].\n\n`{e}`")
 
