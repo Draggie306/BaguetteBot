@@ -2,7 +2,6 @@ from discord.ext import commands
 from discord import utils, Embed
 from time import time, sleep
 import lavalink, random, os, math, discord
-from discord_slash import SlashCommand
 
 emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
 name_Nolwennium = "Nolwennium"
@@ -42,8 +41,8 @@ class Music(commands.Cog):
             self.bot.music.voice_update_handler, 'on_socket_response')
         self.bot.music.add_event_hook(self.track_hook)
 
-    @commands.command(name='newplay', help="BaguetteBot's new audio playing feature. Type '.newplay' followed by your YouTube search term while in a voice chat to start playing audio!", brief="Joins and plays auido in a Voice Channel.")
-    async def newplay(self, ctx):
+    @commands.command(name='play', help="BaguetteBot's new audio playing feature. Type '.play' followed by your YouTube search term while in a voice chat to start playing audio!", brief="Joins and plays auido in a Voice Channel.")
+    async def play(self, ctx):
         try:
             volume = await getServerVoiceVolume(ctx)
             millisecs = round(time() * 1000)
@@ -71,16 +70,15 @@ class Music(commands.Cog):
                     await player.set_volume(volume)
                     done_millisecs = round(time() * 1000)
                     time_delay = done_millisecs - millisecs
-                    embed = Embed(
-                        title="Playing audio", description=f"**[{player.current.title}]({player.current.uri})**", colour=0x228B22)
-                    embed.add_field(
-                        name="Channel", value=f"{player.current.author}")
+                    embed = Embed(title="Playing audio", description=f"**[{player.current.title}]({player.current.uri})**", colour=0x228B22)
+                    embed.add_field(name="Channel", value=f"{player.current.author}")
                     embed.add_field(name="Time taken", value=f"{time_delay}ms")
+                    embed.add_field(name="Requested by", value=f"<@{ctx.author.id}>")
                     await ctx.send(embed=embed)
                 else:
                     print("Stopping player.")
                     await player.stop()
-                    await Music.newplay(self, ctx)
+                    await Music.play(self, ctx)
             else:
                 raise AttributeError
 
@@ -95,7 +93,7 @@ class Music(commands.Cog):
                     player.store('channel', ctx.channel.id)
                     await self.connect_to(ctx.guild.id, str(vc.id))
                     await ctx.send(f"Joined Voice Channel <#{vc.id}>")
-            await Music.newplay(self, ctx)
+            await Music.play(self, ctx)
 
     @commands.command(name='stop', help="Stops the bot playing audio in Voice Chat.", brief="Stops playing audio.")
     async def stop(self, ctx):
