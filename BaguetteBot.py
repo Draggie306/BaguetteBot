@@ -1,4 +1,4 @@
-DraggieBot_version = "v1.3"
+DraggieBot_version = "v1.3.1"
 build = ""
 beta_bot = False
 
@@ -9,10 +9,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, subprocess, math, openai
-#from        discord_slash import SlashCommand
-#from        discord_slash.utils.manage_commands import create_option, create_choice
 from        discord.ext import commands
-#from        discord.ui import Select, Button, View
 from        discord.errors import Forbidden#                                    CMD Prerequisite: py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite: py -3 -m pip install -U python-dotenv
 from        youtube_search import YoutubeSearch#                                PIP:            python -m ensurepip
@@ -29,7 +26,7 @@ voiceVolume = 0.3
 Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
 croissant_names = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
 tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
-brigaders = [759861456300015657]
+brigaders = 759861456300015657
 random_word = ["Expulser!", "Troubador!", "Delenda!", "Vincit!", "Consilium!", "Renovatur!", "Acheronta!", "Oderint!"]
 emoji_Coins = "<:Coins:852664685270663194>"
 emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
@@ -99,27 +96,9 @@ client = commands.Bot(
 
 print("Done!\nSlash commands initialising...")
 
-
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
-
-"""@client.tree.command(name="nsfw", description="haha yes")
-async def nsfw(interaction: discord.Interaction, fruits: Literal['Wattson', 'Chun-Li', 'Do not click me']):
-    button_watt = Button(label="Wattson", style=discord.ButtonStyle.red, emoji="⚡")
-    button_chun = Button(label="Chun-Li", style=discord.ButtonStyle.blurple, emoji="🍑")
-    button_sus = Button(label="Do not click me", url="ibaguette.com")
-
-
-    await interaction.response.send_message(f'Your favourite fruit is {fruits}.')
-
-    select = Select(options=[
-        discord.SelectOption(label="Wattson", emoji="⚡", description="My gal Wattson Apex legen"),
-        discord.SelectOption(label="Chun-Li", emoji="🍑", description="No way right now lmao")
-    ])
-
-    view = View()
-    view.add_item(button_watt, button_chun, button_sus)"""
 
 @client.tree.command(name="command-2")
 @app_commands.guilds(discord.Object(id=384403250172133387))
@@ -133,6 +112,7 @@ async def my_command(interaction: discord.Interaction) -> None:
 
 @client.tree.command(name="sync-commands", description="[Admin] Sync edited client tree commands to Discord servers")
 async def sync(interaction: discord.Interaction):
+    await slash_log(interaction)
     if interaction.user.id == 382784106984898560:
         await interaction.response.defer() # Defer due to rate limiting being annoying sometimes grr
         x = await client.tree.sync()
@@ -144,6 +124,7 @@ async def sync(interaction: discord.Interaction):
 
 @client.tree.command(name="stats", description="Just a few useful bot statistics.")
 async def stats(interaction: discord.Interaction):
+    await slash_log(interaction)
     await bot_runtime_events(1)
     if round(client.latency * 1000) <= 100:
         pingColour = (0x44ff44)
@@ -210,12 +191,14 @@ async def stats(interaction: discord.Interaction):
     
 @client.tree.command(name="baguette", description="Sends a random baguette image.")
 async def baguette(interaction: discord.Interaction):
+    await slash_log(interaction)
     await interaction.response.send_message(f"Use French Cuisine bot for this and much more! The commad is `/baguette`.\nAdd it! https://ibaguette.com/api/BotInvs/FrenchCuisine&permissions=V2")
 
 
 @client.tree.command(name="snowflake", description="Convert a Discord snowflake into a DateTime object, accurate to the second.")
 @app_commands.describe(flake="Input the snowflake here, something like '382784106984898560'.")
 async def snowflake(interaction: discord.Interaction, flake: str):
+    await slash_log(interaction)
     snowflake = int(flake)
     try: #      Try and change the message content after the '.snowflake' into an integer.
         unix_timestamp = ((1420070400000 + int(((f"{(snowflake):b}")[:-22]), 2)) / 1000)
@@ -236,6 +219,7 @@ async def get_app_command_error(interaction: discord.Interaction, error: app_com
 @client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!", )
 @app_commands.describe(operation="[Admin Only] set/add/lookup.", target_id="[Admin Only] Enter the user id for the operation to target", mod_value="[Admin Only] Use this as the value for the operation")
 async def coins(interaction: discord.Interaction, operation: Optional[str], target_id: Optional[str], mod_value: Optional[str]):
+    await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
         print(operation,target_id,mod_value)
         member_role = discord.utils.get(interaction.guild.roles, name=f"Member")
@@ -391,10 +375,10 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {emoji_Coins} coins and {nolwennium_bal} {emoji_Nolwennium} Nolwennium available to spend."), colour=0xFFD700)
                             embed.add_field(
                                 name="Items curently available for you to buy:",
-                                value=f"**Citizen**: FREE {emoji_Coins}\n\nType **.buy citizen** to start ascending through purchasable roles!",
+                                value=f"**Citizen**: FREE {emoji_Coins}\n\nType `/buy item:citizen` to start ascending through purchasable roles!",
                                 inline=False
                                 )
-                            embed.set_footer(text=(f'Type ".buy item" to buy your selected item! For example, .buy citizen.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
+                            embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
                             await interaction.response.send_message(embed=embed)
                             return
                         
@@ -413,10 +397,8 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         elif next_available_role_cost <= 0:
                             embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {emoji_Coins} Coins are needed until the next role.")
 
-                        if serverID in tester_guilds:
-                            embed.set_footer(text=(f'Type ".buy item" to buy your selected item! For example, .buy citizen.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
-                        else:
-                            embed.set_footer(text=(f"Type .buy item to buy your selected item!\nYou can buy roles for Coins, and use {name_Nolwennium} to run commands for the bot (saved across all servers)."))
+                        embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (saved across all servers).'))
+                        
                         await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message("You do not have permission to access the shop interface.")
@@ -434,11 +416,22 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
         else:
             await error_code(interaction, 1)
 
+#   extended shop for buy command below
+
+async def extended_shop(interaction):
+    coinBal = await get_coins(interaction.guild_id, interaction.user.id)
+
+    embed = discord.Embed(title="User Balance", description=(f"Welcome to the extended shop.\n You have {coinBal} {emoji_Coins} Coins available to spend."), colour=0x00ACFF)
+
+                            
+    await interaction.response.edit_message(embed=embed)
+
 #   buy
 
 @client.tree.command(name="buy", description="Shows your balance, and available to buy items.")
 @app_commands.describe(item="Enter the item to buy here")
 async def buy(interaction:discord.Interaction, item: str):
+    await slash_log(interaction)
     if interaction.guild_id in tester_guilds:
         canRunCommand = discord.utils.find(lambda r: r.name == 'Member', interaction.guild.roles)
         owner = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
@@ -466,7 +459,7 @@ async def buy(interaction:discord.Interaction, item: str):
             coinBal = get_coins(interaction.guild_id, interaction.user.id)
 
             if determiner == "2":
-                await extended_shop(interaction)
+                await shop_page_2(interaction)
 
             if determiner == 'citizen':
                 cost = 1
@@ -476,7 +469,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     return
                 
                 coinBal = int(coinBal) - cost
-                await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                update_coins(interaction.guild_id, interaction.user.id, -cost)
     
                 role = discord.utils.get(interaction.guild.roles, name="Citizen")
                 await member.add_roles(role)
@@ -505,7 +498,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         await interaction.response.send_message(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
 
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
@@ -542,7 +535,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         return
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
 
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Knight"))
@@ -580,7 +573,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         return
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
 
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
@@ -617,7 +610,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         return
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
                     
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Viscount"))
@@ -655,7 +648,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         return
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
                     
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
@@ -691,7 +684,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         return
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
                     
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
@@ -724,7 +717,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         await interaction.response.send_message(f"You do not have enough Coins to buy {roleName}.")
                         return
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
                     
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
@@ -755,7 +748,7 @@ async def buy(interaction:discord.Interaction, item: str):
                         await interaction.response.send_message("You do not have enough Coins to buy King.")
                         return
                     coinBal = int(coinBal) - cost
-                    await update_coins(interaction.guild_id, interaction.user.id, -cost)
+                    update_coins(interaction.guild_id, interaction.user.id, -cost)
                     
                     role = discord.utils.get(interaction.guild.roles, name="King")
                     await member.add_roles(role)
@@ -770,7 +763,7 @@ async def buy(interaction:discord.Interaction, item: str):
                 return
             
             if determiner == 'admin':
-                await interaction.response.send_message("Required role missing")
+                await error_code(interaction, 1)
             else:
                 await interaction.response.send_message(f"**{determiner}** isn't a valid item to buy. Try `Citizen/Knight/Baron/Viscount/Earl/Marquess/Duke/Prince/King/Admin`!")
         else:
@@ -792,6 +785,7 @@ async def buy(interaction:discord.Interaction, item: str):
 @client.tree.command(name="slowmode", description="Sets the slowmode in a channel.")
 @app_commands.describe(seconds="Input seconds here.")
 async def setdelay(interaction: discord.Interaction, seconds:str):
+    await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_channels:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
     try:
@@ -818,6 +812,7 @@ async def setdelay(interaction: discord.Interaction, seconds:str):
 @client.tree.command(name="emoji-backup", description="Backs up all your server emojis. This will be retrievable soon.")
 @app_commands.describe(guild_id="Enter server ID to grab emojis from")
 async def emojis(interaction:discord.Interaction, guild_id: str):
+    await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_emojis_and_stickers:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_emojis_and_stickers`.")
 
@@ -891,9 +886,10 @@ async def emojis(interaction:discord.Interaction, guild_id: str):
 
 #   Get messages
 
-@client.tree.command(name="get_messages", description="[Admon Only] Get direct messages sent to a user object")
+@client.tree.command(name="get_messages", description="[Admin Only] Get direct messages sent to a user object")
 @app_commands.describe(id="User id to objectify")
 async def get_messages(interaction: discord.Interaction, id:str):
+    await slash_log(interaction)
     if interaction.user.id == 382784106984898560:
         user1 = await client.fetch_user(int(id))
 
@@ -906,6 +902,7 @@ async def get_messages(interaction: discord.Interaction, id:str):
 @client.tree.command(name="logsearch", description="Search the message history for a term. Returns how many times it was sent.")
 @app_commands.describe(term="String to search the log for")
 async def log(interaction:discord.Interaction, term:str):
+    await slash_log(interaction)
     if not interaction.user.guild_permissions.view_audit_log:
         return await interaction.response.send_message("You are missing the required guild persmission: `view_audit_log`.")
     serverID = interaction.guild_id
@@ -935,6 +932,7 @@ async def log(interaction:discord.Interaction, term:str):
 @client.tree.command(name="play", description="[Audio] Streams YT audio. Sligthly buggy, may die randomly.")
 @app_commands.describe(video="What video would you like to search for and play?")
 async def play(interaction:discord.Interaction, video:str):
+    await slash_log(interaction)
     """This uses `youtube-dl` to extract and get links to a searched term. If the search term is a link with a video ID,
     it will extract straight to that ID. If not, it will search for the most liely video.\n
     When it has found a matching video, its formats are extracted. It then uses list comprehension to filter out any 
@@ -942,36 +940,30 @@ async def play(interaction:discord.Interaction, video:str):
     is then passed to the `max` function. The `max` function then returns the element with the highest value of `abr`, 
     as to get the best quality audio to stream into the `VoiceChannel`. This ensures that the `KeyError` error will not 
     occur, since the list only contains elements that have the `abr`     key."""
-    print(f"[SlashCommand] 'play' ran by {interaction.user.id} in {interaction.guild_id}. The search term was '{video}'.")
+    print(f"/ [SlashCommand] 'play' ran by {interaction.user.id} in {interaction.guild_id}. The search term was '{video}'.")
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     await interaction.response.defer() # Defer due to rate limiting being annoying sometimes grr
-    if not interaction.user.id == 382784106984898560:
-        return await interaction.response.send_message("Please wait for the official release of BaguetteBot!")
-    try:
-        voice_client = interaction.guild.voice_client
-        voice_client.stop()
-    except Exception:
-        if not interaction.user.voice:
-            return await interaction.followup.send("You aren't in a Voice Channel.")
+
+
+    if not interaction.user.voice:
+        return await interaction.followup.send("You aren't in a Voice Channel.")
+
+    voice_client = interaction.guild.voice_client
+    if not voice_client:
         channel = interaction.user.voice.channel
         await channel.connect()
         voice_client = interaction.guild.voice_client
-
-    #await interaction.followup.send(f"[debug] Called volume and voiceclient: {voice_client}")
-    print(f"[debug] Called volume and voiceclient: {voice_client}")
 
     searchTerm = video
     millisecs = round(time.time() * 1000)
     if "?v=" in searchTerm:
         vid_id = searchTerm[searchTerm.find("v=")+2:searchTerm.find("v=")+13]
-        result = (f'https://www.youtube.com/watch?v={vid_id}')
+        result = f'https://www.youtube.com/watch?v={vid_id}'
     else:
         results = YoutubeSearch(searchTerm, max_results=1).to_dict()
-        for v in results:
-            result = ('https://www.youtube.com/watch?v=' + v['id'])
-            print(f"\nresult = {result}")
-        
+        result = f'https://www.youtube.com/watch?v={results[0]["id"]}'
+
     url = result
 
     YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
@@ -1022,7 +1014,6 @@ async def play(interaction:discord.Interaction, video:str):
 
     #voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
     
-
     doneMillisecs = round(time.time() * 1000)
     timeDelay = doneMillisecs - millisecs
     video_title = info.get('title')
@@ -1044,6 +1035,7 @@ async def play(interaction:discord.Interaction, video:str):
 
 @client.tree.command(name="stop", description="Stops whatever is going on in voice chat")
 async def stop(interaction:discord.Interaction):
+    await slash_log(interaction)
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     voice_client = interaction.guild.voice_client
@@ -1058,6 +1050,7 @@ async def stop(interaction:discord.Interaction):
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
 async def bitrates(interaction:discord.Interaction, bitrate: Optional[str]):
+    await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_channels:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
     
@@ -1093,26 +1086,24 @@ async def bitrates(interaction:discord.Interaction, bitrate: Optional[str]):
 #   Pause/resume audio
 
 @client.tree.command(name="pause", description="[Audio] Pauses or resumes audio being played")
-async def pause(interaction:discord.Interaction):    
+async def pause(interaction:discord.Interaction):
+    await slash_log(interaction)
     voice_client = interaction.guild.voice_client
     if voice_client.is_playing():
         voice_client.pause()
         await interaction.response.send_message("*✅ Paused the current audio playing!*")
-    if voice_client.is_paused():
+    elif voice_client.is_paused():
         voice_client.resume()
         await interaction.response.send_message("*✅ Resumed playing the audio!*")
     else:
         await interaction.response.send_message("Audio is unable to be paused")
 
-#@client.tree.command(name="settings", description="Edit your BaguetteBot preferences here. Change DMs, role notifications, Coins earning and more.")
-#async def settings(interaction:discord.Interaction):
-#    await interaction.response.send_message("You have no special preferences loaded. <@382784106984898560> please code this")
-
 #   Nolwennium mine
 
 @client.tree.command(name="mine", description=f"Mines some globalCurrency which can be used to do cool stuff!")
-@commands.cooldown(1, 29, commands.BucketType.user)
+@app_commands.checks.cooldown(1, 29, key=lambda i: (i.user.id))
 async def mine(interaction:discord.Interaction):
+    await slash_log(interaction)
     print(f"CURRENCY - {name_Nolwennium} > {interaction.user.id} is mining")
 
     base_mined_amount = random.randint(-5, 88)
@@ -1241,11 +1232,11 @@ async def mine(interaction:discord.Interaction):
     await bot_runtime_events(1)
     print(f"CURRENCY - {name_Nolwennium} > {interaction.user.id} has gained {newNumberAfterFee} {name_Nolwennium} (fee: {fee}). Their total is {new_balance}")
 
-
 #   yn
 
 @client.tree.command(name="yes-no", description="Randomly answers yes or no.")
 async def yn(interaction:discord.Interaction):
+    await slash_log(interaction)
     list_test = ["No!", "Of course not!", "Certainly not.", "Definitely not!", "Obviously not.", "Nah!", "Nope.", "Hell nah...", 
                 "Yes!", "Obviously!",   "Of course!",       "Certainly!",       "Definitely!",  "Without a shadow of a doubt!", "Yessir!"]
     await interaction.response.send_message(random.choice(list_test))
@@ -1259,6 +1250,7 @@ async def yn(interaction:discord.Interaction):
 
 @client.tree.command(name="brawlstars", description="?")
 async def BrawlStars(interaction:discord.Interaction):
+    await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
         num_lines = sum(1 for line in open (f"C:{s_slash}Users{s_slash}Draggie{s_slash}iCloudDrive{s_slash}iCloud~is~workflow~my~workflows{s_slash}Brawl Stars Counter.txt"))
         await interaction.response.send_message(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
@@ -1266,81 +1258,93 @@ async def BrawlStars(interaction:discord.Interaction):
         f.write(f"\nCOMMAND RAN -> '.lines' ran by {interaction.user} at {datetime.now()}")
         f.close()
 
-
 #   vbuck calc
 
 @client.tree.command(name="vbucks", description="Calculates GBP -> V-Bucks")
-async def vbucks(interaction:discord.Interaction):
-    txt = ctx.message.content
-    x = txt.split()
-    
-    vTier = (float (x[1]))
-    vAmount = (float (x[2]))
-    GBP = (float (x[2]))
+@app_commands.describe(amount="Enter the amount of £££ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
+async def vbucks(interaction:discord.Interaction, amount:str, tier:Optional[int]):
+    await slash_log(interaction)
+    tier = 0 if tier is None else tier
+    try:
+        vAmount = (float (amount))
+        gbp = amount
+    except ValueError:
+        return await interaction.response.send_message(f"Inappropriate integer: {amount}/{tier}")
 
     vTier1 = (float (154.083205))
     vTier2 = (float (175.109443))
     vTier3 = (float (192.381685))
     vTier4 = (float (210.970464))
 
-
-    if vTier == (float ("1")):
-        vAmount = (float (vTier1)) * (int (vAmount))
-        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 1 of vbuck purchase).")
-    if vTier == (float ("2")):
-        vAmount = (int (vTier2)) * (int (vAmount))
-        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 2 of vbuck purchase).")
+    if tier == 1:
+        vAmount = round(vTier1 * vAmount)
+        await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 1 of vbuck purchase)")
         print (vAmount)
-    if vTier == (float ("3")):
-        vAmount = (int (vTier3)) * (int (vAmount))
-        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 3 of vbuck purchase).")
+    if tier == 2:
+        vAmount = round(vTier2 * vAmount)
+        await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 2 of vbuck purchase)")
         print (vAmount)
-    if vTier == (float ("4")):
-        vAmount = (int (vTier4)) * (int (vAmount))
-        await ctx.send(f"£ {GBP} is equal to {vAmount} vbucks (using tier 4 of vbuck purchase).")
+    if tier == 3:
+        vAmount = round(vTier3 * vAmount)
+        await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 3 of vbuck purchase)")
         print (vAmount)
+    if tier == 4:
+        vAmount = round(vTier4 * vAmount)
+        await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 4 of vbuck purchase)")
+        print (vAmount)
+    else:
+        vAmount_LowerBounds = int(vTier1 * vAmount)
+        vAmount_UpperBounds = int(vTier4 * vAmount)
+        await interaction.response.send_message(f"£{gbp} may be between **{format(vAmount_LowerBounds, ',')}** and **{format(vAmount_UpperBounds, ',')}** V-Bucks depending on which V-Bucks package(s) you choose to buy")
 
 #   Vbucks USD
 
-@client.tree.command(name="vbucks-usd", description="Converts USD into VBucks")
-async def vbucksUSD(ctx):
-    txt = ctx.message.content
-    x = txt.split()
-    vTier = (str (x[1]))
-    vAmount = (str (x[2]))
-    USD = (str (x[2]))
+@client.tree.command(name="vbucks-usd", description="Calculates USD -> V-Bucks")
+@app_commands.describe(amount="Enter the amount of $$$ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
+async def vbucks_usd(interaction:discord.Interaction, amount:str, tier:Optional[int]):
+    await slash_log(interaction)
+    tier = 0 if tier is None else tier
+    try:
+        vAmount = (float (amount))
+        usd = amount
+    except ValueError:
+        return await interaction.response.send_message(f"Inappropriate integer: {amount}/{tier}")
 
-    vTier1USD = (int (125.156446))
-    vTier2USD = (int (140.070035))
-    vTier3USD = (int (156.298843))
-    vTier4USD = (int (168.771096))
+    vTier1usd = 125.156446
+    vTier2usd = 140.070035
+    vTier3usd = 156.298843
+    vTier4usd = 168.771096
 
-    if vTier == "1":
-        vAmount = (int (vTier1USD)) * (int (vAmount))
-        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 1 of vbuck purchase)")
+    if tier == 1:
+        vAmount = round(vTier1usd * vAmount)
+        await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 1 of vbuck purchase)")
         print (vAmount)
-    if vTier == "2":
-        vAmount = (int (vTier2USD)) * (int (vAmount))
-        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 2 of vbuck purchase)")
+    if tier == 2:
+        vAmount = round(vTier2usd * vAmount)
+        await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 2 of vbuck purchase)")
         print (vAmount)
-    if vTier == "3":
-        vAmount = (int (vTier3USD)) * (int (vAmount))
-        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 3 of vbuck purchase)")
+    if tier == 3:
+        vAmount = round(vTier3usd * vAmount)
+        await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 3 of vbuck purchase)")
         print (vAmount)
-    if vTier == "4":
-        vAmount = (int (vTier4USD)) * (int (vAmount))
-        await ctx.send(f"${USD} is equal to {vAmount} vbucks (using tier 4 of vbuck purchase)")
+    if tier == 4:
+        vAmount = round(vTier4usd * vAmount)
+        await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 4 of vbuck purchase)")
         print (vAmount)
+    else:
+        vAmount_LowerBounds = int(vTier1usd * vAmount)
+        vAmount_UpperBounds = int(vTier4usd * vAmount)
+        await interaction.response.send_message(f"${usd} may be between **{format(vAmount_LowerBounds, ',')}** and **{format(vAmount_UpperBounds, ',')}** V-Bucks depending on which V-Bucks package(s) you choose to buy")
 
 @client.tree.command(name="settings", description="Edit a ton of the bot's settings here. [Ephemeral]")
 async def settings(interaction:discord.Interaction):
+    await slash_log(interaction)
     user_settings_json_path = f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json"
     # Check if the file exists
-    if not os.path.exists(user_settings_json_path):
-        # Create the file with default values
+    if not os.path.isfile(user_settings_json_path):
         with open(user_settings_json_path, 'w') as f:
-            json.dump(default_user_settings, f)
-
+            json.dump(default_configfile, f)
+    
     # Read the JSON file
     with open(user_settings_json_path, 'r') as f:
         settings = json.load(f)
@@ -1350,7 +1354,7 @@ async def settings(interaction:discord.Interaction):
     embed=discord.Embed(title="BaguetteBot Settings", description="Use the buttons to interact and change these settings. These apply to all servers.")
     view=discord.ui.View()
 
-    for key, value in settings.items():
+    for key, value in settings['user_settings'].items():
         string = (f"{string}\n{key}: {value}")
         if key == "send_generalised_dms":
             key = "Send General DMs"
@@ -1376,6 +1380,37 @@ async def settings(interaction:discord.Interaction):
 
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
+#   vbuck calc
+
+@client.tree.command(name="terms", description="Views the iBaguette Terms of Service which governs this bot.")
+async def terms(interaction:discord.Interaction):
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
+    view.add_item(discord.ui.Button(label="iBaguette Terms", style=discord.ButtonStyle.link,url="https://ibaguette.com/terms"))
+    await interaction.response.send_message("Press the button below to see iBaguette Terms of Service and Privacy Policy.",view=view, ephemeral=True)
+
+"""@client.tree.error
+async def on_app_command_error(error: app_commands.AppCommandError, interaction: discord.Interaction):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(error, ephemeral=True)
+    else:
+        raise error
+    print(f"[Tree/ERROR]      {error}")"""
+
+@client.tree.command(name="dev_settings", description="Dev settings panel")
+async def dev_settings(interaction:discord.Interaction):
+    #save_user_settings(interaction.user.id)
+    await interaction.response.send_message("Done")
+
+@client.tree.command(name="join", description="Makes the bot join your voice channel")
+async def join(interaction:discord.Interaction):
+    if interaction.user.voice == None:
+        return await interaction.response.send_message("You aren't in a Voice Channel.")
+
+    else:
+        channel = interaction.user.voice.channel
+        await channel.connect()
+        await interaction.response.send_message(f"Joined <#{channel.id}>")
 
 
 ###########################################################################################################################################################
@@ -1384,26 +1419,44 @@ async def settings(interaction:discord.Interaction):
 
 print("Done!\nDefining function and constants...")
 
+class AcceptToSButtons(discord.ui.Button):  
+    def __init__(self, label:str, style:discord.ButtonStyle):
+        super().__init__(label=label, style = style)
+    async def callback(self, interaction):
+        if not os.path.isfile(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json"):
+            first_save_user_settings(interaction.user.id)
+        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
+            settings = json.load(f)
+        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
+            settings['accepted_tos'] = 'true'
+            json.dump(settings, f)
+            await interaction.response.edit_message(content="iBaguette Terms of Service have been accepted! Please rerun the command. To change your settings, simply type `/settings`.")
+            return print(f"> [TermsAccepted]  ToS accepted by {interaction.user.id}. They can now run Slash Commands. Event occurred at {datetime.now()}")
+
+class PlayButtons(discord.ui.Button):  
+    def __init__(self, label:str, style:discord.ButtonStyle):
+        super().__init__(label=label, style = style)
+    async def callback(self, interaction):
+        if self.label == "Send General DMs":
+            enableanddisable(self, "send_generalised_dms")
+        view=discord.ui.View()
+        await interaction.response.edit_message(view=view)
 
 
 class OptionButton(discord.ui.Button):  
     def __init__(self, label:str, style:discord.ButtonStyle):
         super().__init__(label=label, style = style)
     async def callback(self, interaction):
-        try:
-            with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
-                settings = json.load(f)
-        except FileNotFoundError:
-            with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
-                json.dump(default_user_settings, f)
-            
+        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
+            settings = json.load(f)
+
         def enableanddisable(self, text: str):
-            if settings[text] == "false":
-                print(f"[UserSettings] {text} is being changed to True for user {interaction.user.id}")
-                settings[text] = "true"
-            elif settings[text] == "true":
-                print(f"[UserSettings] {text} is being changed to False for user {interaction.user.id}")
-                settings[text] = "false"
+            if settings['user_settings'][text] == "false":
+                print(f"/ [UserSettings] {text} is being changed to True for user {interaction.user.id}")
+                settings['user_settings'][text] = "true"
+            elif settings['user_settings'][text] == "true":
+                print(f"/ [UserSettings] {text} is being changed to False for user {interaction.user.id}")
+                settings['user_settings'][text] = "false"
             
             with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
                 json.dump(settings, f)
@@ -1435,7 +1488,7 @@ class OptionButton(discord.ui.Button):
 
         embed=discord.Embed(title="BaguetteBot Settings", description="Use the buttons to interact and change these settings. These apply to all servers.")
         view=discord.ui.View()
-        for key, value in settings.items():
+        for key, value in settings['user_settings'].items():
             string = (f"{string}\n{key}: {value}")
             if key == "send_generalised_dms":
                 key = "Send General DMs"
@@ -1451,8 +1504,8 @@ class OptionButton(discord.ui.Button):
                 key = "Allow Bot Experiments"
             if key == "can_use_shop_section_2":
                 key = "View Shop Sections"
-            if key == "User Analytics":
-                key = "contribute_to_statistics"
+            if key == "contribute_to_statistics":
+                key = "User Analytics"
     
             embed.add_field(name=key, value="🔴 Disabled" if value == "false" else "🟢 Enabled")
             style=discord.ButtonStyle.green if value == "true" else discord.ButtonStyle.red
@@ -1460,57 +1513,69 @@ class OptionButton(discord.ui.Button):
         
         await interaction.response.edit_message(embed=embed, view=view)
 
-#   extended shop for buy command below
 
-async def extended_shop(ctx):
-    embed = discord.Embed(title="*EXTENDED SHOP*", description=(f"Welcome to the extended shop."), colour=0xFFD700)
+async def slash_log(interaction):
+    print(f"/ [SlashCommandRan]   {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})")
+    if not os.path.isfile(f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json"):
+        view = discord.ui.View()
+        view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
+        view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
+        return await interaction.response.send_message("You must accept the Terms of Service before using this Slash Command.", view=view, ephemeral=True)
+    else:
+        with open (f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json", 'r') as json_file:
+            json_data = json.load(json_file)
+            if not json_data['accepted_tos'] == 'true':
+                view = discord.ui.View()
+                view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
+                view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
+                return await interaction.response.send_message("You must accept the Terms of Service before using this Slash Command.", view=view, ephemeral=True)
+            else:
+                pass
+    with open (GlobalLogDir, 'a') as file:
+        file.write(f"/ [SlashCommand]      {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})\n")
+  
+async def get_user_settings(user_id):
+    """Returns a JSON dict with the user's settings."""
+    if os.path.isfile(f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json"):
+        with open (f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json", "r") as file:
+            json_data = json.load(file)
+        if json_data['accepted_tos'] == 'true':
+            settings = json_data['user_settings']
+            return settings
+        else:
+            return None
+    else:
+        return None
 
-    f = open(coinDir, 'r')
-    coinBal = f.read()
-    f.close()
-    f = open(nolwenniumUserDir, 'r')
-    nolwennium_bal = f.read()
-    f.close()
-
-    embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {emoji_Coins} coins and {nolwennium_bal} {emoji_Nolwennium} Nolwennium available to spend."), colour=0xFFD700)
-                            
-    await ctx.send(embed=embed)
-
-
-
-# Define the default user settings
-default_user_settings = {
-    "send_generalised_dms": "false",
-    "get_dm_notification_for_role_addition": "false",
-    "get_dm_notification_for_role_removal": "false",
-    "get_dm_notification_for_coin_threshold": "false",
-    "reminders_for_voice_time": "false",
-    "participate_in_experiments": "false",
-    "can_use_shop_section_2": "true",
-    "contribute_to_statistics": "true",
+# Define the default file layout
+default_configfile = {
+    "user_settings": {
+        "send_generalised_dms": "false",
+        "get_dm_notification_for_role_addition": "false",
+        "get_dm_notification_for_role_removal": "false",
+        "get_dm_notification_for_coin_threshold": "false",
+        "reminders_for_voice_time": "false",
+        "participate_in_experiments": "false",
+        "can_use_shop_section_2": "true",
+        "contribute_to_statistics": "true",
+    },
+    "accepted_tos": "false",
+    "config_version": "1",
 }
 
 # Function to save the user settings to a JSON file
-def save_user_settings(user_id, settings):
+def first_save_user_settings(user_id):
     # Read the existing JSON file, if it exists
-    filepath = f"{base_directory}Users\\{user_id}"
-    try:
-        with open(filepath, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        data = {}
-
-    # Set the default values for any keys that are not present in the settings dictionary
-    for key, value in default_user_settings.items():
-        settings.setdefault(key, value)
-
-    # Add the user ID and settings to the dictionary
-    data[user_id] = settings
-
-    # Write the dictionary to a JSON file
-    with open(filepath, "w") as f:
-        json.dump(data, f)
-
+    filepath = f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json"
+    # Read the JSON file
+    if not os.path.exists(filepath):
+        # Create the file with default values
+        with open(filepath, 'w') as f:
+            json.dump(default_configfile, f)
+    else:
+        os.remove(filepath)
+        with open(filepath, 'w') as f:
+            json.dump(default_configfile, f)
 
 async def handleLeaveVoiceChat(ctx):
     voice_client = ctx.guild.voice_client
@@ -1561,7 +1626,7 @@ async def get_coins(server_id: int, user_id: int) -> int:
     return balance
 
 
-async def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
+def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     """Gets then updates a user's coins. The `server_id` and `user_id` as integers must be provided.\n
     The amount of coins to add/subtract as an integer must be added too.\n
     Returns new amount of Coins."""
@@ -1581,34 +1646,29 @@ async def bot_runtime_events(event_int):
     global bot_events
     bot_events = bot_events + event_int
 
-async def command_log(text: str, slash: bool, interaction):
-    """Appends to the GlobalLogDir the following:\n
-    [SLASH/ALT COMMAND EXECUTED] `param1` ran by `param3.user` in channel `param3.channel.id` at (current datetime)\n
-    `param1`: string (the command ran)\n
-    `param2`: boolean (is slash command or not)\n
-    `param3` should be either an `interaction` object or `ctx` for legacy commands"""
-    with open(GlobalLogDir, "a", encoding='utf-8') as log:
-        if slash == True:
-            log.write(f"\n[SLASH COMMAND EXECUTED] '{text}' ran by {interaction.user} in channel {interaction.channel.id} at {datetime.now()}")
-        else:
-            log.write(f"\n[ALT COMMAND EXECUTED] '{text}' ran by {interaction.user} in channel {interaction.channel.id} at {datetime.now()}")
+class error_messages:
+    codes = [
+        ["You do not have the facilities to use this, big man", "You don't have the correct permissions", "[Error 1] You do not have the required permissions", "You can't run this command."], 
+        ["A critical error occured and this command cannot continue", ""],
+        ["Critical error whilst in Voice Chat"]
+    ]
 
 async def error_code(interaction, code:int, *note:str, **raw_error:Exception):
     if note:
         print(f"A manual error was encountered and here is the information: {note}")
     embed = discord.Embed()
     random_cry = ['<:AmberCry:828577834146594856>', '<:BibiByeBye:828683852939395072>', '<:ColetteCry:828683829631516732>', '<:JessieCry:828683805861740654>', '<:SpikeCry:828683779206807622>', '<:SurgeCry:828683755694063667>', '<:TaraCry:828683724286853151>']        
-    error_messages = [
-        "",
-        "[Error 0x0000001] This command does not exist. Maybe you don't have access to it or it was removed?",
-    ]
+
 
     embed = discord.Embed(
         title=(f"{random.choice(random_cry)} An error occured"), 
-        description=f"**{str(error_messages[code])}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", 
+        description=f"**{str(random.choice(error_messages.codes[code]))}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", 
         color=0x990000)
 
-    await interaction.followup.send(embed=embed)
+    try:
+        await interaction.response.send_message(embed=embed)
+    except app_commands.errors.CommandInvokeError:
+        await interaction.followup.send(embed=embed)
 
     if raw_error:
         with open(f"{base_directory}errors.txt", "a") as f:
@@ -1716,14 +1776,8 @@ async def on_ready():
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
     await client.tree.sync() 
-    #if running_locally:
-    #    try:
-    #        await client.load_extension('cogs.music')
-    #        print("COG: Music loaded!")
-    #    except Exception as e:
-    #        print(f"Unable to load extension: {e}")
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
-    #await log_channel.send(f"Online at **{datetime.now()}**") # Uncomment when finished.
+    await log_channel.send(f"Online at **{datetime.now()}**")
     f = open(GlobalLogDir, "a", encoding="utf-8")
     f.write(f"\n\nREADY at {datetime.now()}")
     f.write(' - Logged in as {0.user}'.format(client))
@@ -1743,17 +1797,17 @@ async def on_ready():
     general = client.get_channel(759861456761258045)#  Brigaders_channel 
     console = client.get_channel(912429726562418698)
     guild = client.get_guild(759861456300015657)
-    # Uncomment when finisheddraggie_guild = client.get_guild(759861456300015657)
+    draggie_guild = client.get_guild(759861456300015657)
     hasPrivate = discord.utils.find(lambda r: r.name == 'Private', guild.roles)
-    # Uncomment when finishedhasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
-    # Uncomment when finishedrolePrivate = discord.utils.get(guild.roles, name='Private')
-    # Uncomment when finishedupvote = client.get_emoji(803578918488768552)
-    # Uncomment when finisheddownvote = client.get_emoji(803578918464258068)
-    # Uncomment when finishedepic_memes = client.get_channel(809112184902778890)
-    # Uncomment when finishedpublic_memes = client.get_channel(930488945144397905)
+    hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
+    rolePrivate = discord.utils.get(guild.roles, name='Private')
+    upvote = client.get_emoji(803578918488768552)
+    downvote = client.get_emoji(803578918464258068)
+    epic_memes = client.get_channel(809112184902778890)
+    public_memes = client.get_channel(930488945144397905)
 
-    # Uncomment when finishedmemes_channels = [epic_memes, public_memes]
-    # Uncomment when finishedhasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
+    memes_channels = [epic_memes, public_memes]
+    hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
 
     await asyncio.sleep(2)
     global test__bb_voice_channel
@@ -1768,7 +1822,6 @@ async def on_ready():
     x.write(voice_time)
     x.close()
 
-    return # Uncomment when finished
     async for message in epic_memes.history():
         if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
             #print(message.reactions)
@@ -1803,6 +1856,20 @@ async def on_ready():
             except AttributeError:
                 os.remove(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice\\tempuserstate_{file}.txt")
 
+    voice_chat_category = discord.utils.get(guild.categories, id=759861456761258048)
+
+    for VoiceChannel in voice_chat_category.channels:
+        for Member in VoiceChannel.members:
+            print(f"[ReadyUpVoice]      {Member.id} is in a Voice Chat.")
+            if not os.path.isfile(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice\\tempuserstate_{Member.id}.txt"):
+                with open(f"{base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt", "w+") as new_synced_user_from_offline:
+                    join_time = str(round(time.time()))
+                    new_synced_user_from_offline.write(join_time)
+                    new_synced_user_from_offline.close()
+                    print(f"[ReadyUpVoice]      Written {join_time} to {base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt")
+            else:
+                print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt")
+
     print(f"Calibrated Voice Chat time to {voice_time} seconds")
 
     await bot_runtime_events(1)
@@ -1821,7 +1888,7 @@ async def StatusAutoUpdator():
     else:
         await bot_runtime_events(1)
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
-    print(f"[StatusUpdate] - {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
+    print(f"[StatusUpdate]      {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
     #await asyncio.sleep(random.randint(100,500))
     await bot_runtime_events(1)
     await asyncio.sleep(60)
@@ -1829,16 +1896,17 @@ async def StatusAutoUpdator():
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    print(f"[VoiceChatEvent] Occurred in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
+    print(f"[VoiceChatEvent]    Occurred in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
     #if member.bot: #checking this before anything else will reduce unneeded file operations etc
     #    return
     await bot_runtime_events(1)
     if after.channel:
         if member.id == 382784106984898560:
-            if before.channel.id == 1045032578190684181:
-                if after.channel.id != 1045032578190684181:
-                    channel = client.get_channel(1045032578190684181) 
-                    await member.move_to(channel)
+            if before.channel is not None:
+                if before.channel.id == 1045032578190684181:
+                    if after.channel.id != 1045032578190684181:
+                        channel = client.get_channel(1045032578190684181) 
+                        await member.move_to(channel)
         if not os.path.isfile(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt'):
             try:
                 os.mkdir(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice')
@@ -1849,26 +1917,31 @@ async def on_voice_state_update(member, before, after):
             x.close()
     else:
         print(f"User left VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
+        # Check if the member is the only one in the voice channel
+        #if guild.voice_client
+        if len(before.channel.members) == 1:
+            # Leave the voice channel
+            if before.channel.guild.voice_client is not None:
+                await before.channel.guild.voice_client.disconnect()
+                await before.channel.send("Left this Voice Channel due to user no other users present in the channel!")
     new_user = str(member.id)
 
     if not before.channel: #When VC joined.
         join_time = round(time.time())
-        x = open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'w')
-        x.write(str(join_time))
-        x.close
+        with open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'w') as x:
+            x.write(str(join_time))
     if not after.channel:
         await bot_runtime_events(1)
         leave_time = round(time.time())
-        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'r')
-        start_time = int(x.read())
-        x.close()
-        #os.remove(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt')
+        with open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'r') as x:
+            start_time = int(x.read())
+        os.remove(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt')
         time_spent = leave_time - start_time
-        print(f"{member.name} just spent {time_spent} in a Voice Chat.")
+        print(f"[VoiceChatLeave]    {member.name} just spent {time_spent}s in a Voice Chat.")
 
         if before.channel.guild.id == 759861456300015657:
             await bot_runtime_events(1)
-            print("It's in Baguette Brigaders!")
+            print("[VoiceChatLeave]     Occured in Baguette Brigaders!")
 
             #   Calculate the amount to add using the special formula
             coins_to_add = round(((math.sqrt(time_spent)/10))*2 + (math.sqrt(time_spent)/2))
@@ -1887,23 +1960,27 @@ async def on_voice_state_update(member, before, after):
                     units = "hours"
                 
             try:
-                x = (random.randint(1,5))
+                x = (random.randint(1,4))
                 if x == 2:
-                    if coins_to_add > 5:
+                    if coins_to_add > 10:
                         if member.id == 792850689533542420:
                             return
-                        string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `/coins` in Baguette Brigaders to see what you can buy!*")
-                        #await member.send(string)
-                        #await draggie.send(f"[Sent to {member.mention}] {string}")
-                        print(string)
+                        settings = await get_user_settings(member.id)
+                        if settings is not None:
+                            if settings['reminders_for_voice_time'] == "true":
+                                string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `/coins` in Baguette Brigaders to see what you can buy!*")
+                                print(f"[VoiceChatEvent]    Member leaving has subscribed to Voice Reminders. Message sent: {string}")
+                        else:
+                            print(f"[VoiceChatEvent]    Member has not specified their Settings preferences.")
+
                     else:
-                        print(f"Not going to Stage 3 of alerting earned sum was only {coins_to_add}.")
+                        print(f"[VoiceChatEvent]    CoinBal Not going to Stage 3 of alerting earned sum was only {coins_to_add}.")
                 else:
                     print(f"Not going to Stage 2 of alerting as the number was not 2, it was {x}")
             except AttributeError:
                 print("Could not send the message as the member is probably a bot or has blocked the bot.")
 
-            await update_coins(member.guild.id, member.id, coins_to_add)
+            update_coins(member.guild.id, member.id, coins_to_add)
 
         # Get total guild time spent in Voice Chat
         # Firstly, if there is not a record of voice chat time, create the file
@@ -1933,7 +2010,7 @@ async def on_voice_state_update(member, before, after):
             await test__bb_voice_channel.send(total_guild_time_spent)
 
         #   Finally, send sum to me as a test.
-        #await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.") # Uncomment when finished
+        await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
@@ -1985,7 +2062,7 @@ async def on_raw_reaction_add(payload=None):
         smp2ID = 912012054414630973
         birthdayID = 892114380005715978
         birthday2ID = 1024404603866988704
-        guild = discord.utils.get(client.guilds, name='Baguette Brigaders')
+        guild = discord.utils.get(client.guilds, id=brigaders)
         roleAllRandoms = discord.utils.get(guild.roles, id=930186230442905620)
         rolePrivate = discord.utils.get(guild.roles, name='Private')
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
@@ -2144,7 +2221,7 @@ async def on_message_edit(before, after):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     if not after.guild:
-        return print("[Mod/Edits] Message edited in a non guild channel")
+        return print("[Mod/Edits]       Message edited in a non guild channel or ephemeral message")
     sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -2237,13 +2314,13 @@ async def on_typing(channel, user, when):
         #embed.add_field(name='Channel', value=f"<#{channel.id}>")
         #embed.add_field(name='Time', value=tighem)
         #await LoggingChannel.send(embed=embed)
-    print(f"[UserTyping]        {user.name} started typing in {channel.name} at {tighem}/{when} in {channel.guild.name}")
+    print(f"[UserTyping]        {user.name} started typing in '{channel.guild.name} - {channel.name}' at {tighem}/{when}")
 
 @client.event
 async def on_user_update(before, after):
     await bot_runtime_events(1)
     if after.avatar != before.avatar:
-        print(f"INFO >>> {before.name} updated their avatar, to {after.avatar_url}.")
+        print(f"[AvatarUpdate]      {before.name} updated their avatar, to {after.avatar.url}. (from {before.avatar.url})")
 
 @client.event
 async def on_member_ban(guild, user):
@@ -2331,7 +2408,8 @@ async def on_member_update(before, after):
 
                 await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
-            #await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!') <<<<<<                   In Brigaders Helper
+            
+            await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
             #print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
             
     elif len(after.roles) < len(before.roles):
@@ -2511,7 +2589,7 @@ async def on_message(message):
                 print(errorMsg)
                 await draggie.send(errorMsg)
 
-    print(f"\n[MessageSent] '{message.content}' sent by {message.author} in [{serverName} - #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
+    print(f"\n[MessageSent]     '{message.content}' sent by {message.author} in [{serverName} - #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
 
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
         # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS  # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
@@ -2554,7 +2632,7 @@ async def on_message(message):
 
 #   Coin adder.
     if message.content != ".":
-        await update_coins(message.guild.id, message.author.id, 1)
+        update_coins(message.guild.id, message.author.id, 1)
 
 #   Generic commands.
 
@@ -3060,7 +3138,7 @@ async def message(ctx):
 
 #   Audio annoyance command
 
-@client.command(help="UseSlashCommandsInstead", brief="UseSlashCommandsInstead", aliases=['play', 'coins', 'shop', 'buy', 'yts'])
+@client.command(help="UseSlashCommandsInstead", brief="UseSlashCommandsInstead", aliases=['coins', 'shop', 'buy', 'yts', 'mine'])
 async def UseSlashCommandsInstead(ctx):
     return await ctx.reply("This command has been replaced by the new <a:ShinyDiamond:926981569393086544> *shinier* <a:ShinyDiamond:926981569393086544> Slash Command! To see these, simply type `/` in the message field, and select the command. You can interact with not just BaguetteBot in a new way, but also all your other favourite bots! Slash Commands, buttons, dropdowns and more are all now supported by me!")
 
@@ -3533,7 +3611,7 @@ def main():
         print("\n\n\nRUNNING IN TEST MODE!\n\n")
         with open(dotenvPath, "r") as f:
             x = f.read()
-    client.run(x)
+        client.run(x)
 
     
 if __name__ == "__main__":
