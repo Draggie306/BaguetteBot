@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.3.1"
-build = ""
+build = "a"
 beta_bot = False
 
 """
@@ -37,9 +37,9 @@ name_Nolwennium = "Nolwennium"
 id_Draggie = 382784106984898560
 discord_snowflake = 175928847299117063
 discord_epoch = 1420070400000
-YTAPI_Status = "Disabled"
+YTAPI_Status = "Enabled: yt-dl"
 SCAPI_Status = "Disabled"
-audio_subsystem = "Disabled" # Modified repl.it
+audio_subsystem = "ffmpeg"
 idk_what_u_mean = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -957,6 +957,9 @@ async def play(interaction:discord.Interaction, video:str):
 
     searchTerm = video
     millisecs = round(time.time() * 1000)
+    if "spotify.com" in searchTerm:
+        print(f"/ [SlashCommand]       Returning a spotify link: {searchTerm}")
+        return await interaction.followup.send("Spotify links are not supported because no")
     if "?v=" in searchTerm:
         vid_id = searchTerm[searchTerm.find("v=")+2:searchTerm.find("v=")+13]
         result = f'https://www.youtube.com/watch?v={vid_id}'
@@ -983,7 +986,7 @@ async def play(interaction:discord.Interaction, video:str):
             #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
             
         # Find the element in the `formats` list with the highest value of `abr`
-        print("Finding the best value...")
+        print("/ [PlayCommand]      Finding the best value...")
         info = video_info
         best_format = max([f for f in info['formats'] if 'abr' in f], key=lambda x: x['abr'])
 
@@ -993,9 +996,9 @@ async def play(interaction:discord.Interaction, video:str):
         audio_bitrate = best_format['abr']
     
         #await interaction.followup.send(f"[debug] `{url}`")
-        print(f"\n\n{url}\n\n")
+        print(f"/ [PlayCommand]     {url}")
 
-    print("Extracted info")
+    print("/ [PlayCommand]      Extracted info")
     #await interaction.followup.send("[debug] Extracted info")
 
     #voice_client = await connectToGuildChannel(ctx)
@@ -1004,10 +1007,13 @@ async def play(interaction:discord.Interaction, video:str):
     try:
         source = discord.FFmpegPCMAudio(source=url)
         #voice_client.source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-        source = discord.PCMVolumeTransformer(source, volume=0.5)
+        source = discord.PCMVolumeTransformer(source, volume=0.4)
     except Exception as error:
         print(error)
         await interaction.followup.send(f"[debug] An unexpected error has occured and audio cannot proceed to be played: {error}")
+    
+    if voice_client.is_playing():
+        voice_client.stop()
     
     voice_client.play(source)    
     voice_client.is_playing()
@@ -1515,12 +1521,12 @@ class OptionButton(discord.ui.Button):
 
 
 async def slash_log(interaction):
-    print(f"/ [SlashCommandRan]   {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})")
+    print(f"/ [SlashCommand]   {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})")
     if not os.path.isfile(f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json"):
         view = discord.ui.View()
         view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
         view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
-        return await interaction.response.send_message("You must accept the Terms of Service before using this Slash Command.", view=view, ephemeral=True)
+        return await interaction.response.send_message("You must accept the Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
     else:
         with open (f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json", 'r') as json_file:
             json_data = json.load(json_file)
@@ -1528,10 +1534,10 @@ async def slash_log(interaction):
                 view = discord.ui.View()
                 view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
                 view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
-                return await interaction.response.send_message("You must accept the Terms of Service before using this Slash Command.", view=view, ephemeral=True)
+                return await interaction.response.send_message("You must accept the Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
             else:
                 pass
-    with open (GlobalLogDir, 'a') as file:
+    with open (GlobalLogDir, 'a', encoding="utf-8") as file:
         file.write(f"/ [SlashCommand]      {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})\n")
   
 async def get_user_settings(user_id):
@@ -2395,18 +2401,9 @@ async def on_member_update(before, after):
                     print (f"\n[CURRENCY - {name_Nolwennium}] Added balance of {toAdd} (total: {addedAmount} for boosting the server: {after.id} - {after.name}")
                     f.close()
     
-                f = open(coinDir, 'r')
-                coins = int(f.read())
-                f.close()
-                newSum = coins + 200
-                f = open(coinDir, 'w+')
-                f.write(str (newSum))
-                f.close()
-                f = open(coinDir, 'r')
-                newCoins = int(f.read())
-                f.close()
+                new_coins = update_coins(after.guild.id, after.id, 100)
 
-                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {newCoins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
+                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {new_coins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             
             await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
