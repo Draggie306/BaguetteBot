@@ -1,5 +1,5 @@
-DraggieBot_version = "v1.3.1"
-build = "a"
+DraggieBot_version = "v1.3.2"
+build = ""
 beta_bot = False
 
 """
@@ -32,6 +32,8 @@ emoji_Coins = "<:Coins:852664685270663194>"
 emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
 emoji_random_lmao = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "😳"]
 emoji_loading = "<a:loading:935623554215591936>"
+emoji_tick_animated = "<a:AnimatedTick:956621591108804652>"
+emoji_cross_animated = "<a:AnimatedCross:956621593113665536>"
 value_Placeholder = "TBD/tbd"
 name_Nolwennium = "Nolwennium"
 id_Draggie = 382784106984898560
@@ -954,7 +956,7 @@ async def play(interaction:discord.Interaction, video:str):
         channel = interaction.user.voice.channel
         await channel.connect()
         voice_client = interaction.guild.voice_client
-
+    log_string = ""
     searchTerm = video
     millisecs = round(time.time() * 1000)
     if "spotify.com" in searchTerm:
@@ -963,19 +965,24 @@ async def play(interaction:discord.Interaction, video:str):
     if "?v=" in searchTerm:
         vid_id = searchTerm[searchTerm.find("v=")+2:searchTerm.find("v=")+13]
         result = f'https://www.youtube.com/watch?v={vid_id}'
+        log_string = f"{log_string}\nresult: {result}"
     else:
         results = YoutubeSearch(searchTerm, max_results=1).to_dict()
         result = f'https://www.youtube.com/watch?v={results[0]["id"]}'
+        log_string = f"{log_string}\nresult: {result}"
 
     url = result
+    log_string = f"{log_string}\nurl: {result}"
 
     YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
 
-    print("Got YDL_OPTIONS")
+    print(f"[PlayCommand]    ({datetime.now()}) - Got YDL_OPTIONS")
     with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
         try:
             video_info = ydl.extract_info(url, download=False)
+            log_string = f"{log_string}\nvideo_info: {video_info}"
         except youtube_dl.DownloadError as error:
+            log_string = f"{log_string}\nERROR: {error}"
             return await interaction.response.send_message(f"A download error occured: {error}")
 
         url = video_info['formats'][0]['url']
@@ -986,36 +993,37 @@ async def play(interaction:discord.Interaction, video:str):
             #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
             
         # Find the element in the `formats` list with the highest value of `abr`
-        print("/ [PlayCommand]      Finding the best value...")
+        print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
         info = video_info
         best_format = max([f for f in info['formats'] if 'abr' in f], key=lambda x: x['abr'])
+        log_string = f"{log_string}\nbest_format: {best_format}"
 
         # Extract the `url` attribute of the element
         url = best_format['url']
+        log_string = f"{log_string}\nbest_format - url: {url}"
 
         audio_bitrate = best_format['abr']
+        log_string = f"{log_string}\nbest_format - abr level: {audio_bitrate}"
     
         #await interaction.followup.send(f"[debug] `{url}`")
-        print(f"/ [PlayCommand]     {url}")
+        print(f"/ [PlayCommand]     ({datetime.now()}) - Probing URL: {url}")
 
-    print("/ [PlayCommand]      Extracted info")
-    #await interaction.followup.send("[debug] Extracted info")
+    print(f"/ [PlayCommand]      ({datetime.now()}) - Extracted info")
 
-    #voice_client = await connectToGuildChannel(ctx)
-    #volume = await getServerVoiceVolume(ctx)
+    volume = await get_server_voice_volume(interaction.guild_id)
 
     try:
-        source = discord.FFmpegPCMAudio(source=url)
+        source = discord.FFmpegPCMAudio(source=url, options=FFMPEG_OPTIONS)
         #voice_client.source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-        source = discord.PCMVolumeTransformer(source, volume=0.4)
+        source = discord.PCMVolumeTransformer(source, volume=volume)
     except Exception as error:
         print(error)
-        await interaction.followup.send(f"[debug] An unexpected error has occured and audio cannot proceed to be played: {error}")
+        return await interaction.followup.send(f"[debug] An unexpected error has occured and audio cannot proceed to be played: {error}")
     
     if voice_client.is_playing():
         voice_client.stop()
     
-    voice_client.play(source)    
+    voice_client.play(source)
     voice_client.is_playing()
 
     #voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
@@ -1024,20 +1032,212 @@ async def play(interaction:discord.Interaction, video:str):
     timeDelay = doneMillisecs - millisecs
     video_title = info.get('title')
     
-    duration = await duration_to_time(info.get('duration'))
+    og_duration = info.get('duration')
+
+    duration = await duration_to_time(og_duration)
 
     embed=discord.Embed(title="Playing audio", description=f"**[{video_title}]({info.get('webpage_url')})**", colour=0x228B22)
     embed.add_field(name="Channel", value=f"[{info.get('channel')}]({info.get('channel_url')})")
     embed.add_field(name="Duration", value=duration)
     embed.add_field(name="Views", value=format(int(info.get('view_count')), ","))
-    embed.add_field(name="Likes", value=f"{info.get('like_count')}")
+    #embed.add_field(name="Likes", value=f"{info.get('like_count')}")
+    embed.add_field(name="Publish Time", value=(results[0]['publish_time']))
     embed.add_field(name="Time taken", value=f"{timeDelay}ms")
     embed.add_field(name="Audio bitrate", value=f"{audio_bitrate} kbps")
     embed.set_thumbnail(url=(info.get('thumbnail')))
-    #if int(duration) > 300:
-    #    embed.add_field(name="⚠️ Warning", value=f"This video is very long, and may not work properly. If there is no audio, please use another video.", inline=True)
+    if int(og_duration) > 3600:
+        embed.add_field(name="⚠️ Warning", value=f"This video is very long, and may not work properly. If there is no audio or it is a little buggy, please use another video. But I'll try as best I can!", inline=True)
     await interaction.followup.send(embed=embed)
     print("Send embed")
+
+@client.tree.command(name="volume", description=f"[Audio] Change the audio player's volume or lock it.")
+@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {voiceVolume*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
+async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
+    try:
+        volume_float = float(percentage/100)
+    except Exception as e:
+        return await interaction.response.send_message(f"Unable to convert {volume_float} into an integer.")
+
+    str_to_send = ""
+
+    if volume_float > 10:
+        volume_float = 10
+
+    if not os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt"):
+        with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w') as f:
+            f.write(str(voiceVolume*100))
+            print(f"[VoiceVolume]       Created a directory for guild_id {interaction.guild_id}")
+
+    if lock:
+        if not interaction.user.guild_permissions.manage_guild:
+            return await interaction.response.send_message(f"You are trying to lock a voice channel without having the right priviliges: `manage_guild`.")
+        if not os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt"):
+            with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w+') as file:
+                file.write(str(volume_float))
+            with open(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt", 'w') as file:
+                file.close()
+            return await interaction.response.send_message(f"{emoji_tick_animated} Locked the voice chat volume to {volume_float*100}% for this server.")
+        else:
+            os.remove(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt")
+            str_to_send = f"{str_to_send}Removed the lock on voice volume."
+    
+    if os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt"):
+        if interaction.user.guild_permissions.manage_guild:
+            return await interaction.response.send_message ("You can't modify the volume as it has been locked. Change the value of `lock` to `True` when using `/volume` to toggle it off again.")
+        return await interaction.response.send_message("You can't modify the volume as it has been locked by a guild manager.")
+    
+    voice_client = interaction.guild.voice_client
+
+    if voice_client is not None:
+        if voice_client.is_playing():
+            voice_client.source.volume = volume_float
+
+    
+    with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w+') as file:
+        file.write(str(volume_float))
+        print(f"[VoiceVolume]       Written to {interaction.guild_id} file: {str(volume_float)}")
+        str_to_send=(f"{str_to_send}\n{emoji_tick_animated} Set the server's voice percentage to: **{volume_float*100}%.**")
+
+    await interaction.response.send_message(str_to_send)
+
+
+@client.tree.command(name="gpt", description="Get GPT-3 to respond to your prompt.")
+@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", code="Should GPT generate code instead?", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
+async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, code: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
+    #await ctx.send("Generating response... <a:loading:935623554215591936>")
+
+    if not temperature:
+        temperature = 0.15
+    else:
+        temperature = temperature/100
+
+    if not top_p:
+        top_p = 0.95
+    else:
+        top_p = top_p/100
+    
+    if not frequency_penalty:
+        frequency_penalty = 0
+    else:
+        frequency_penalty = frequency_penalty/100
+    
+    if not presence_penalty:
+        presence_penalty = 0
+    else:
+        presence_penalty = presence_penalty/100
+    
+    if not dm:
+        dm = False
+        
+    if os.path.isfile(f"{base_directory}openai_disabled.txt"):
+        return await interaction.response.send_message("The OpenAI subsystem has been disabled.")
+
+    if prompt is None:
+        return await interaction.response.send_message("No prompt!")
+
+    if not code:
+        if model == 1:
+            model_type = "text-ada-001"
+        if model == 2:
+            model_type = "text-babbage-001"
+        if model == 4:
+            model_type = "text-davinci-002"
+        else:#  Default.
+            model_type = "text-curie-001"
+    else:
+        if model == 2:
+            model_type = "code-davinci-002"
+        else:
+            model_type = "code-cushman-001"
+        
+
+        #   Now defer as it may take a long time lmao
+    await interaction.response.defer()
+    
+    with open(f"{base_directory}openai_api_key.txt", 'r') as f:
+        openai_key = f.read()
+    openai.api_key = openai_key
+    
+    
+    response = openai.Moderation.create(
+        input=prompt,
+    )
+    print(response)
+    print(response.results[0])
+    output = (response.results[0].flagged)
+    if output == 1:
+        return await interaction.followup.send("You've sent it some really sussy things, so imma have to stop you right there... wtf!")
+
+    #   Get the actual data
+
+    try:
+        response = openai.Completion.create(
+            model=model_type,
+            prompt=prompt,
+            temperature=temperature,
+            max_tokens=limit,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty
+        )
+    except Exception as e:
+        await interaction.followup.send(e)
+
+    response_content = (response.choices[0].text)
+    print(response_content)
+
+
+    mod_response = openai.Moderation.create(
+        input=response_content,
+    )
+    print(mod_response)
+    print(mod_response.results[0])
+    output = (mod_response.results[0].flagged)
+
+    if output == 1:
+        with open(f"Z:\\{interaction.user.id}_gpt.txt", 'w+') as f:
+            f.write(response_content)
+        view = discord.ui.View()
+        view.add_item(SusButton(label="See Sussiness", style=discord.ButtonStyle.red))
+        return await interaction.followup.send("The output of the request was a little too suspicious. If you *really* want to see it, then click the button.", view=view)
+    
+    if code:
+        x = f"```{response_content}```"
+    
+    if len(response_content) > 1900:
+        chunks = [response_content[i:i+1900 ] for i in range(0, len(response_content), 1900 )]
+        print(len(chunks))
+        
+        if dm:
+            for chunk in chunks:
+                await interaction.user.send(chunk)
+            await interaction.followup.send("I've sent the result in your DMs!")
+            for chunk in chunks:
+                await draggie.send(chunk)
+        else:
+            for chunk in chunks:
+                await interaction.followup.send(chunk)
+
+    if dm:
+        await interaction.user.send(response_content)
+        await interaction.followup.send("I've sent the result in your DMs!")
+        await draggie.send(x)
+    else:
+        await interaction.followup.send(response_content)
+
+
+async def get_server_voice_volume(guild_id: int) -> float:
+    """Returns the volume of a guild chosen by its members.\n
+    Must include parameter of the guild id\n
+    Returns an float which can be used as the percentage to play at"""
+    if not os.path.isfile(f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt"):
+        with open (f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w') as f:
+            f.write(str(voiceVolume*100))
+    with open (f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'r') as file:
+        volume = file.read()
+    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}")
+    return float(volume)
+
 
 @client.tree.command(name="stop", description="Stops whatever is going on in voice chat")
 async def stop(interaction:discord.Interaction):
@@ -1045,7 +1245,11 @@ async def stop(interaction:discord.Interaction):
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     voice_client = interaction.guild.voice_client
-    voice_client.stop()
+    if voice_client is not None:
+        voice_client.stop()
+    else:
+        return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
+
     await interaction.response.send_message((str ("Stopped playing audio.")))
     f = open(GlobalLogDir, "a")
     f.write(f"\nAUDIO COMMAND RAN -> '.stop' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
@@ -1439,15 +1643,17 @@ class AcceptToSButtons(discord.ui.Button):
             await interaction.response.edit_message(content="iBaguette Terms of Service have been accepted! Please rerun the command. To change your settings, simply type `/settings`.")
             return print(f"> [TermsAccepted]  ToS accepted by {interaction.user.id}. They can now run Slash Commands. Event occurred at {datetime.now()}")
 
-class PlayButtons(discord.ui.Button):  
+class SusButton(discord.ui.Button):  
     def __init__(self, label:str, style:discord.ButtonStyle):
         super().__init__(label=label, style = style)
     async def callback(self, interaction):
-        if self.label == "Send General DMs":
-            enableanddisable(self, "send_generalised_dms")
-        view=discord.ui.View()
-        await interaction.response.edit_message(view=view)
-
+        user_id = interaction.user.id
+        if os.path.isfile(f"Z:\\{user_id}_gpt.txt"):
+            with open (f"Z:\\{user_id}_gpt.txt", 'r') as f:
+                content = f.read()
+                view = discord.ui.View()
+                #view.add_item(SusButton(label="See Sussiness", style=discord.ButtonStyle.red))
+                await interaction.response.edit_message(content=content, view=view)
 
 class OptionButton(discord.ui.Button):  
     def __init__(self, label:str, style:discord.ButtonStyle):
@@ -1629,6 +1835,7 @@ async def get_coins(server_id: int, user_id: int) -> int:
     coin_dir = f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins{s_slash}{user_id}.txt"
     with open(coin_dir, 'r') as f:
         balance = int(f.read())
+    print(f"[CoinsQuery]    Balance called for {user_id} in {server_id}. (Balance: {balance})")
     return balance
 
 
@@ -1640,9 +1847,9 @@ def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     mode = 'r+' if os.path.exists(coin_dir) else 'w+'
     with open(coin_dir, mode) as file:
         balance = int(file.read()) if mode == "r+" else 0
-        print(f"[Coins] Balance called for {user_id} in {server_id}.")
+        print(f"[CoinsUpdate]   Balance called for {user_id} in {server_id}.")
         new_balance = balance + coins_calc
-        print(f"[Coins] The new balance for {user_id} is {new_balance}.")
+        print(f"[CoinsUpdate]   The new balance for {user_id} is {new_balance}.")
         file.seek(0)
         file.write(str(new_balance))
     return new_balance
@@ -1681,12 +1888,44 @@ async def error_code(interaction, code:int, *note:str, **raw_error:Exception):
             f.write(f"\nERROR: An error occured! Original command initialised by {interaction.user} at {datetime.now()}. ERROR MESSAGE: {str(raw_error)}")
 
 
+async def get_current_seconds_bandwidth() -> list:
+    """
+    Gets network bandwidth used in the last second. Useful for seeing if the network is being throttled.\n
+    Returns a list, index `0` is Uploaded Megabytes, index `1` is Downloaded Megabytes.
+    """
+    import time
+    import psutil
+
+    # Store the previous values for comparison
+    prev_net_data = psutil.net_io_counters(pernic=False, nowrap=True)
+
+    # Wait for one second
+    await asyncio.sleep(1)
+
+    # Get the current network data
+    net_data = psutil.net_io_counters(pernic=False, nowrap=True)
+
+    # Calculate the network usage over the last second
+    bytes_sent = net_data.bytes_sent - prev_net_data.bytes_sent
+    bytes_recv = net_data.bytes_recv - prev_net_data.bytes_recv
+
+    # Convert the usage to megabytes
+    megabytes_sent = (bytes_sent / 1024 / 1024) * 10
+    megabytes_recv = (bytes_recv / 1024 / 1024) * 10
+
+    print(f"Total network usage:")
+    print(f"  Megabytes sent: {megabytes_sent}")
+    print(f"  Megabytes received: {megabytes_recv}")
+    return [f"{megabytes_sent}", f"{megabytes_recv}"]
+
+
 async def duration_to_time(duration: int) -> str:
     """
     Enter the duration in seconds as the argument and the function
     will return a prettified string based on the time :)\n
     e.g. 23 hours 6 minutes, 4 minutes 45 seconds, etc.
     """
+    print(f"[FunctionUsed]  'duration_to_time(duration:{duration})' used.")
     # Convert duration to seconds
     seconds = duration
 
@@ -1694,17 +1933,28 @@ async def duration_to_time(duration: int) -> str:
     if seconds >= 3600:
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
-        return f"{hours} hours {minutes} minutes"
+        if hours == 0:
+            return f"{minutes} minutes"
+        elif minutes == 0:
+            return f"{hours} hours"
+        else:
+            return f"{hours} hours {minutes} minutes"
 
     # If the duration is greater than or equal to a minute, print the duration in minutes and seconds
     elif seconds >= 60:
         minutes = seconds // 60
         seconds = seconds % 60
-        return f"{minutes} minutes {seconds} seconds"
+        if minutes == 0:
+            return f"{seconds} seconds"
+        elif seconds == 0:
+            return f"{minutes} minutes"
+        else:
+            return f"{minutes} minutes {seconds} seconds"
 
     # Otherwise, print the duration in seconds
     else:
         return f"{seconds} seconds"
+
 
 
 YTDL_OPTIONS = {
@@ -1778,7 +2028,7 @@ start_time = time.time()
 
 @client.event
 async def on_ready():
-    print(f'\n\n\n\nLogged in as {client.user} - {(datetime.now())}')
+    print(f'\n\n\n\n[ReadyUp]       Logged in as {client.user} - {(datetime.now())}')
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
     await client.tree.sync() 
@@ -1834,18 +2084,18 @@ async def on_ready():
             if ("http") in message.content.lower():
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
-                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'http' in '{message.content.lower()}'")
+                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'http' in '{message.content.lower()}'")
             if len(message.attachments) >= 1:
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
-                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
+                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
             else:
-                print("Skipped message to react to")
+                print("[ReadyUp]       Skipped message to react to")
         if len(message.reactions) == 0:
             if ("http") in message.content.lower() or len(message.attachments) >= 1:
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
-                print(f"Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'no reactions on message' or 'has attachment'")
+                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'no reactions on message' or 'has attachment'")
 
     for file in os.listdir("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice"):
         if file != "voice_info.txt":
@@ -1856,9 +2106,9 @@ async def on_ready():
             try:
                 if not person.voice:
                     os.remove(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice\\tempuserstate_{file}.txt")
-                    print(f"Deleted a temporary voice file on readying up. Name: {file} // ({person})")
+                    print(f"[ReadyUp]       Deleted a temporary voice file on readying up. Name: {file} // ({person})")
                 else:
-                    print(f"Kept temporary voice file, as the person is still in a voice chat. ({person.name})")
+                    print(f"[ReadyUp]       Kept temporary voice file, as the person is still in a voice chat. ({person.name})")
             except AttributeError:
                 os.remove(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice\\tempuserstate_{file}.txt")
 
@@ -1876,7 +2126,7 @@ async def on_ready():
             else:
                 print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt")
 
-    print(f"Calibrated Voice Chat time to {voice_time} seconds")
+    print(f"[ReadyUp]       Calibrated Voice Chat time to {voice_time} seconds")
 
     await bot_runtime_events(1)
     await StatusAutoUpdator()
@@ -1894,7 +2144,7 @@ async def StatusAutoUpdator():
     else:
         await bot_runtime_events(1)
         await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
-    print(f"[StatusUpdate]      {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
+    print(f"[SelfStatus]        {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
     #await asyncio.sleep(random.randint(100,500))
     await bot_runtime_events(1)
     await asyncio.sleep(60)
@@ -1918,18 +2168,20 @@ async def on_voice_state_update(member, before, after):
                 os.mkdir(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice')
             except Exception:
                 print("Area already exists.")
-            print(f"User joined VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()} ")
+            print(f"[VoiceChatJoin]    User {member.name} joined VC in {member.guild.id} ({member.guild.name}) at {datetime.now()} ")
             x = open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt', 'w')
             x.close()
     else:
-        print(f"User left VC in {member.guild.id} ({member.guild.name}) by {member.name} at {datetime.now()}")
+        print(f"[VoiceChatLeave]    User {member.name} left VC in {member.guild.id} ({member.guild.name}) at {datetime.now()}")
         # Check if the member is the only one in the voice channel
         #if guild.voice_client
         if len(before.channel.members) == 1:
             # Leave the voice channel
             if before.channel.guild.voice_client is not None:
-                await before.channel.guild.voice_client.disconnect()
-                await before.channel.send("Left this Voice Channel due to user no other users present in the channel!")
+                await asyncio.sleep(30) #   Wait a few seconds in case people rejoin.
+                if len(before.channel.members) == 1:
+                    await before.channel.guild.voice_client.disconnect()
+                    await before.channel.send("Automatically left this Voice Channel as all other members have left!")
     new_user = str(member.id)
 
     if not before.channel: #When VC joined.
@@ -2021,6 +2273,7 @@ async def on_voice_state_update(member, before, after):
 @client.event
 async def on_member_join(member):
     await bot_runtime_events(1)
+    print(f"[MemberJoined]  on_member_join triggered: Member: {member.name} ({member.id}) in guild {member.guild.name} ({member.guild_id}).")
     sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
     if member.guild.id == 759861456300015657:
         #await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
@@ -2044,9 +2297,9 @@ async def on_member_remove(member):
     if os.path.isfile(sendLogsDir):
         try:
             channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-            await channel.send(f"{member} has left the server.")
+            await channel.send(f"[MemberLeave]  {member} has left the server.")
         except Forbidden:
-            await draggie.send(f"Removed from server {member.guild.name} / {member.guild.id}")
+            await draggie.send(f"[SelfRemove]   Removed from server {member.guild.name} / {member.guild.id}")
     servers = len(client.guilds)
     members = 0
     cpuPercentage = psutil.cpu_percent()
@@ -2060,6 +2313,7 @@ async def on_member_remove(member):
     
 @client.event
 async def on_raw_reaction_add(payload=None):
+    print(f"[ReactionAdd]   Reaction '{payload.emoji.name}' added in {payload.guild_id} ({payload.member.guild.name}) by {payload.member.name}. ({payload.emoji.url})")
     await bot_runtime_events(1)
     if payload.guild_id == 759861456300015657:#     Must, while reaction roles are not available for all servers.
         msgID = 835227251695288391
@@ -2098,29 +2352,29 @@ async def on_raw_reaction_add(payload=None):
                 await payload.member.send("You are too late to claim the birthday role, sorry. More exclusive roles will be given in the future!")
             if payload.message_id == smp2ID:
                 await payload.member.add_roles(roleSMP)
-                print(f"Added role to {payload.member.name}")
+                print(f"[ReactionRole]  Added role to {payload.member.name}")
                 await payload.member.send(f"{payload.member.mention}, you've been granted SMP Season 2 role in Baguette Brigaders! Enjoy your time on the server.")
-                print(f"Sent DM to {payload.member.name}")
+                print(f"[ReactionRole]  Sent DM to {payload.member.name}")
             if payload.message_id == 1024404603866988704:
                 await payload.member.add_roles(role_birthday_2)
                 await payload.member.send("You've claimed the Brigadeux role permanently! Enjoy!")
 
             if payload.message_id == 936320104193474630:
-                print(f"Sent Roblox Message message to {payload.member}")
+                print(f"[ReactionRole]  Sent Roblox Message message to {payload.member}")
                 await payload.member.add_roles(robloxDev)
             if payload.message_id == 931577920512725083:#
                 await asyncio.sleep(5)
                 member = payload.member.guild.get_member(payload.member.id)
                 await payload.member.remove_roles(roleUnverified)
                 if roleAllRandoms not in member.roles:
-                    print("Adding roles...")
+                    print("[ReactionRole]  Adding roles...")
                     channel = client.get_channel(930489645014331442)
                     await member.add_roles(roleAllRandoms)
                     await member.send(f"Welcome, {member.mention}! You have been verified! Enjoy the server; thanks for being part of this special community. We look forward to having you onboard for future developments!")
-                    print(f"Sent message to {member}")     
+                    print(f"[ReactionRole]  Sent message to {member}")     
                     await LoggingChannel.send(f"{payload.member} has been verified.")
                 else:
-                    print("Not adding as members is already in roles.")
+                    print("[ReactionRole]  Not adding as members is already in roles.")
 
             if payload.message_id == 931586778245247018:
                 choices = ["OK, you'll no longer see the other side.", "No longer seeing the other side. Enjoy your time on this side!", "Who likes the other side anyway, this side is better!"]
@@ -2128,7 +2382,7 @@ async def on_raw_reaction_add(payload=None):
                     await payload.member.add_roles(roleAllRandoms)
                     await LoggingChannel.send(f"{payload.member} has been allowed access to the other side.")
                 else:
-                    print(f"{payload.member.name} already has Members role, removing it.")
+                    print(f"[ReactionRole]  {payload.member.name} already has Members role, removing it.")
                     await payload.member.remove_roles(roleAllRandoms)
                     await payload.member.send(f"{random.choice(choices)}")
     
@@ -2143,12 +2397,12 @@ async def on_raw_reaction_add(payload=None):
                     await payload.member.remove_roles(roleUnverified)
                     await asyncio.sleep(8)
                     await channel.purge(limit=1)
-                    print(f"And it's gone in {channel}")
+                    print(f"[ReactionRole]  And it's gone in {channel}")
 
             if payload.message_id == vaccinatedID:
                 if str(payload.emoji) == "✅":
                     await payload.member.add_roles(roleVaccinated)
-                    await LoggingChannel.send(f"{payload.member} has been granted vaccination status.")
+                    await LoggingChannel.send(f"[ReactionRole]  {payload.member} has been granted vaccination status.")
 
                     #await draggie.send(f"Attempting to ban user {payload.member.name}...")
                     #await payload.member.ban(reason="Banned while i fix this code.")
@@ -2178,7 +2432,7 @@ async def on_reaction_remove(reaction, user):
 
 @client.event
 async def on_guild_remove(guild):
-    print(f"Removed from guild {guild}")
+    print(f"[GuildRemove]   Removed from guild {guild}")
     await draggie.send(f"DEV MODE: removed from guild {guild} ({guild.id})")
 
 #   Client evenys
@@ -2189,7 +2443,7 @@ async def on_message_delete(message):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     sendRedactionsInChannel = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendRedactions.txt")
-    print(f"Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
+    print(f"[MessageDeletion]   Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
     if message.channel.id == 825470734453047297:
         if message.author.bot == False:
             print(f"Stop deleting your messages in here, we're literally adding numbers, {message.author.mention}. *Their message was {message.content}*")
