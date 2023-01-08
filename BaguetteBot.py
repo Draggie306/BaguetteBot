@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.3.2"
-build = ""
+build = "a"
 beta_bot = False
 
 """
@@ -224,7 +224,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
     await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
         print(operation,target_id,mod_value)
-        member_role = discord.utils.get(interaction.guild.roles, name=f"Member")
+        member_role = discord.utils.get(interaction.guild.roles, name=f"Private")
         staff_role = discord.utils.get(interaction.guild.roles, id=963738031863525436)
         owner_role = discord.utils.get(interaction.guild.roles, id=759861763247570946)
         if member_role in interaction.user.roles or staff_role in interaction.user.roles or owner_role in interaction.user.roles:
@@ -256,37 +256,38 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                 nolwennium_balance_file.close()
             
             if serverID == 384403250172133387 or serverID == 759861456300015657:
-                canRunCommand = discord.utils.find(lambda r: r.name == 'Member', interaction.guild.roles)
+                canRunCommand = discord.utils.find(lambda r: r.name == 'Private', interaction.guild.roles)
                 canRunCommand2 = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
                 if canRunCommand or canRunCommand2 in user.roles:
                     try:
                         #	List of stuff BEFORE showing the user their balance
                         word1 = operation
-                        userID = target_id
-                        amount = mod_value
+                        userID = int(target_id)
+                        amount = int(mod_value)
 
                         if interaction.user.guild_permissions.administrator == True:
                             if word1.lower() == 'set':
-                                if not amount or userID:
+                                if not amount or not userID:
                                     return await interaction.response.send_message(idk_what_u_mean)
                                 users_coins = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{userID}.txt")
-                                old_coins = get_coins(interaction.guild_id, interaction.user.id)
+                                old_coins = await get_coins(interaction.guild_id, userID)
                                 with open(users_coins, 'w+') as f:
                                     f.write(str(amount))
-                                new_coins = get_coins(interaction.guild_id, interaction.user.id)
+                                new_coins = await get_coins(interaction.guild_id, userID)
                                 return await interaction.response.send_message(f"Successfully set the user's coins from {old_coins} to **{new_coins}**.")
                             
                             if word1.lower() == 'add':
-                                if not amount or userID:
+                                if not amount or not userID:
                                     return await interaction.response.send_message(idk_what_u_mean)
-                                added_balance = update_coins(interaction.guild_id, interaction.user.id, int(amount))
+                                added_balance = update_coins(interaction.guild_id, interaction.user.id, amount)
                                 return await interaction.response.send_message(f"Successfully added {amount} Coins to the user. They now have **{added_balance}**!")
 
             
                             if word1.lower() == 'lookup':
-                                if not amount or userID:
+                                if not userID:
                                     return await interaction.response.send_message(idk_what_u_mean)
-                                return await interaction.response.send_message(f"<@{userID}> has **{get_coins(interaction.guild_id, interaction.user.id)}** Coins.")
+                                
+                                return await interaction.response.send_message(f"<@{userID}> has **{get_coins(interaction.guild_id, userID)}** Coins.")
                             else:
                                 return await interaction.response.send_message(idk_what_u_mean)
 
@@ -1640,7 +1641,7 @@ class AcceptToSButtons(discord.ui.Button):
         with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
             settings['accepted_tos'] = 'true'
             json.dump(settings, f)
-            await interaction.response.edit_message(content="iBaguette Terms of Service have been accepted! Please rerun the command. To change your settings, simply type `/settings`.")
+            await interaction.response.edit_message(content="iBaguette Terms of Service have been accepted! Please rerun the command. To change your preferences, use `/settings`.")
             return print(f"> [TermsAccepted]  ToS accepted by {interaction.user.id}. They can now run Slash Commands. Event occurred at {datetime.now()}")
 
 class SusButton(discord.ui.Button):  
@@ -1847,9 +1848,9 @@ def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     mode = 'r+' if os.path.exists(coin_dir) else 'w+'
     with open(coin_dir, mode) as file:
         balance = int(file.read()) if mode == "r+" else 0
-        print(f"[CoinsUpdate]   Balance called for {user_id} in {server_id}.")
+        print(f"[CoinsUpdate]       Balance called for {user_id} in {server_id}.")
         new_balance = balance + coins_calc
-        print(f"[CoinsUpdate]   The new balance for {user_id} is {new_balance}.")
+        print(f"[CoinsUpdate]       The new balance for {user_id} is {new_balance}.")
         file.seek(0)
         file.write(str(new_balance))
     return new_balance
@@ -1914,8 +1915,8 @@ async def get_current_seconds_bandwidth() -> list:
     megabytes_recv = (bytes_recv / 1024 / 1024) * 10
 
     print(f"Total network usage:")
-    print(f"  Megabytes sent: {megabytes_sent}")
-    print(f"  Megabytes received: {megabytes_recv}")
+    print(f"Megabytes sent: {megabytes_sent}")
+    print(f"Megabytes received: {megabytes_recv}")
     return [f"{megabytes_sent}", f"{megabytes_recv}"]
 
 
@@ -2034,10 +2035,9 @@ async def on_ready():
     await client.tree.sync() 
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
     await log_channel.send(f"Online at **{datetime.now()}**")
-    f = open(GlobalLogDir, "a", encoding="utf-8")
-    f.write(f"\n\nREADY at {datetime.now()}")
-    f.write(' - Logged in as {0.user}'.format(client))
-    f.close()
+    with open(GlobalLogDir, "a", encoding="utf-8") as f:
+        f.write(f"\n\nREADY at {datetime.now()}")
+        f.write(' - Logged in as {0.user}'.format(client))
     servers = len(client.guilds)
     members = 0
     await bot_runtime_events(7)
@@ -2074,9 +2074,8 @@ async def on_ready():
 
     voice_time = test_voice_time.content
 
-    x = open(f'{base_directory}Servers{s_slash}759861456300015657{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+')
-    x.write(voice_time)
-    x.close()
+    with open(f'{base_directory}Servers{s_slash}759861456300015657{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+') as x:
+        x.write(voice_time)
 
     async for message in epic_memes.history():
         if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
@@ -2090,7 +2089,7 @@ async def on_ready():
                 await message.add_reaction(downvote)
                 print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
             else:
-                print("[ReadyUp]       Skipped message to react to")
+                print("[ReadyUp]        Skipped message to react to")
         if len(message.reactions) == 0:
             if ("http") in message.content.lower() or len(message.attachments) >= 1:
                 await message.add_reaction(upvote)
@@ -2613,7 +2612,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.nick)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"Events Listener: NICK of {after} has been updated FROM {before.nick} TO {after.nick} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"[NickChange]        The nickname of {after} has been updated FROM {before.nick} TO {after.nick} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif len(before.roles) < len(after.roles):
         new_role = next(role for role in after.roles if role not in before.roles)
@@ -2660,8 +2659,10 @@ async def on_member_update(before, after):
                 await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {new_coins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             
+        settings = await get_user_settings(after.id)
+        if settings['get_dm_notification_for_role_addition'] == "true":
             await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
-            #print(f"Sent >>> {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+            print(f"[SendDirectMessage] {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
             
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
@@ -2671,6 +2672,10 @@ async def on_member_update(before, after):
         embed.add_field(name='Date/Time', value=tighem)
         send = True
         print(f"Events Listener: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        settings = await get_user_settings(after.id)
+        if settings['get_dm_notification_for_role_removal'] == "true":
+            await after.send(f'{after.mention}, you\'ve been removed from the role **"{new_role}"** in {after.guild.name}!')
+            print(f"[SendDirectMessage] {after.mention}, you\'ve been removed from the6 role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif before.name != after.name:
         embed = discord.Embed(title=f"Changed name", colour=0x5865F2)
@@ -3654,7 +3659,7 @@ async def bs(ctx):
 
 #   Birthdays
 
-@client.command(help = "Writes your birthday to a file. Use .birthday set [date] to set birthday, and .birthday file to get a list of birthdays.", brief = "Sets your birthday, syntax '.birthday set [your birth date]", pass_context=True, hidden=True)
+@client.tree.command(name = "birthday", description="Saves your birthday to a file so other people know when to celebrate! 🎂")
 async def birthday(ctx):
     async with ctx.typing():
         try:
