@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.3.2"
-build = "a"
+build = "b"
 beta_bot = False
 
 """
@@ -224,7 +224,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
     await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
         print(operation,target_id,mod_value)
-        member_role = discord.utils.get(interaction.guild.roles, name=f"Private")
+        member_role = discord.utils.get(interaction.guild.roles, id=806481292392267796)
         staff_role = discord.utils.get(interaction.guild.roles, id=963738031863525436)
         owner_role = discord.utils.get(interaction.guild.roles, id=759861763247570946)
         if member_role in interaction.user.roles or staff_role in interaction.user.roles or owner_role in interaction.user.roles:
@@ -256,8 +256,8 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                 nolwennium_balance_file.close()
             
             if serverID == 384403250172133387 or serverID == 759861456300015657:
-                canRunCommand = discord.utils.find(lambda r: r.name == 'Private', interaction.guild.roles)
-                canRunCommand2 = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
+                canRunCommand = member_role
+                canRunCommand2 = discord.utils.find(lambda r: r.id == 759861763247570946, interaction.guild.roles)
                 if canRunCommand or canRunCommand2 in user.roles:
                     try:
                         #	List of stuff BEFORE showing the user their balance
@@ -287,7 +287,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                                 if not userID:
                                     return await interaction.response.send_message(idk_what_u_mean)
                                 
-                                return await interaction.response.send_message(f"<@{userID}> has **{get_coins(interaction.guild_id, userID)}** Coins.")
+                                return await interaction.response.send_message(f"<@{userID}> has **{await get_coins(interaction.guild_id, userID)}** Coins.")
                             else:
                                 return await interaction.response.send_message(idk_what_u_mean)
 
@@ -295,16 +295,16 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             await interaction.response.send_message("You don't have full administrator privileges to run this command. Try `/coins` without any added options?")
 
                     except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
-                        hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', interaction.guild.roles)
-                        hasKnight = discord.utils.find(lambda r: r.name == 'Knight', interaction.guild.roles)
-                        hasBaron = discord.utils.find(lambda r: r.name == 'Baron', interaction.guild.roles)
-                        hasViscount = discord.utils.find(lambda r: r.name == 'Viscount', interaction.guild.roles)
-                        hasEarl = discord.utils.find(lambda r: r.name == 'Earl', interaction.guild.roles)
-                        hasMarquess = discord.utils.find(lambda r: r.name == 'Marquess', interaction.guild.roles)
-                        hasDuke = discord.utils.find(lambda r: r.name == 'Duke', interaction.guild.roles)
-                        hasPrince = discord.utils.find(lambda r: r.name == 'Prince', interaction.guild.roles)
-                        hasKing = discord.utils.find(lambda r: r.name == 'King', interaction.guild.roles)
-                        hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', interaction.guild.roles)
+                        hasCitizen = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[0], interaction.guild.roles)
+                        hasKnight = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[1], interaction.guild.roles)
+                        hasBaron = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[2], interaction.guild.roles)
+                        hasViscount = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[3], interaction.guild.roles)
+                        hasEarl = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[4], interaction.guild.roles)
+                        hasMarquess = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[5], interaction.guild.roles)
+                        hasDuke = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[6], interaction.guild.roles)
+                        hasPrince = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[7], interaction.guild.roles)
+                        hasKing = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[8], interaction.guild.roles)
+                        hasAdmin = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[9], interaction.guild.roles)
 
                         randomCry = random.randint(1,7)
                         global cry
@@ -330,30 +330,30 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         roles_tier = -1
 
                         if hasCitizen in user.roles:
-                            roles_tier = roles.Citizen_Tier
+                            roles_tier = Roles.Citizen_Tier
                         if hasKnight in user.roles:
-                            roles_tier = roles.Knight_Tier
+                            roles_tier = Roles.Knight_Tier
                         if hasBaron in user.roles:
-                            roles_tier = roles.Baron_Tier
+                            roles_tier = Roles.Baron_Tier
                         if hasViscount in user.roles:
-                            roles_tier = roles.Viscount_Tier
+                            roles_tier = Roles.Viscount_Tier
                         if hasEarl in user.roles:
-                            roles_tier = roles.Earl_Tier
+                            roles_tier = Roles.Earl_Tier
                         if hasMarquess in user.roles:
-                            roles_tier = roles.Marquess_Tier
+                            roles_tier = Roles.Marquess_Tier
                         if hasMarquess in user.roles:
-                            roles_tier = roles.Marquess_Tier
+                            roles_tier = Roles.Marquess_Tier
                         if hasDuke in user.roles:
-                            roles_tier = roles.Duke_Tier
+                            roles_tier = Roles.Duke_Tier
                         if hasPrince in user.roles:
-                            roles_tier = roles.Prince_Tier
+                            roles_tier = Roles.Prince_Tier
                         if hasKing in user.roles:
-                            roles_tier = roles.King_Tier
+                            roles_tier = Roles.King_Tier
 
-                        topRole_name = roles.Roles_order_List[roles_tier]
+                        topRole_name = Roles.Roles_order_List[roles_tier]
                         #await interaction.response.send_message(f"The user's top role is {topRole_name}")
-                        nextRole = roles.Roles_order_List[(roles_tier + 1)]
-                        next_available_role_cost = roles.Roles_Cost[(roles_tier + 1)]
+                        nextRole = Roles.Roles_order_List[(roles_tier + 1)]
+                        next_available_role_cost = Roles.Roles_Cost[(roles_tier + 1)]
 
                         #await interaction.response.send_message(f"the next role is {nextRole} which will cost {roles.Roles_Cost[(roles_tier + 1)]} coins. this means they are {next_available_role_cost - int(coinBal)} coins away.")
 
@@ -361,7 +361,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             roles_liste = ""
 
                             for i in range((roles_tier + 1)):
-                                roles_liste = (f"{roles_liste}" + f"{(roles.Roles_order_List[i])}: Unlocked! 🔓\n")
+                                roles_liste = (f"{roles_liste}" + f"{(Roles.Roles_order_List[i])}: Unlocked! 🔓\n")
                                 i = i + 1
                             #await interaction.response.send_message(roles_liste)
 
@@ -369,7 +369,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                                 nolwennium_balance = round(float(nolwennium_balance_file.read()), 2)
                                 nolwennium_balance_file.close()
 
-                            finalSum = f"{roles_liste}" + f"{nextRole}: {roles.Roles_Cost[(roles_tier + 1)]} {emoji_Coins} 🔒"
+                            finalSum = f"{roles_liste}" + f"{nextRole}: {Roles.Roles_Cost[(roles_tier + 1)]} {emoji_Coins} 🔒"
 
                             if "🔓" not in finalSum:
                                 if f"{emoji_Coins}" not in finalSum:
@@ -379,8 +379,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             embed.add_field(
                                 name="Items curently available for you to buy:",
                                 value=f"**Citizen**: FREE {emoji_Coins}\n\nType `/buy item:citizen` to start ascending through purchasable roles!",
-                                inline=False
-                                )
+                                inline=False)
                             embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
                             await interaction.response.send_message(embed=embed)
                             return
@@ -401,8 +400,13 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {emoji_Coins} Coins are needed until the next role.")
 
                         embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (saved across all servers).'))
-                        
-                        await interaction.response.send_message(embed=embed)
+                         
+                        x = await get_user_settings(interaction.user.id)
+                        view = discord.ui.View()
+                        if x['can_use_shop_section_2'] == 'true':
+                            view.add_item(discord.ui.Button(label="View Page 2", style=discord.ButtonStyle.blurple))
+
+                        await interaction.response.send_message(embed=embed, view=view)
                 else:
                     await interaction.response.send_message("You do not have permission to access the shop interface.")
             else:
@@ -412,7 +416,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                     nolly = "0"
                 else:
                     with open(nolwenniumUserDir, 'r') as nolwennium_balance_file:
-                        nolwennium_balance = f.read()
+                        nolwennium_balance = nolwennium_balance_file.read()
                         nolwennium_balance_file.close()
                     nolly = f"{nolwennium_balance} {emoji_Nolwennium}"
                 await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check https://ibaguette.com/discord for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {emoji_Nolwennium}")
@@ -436,7 +440,7 @@ async def extended_shop(interaction):
 async def buy(interaction:discord.Interaction, item: str):
     await slash_log(interaction)
     if interaction.guild_id in tester_guilds:
-        canRunCommand = discord.utils.find(lambda r: r.name == 'Member', interaction.guild.roles)
+        canRunCommand = rolePrivate
         owner = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
         staff = discord.utils.find(lambda r: r.name == 'Staff', interaction.guild.roles)
         can_access_shop_ui = False
@@ -459,7 +463,7 @@ async def buy(interaction:discord.Interaction, item: str):
             determiner = item.lower()
 
             filedir = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{authorID}.txt")
-            coinBal = get_coins(interaction.guild_id, interaction.user.id)
+            coinBal = await get_coins(interaction.guild_id, interaction.user.id)
 
             if determiner == "2":
                 await shop_page_2(interaction)
@@ -717,7 +721,7 @@ async def buy(interaction:discord.Interaction, item: str):
                 if hasDuke in member.roles:
                     coinBalTest = int(coinBal) - cost
                     if coinBalTest <= 0:
-                        await interaction.response.send_message(f"You do not have enough Coins to buy {roleName}.")
+                        await interaction.response.send_message(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
@@ -748,7 +752,7 @@ async def buy(interaction:discord.Interaction, item: str):
                 if hasPrince in member.roles:
                     coinBalTest = int(coinBal) - cost
                     if coinBalTest < 0:
-                        await interaction.response.send_message("You do not have enough Coins to buy King.")
+                        await interaction.response.send_message(f"You do not have enough Coins to buy {roleName}. You need {requiredAmount} more.")
                         return
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
@@ -1103,10 +1107,11 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
 
 
 @client.tree.command(name="gpt", description="Get GPT-3 to respond to your prompt.")
-@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", code="Should GPT generate code instead?", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
+@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", code="Should GPT generate code instead?", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
 async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, code: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
     #await ctx.send("Generating response... <a:loading:935623554215591936>")
-
+    await slash_log(interaction)
+    print(f"[GPT3Slash]     Prompt '{prompt}' entered by {interaction.user.id} ({interaction.user.name}) in {interaction.guild_id}. Model: {model} // Limit: {limit}")
     if not temperature:
         temperature = 0.15
     else:
@@ -1799,8 +1804,9 @@ youtube_dl.utils.bug_reports_message = lambda: ''
 
 sys.setrecursionlimit(99999999)
 
-class roles:
+class Roles:
     Roles_order_List = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
+    Roles_order_ID = [795738020967743491, 796360098108538901, 943259355619418163, 943259337185435699, 943259319821021194, 943259291484295218, 943259217123496028, 796362374827343923, 796362553541656576, 943974413810933802]
     Roles_Cost = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
 
     Citizen_Tier = 0
@@ -2056,7 +2062,7 @@ async def on_ready():
     draggie_guild = client.get_guild(759861456300015657)
     hasPrivate = discord.utils.find(lambda r: r.name == 'Private', guild.roles)
     hasAdmin = discord.utils.find(lambda r: r.name == 'Admin', guild.roles)
-    rolePrivate = discord.utils.get(guild.roles, name='Private')
+    rolePrivate = discord.utils.get(guild.roles, id=806481292392267796)
     upvote = client.get_emoji(803578918488768552)
     downvote = client.get_emoji(803578918464258068)
     epic_memes = client.get_channel(809112184902778890)
@@ -2323,7 +2329,7 @@ async def on_raw_reaction_add(payload=None):
         birthday2ID = 1024404603866988704
         guild = discord.utils.get(client.guilds, id=brigaders)
         roleAllRandoms = discord.utils.get(guild.roles, id=930186230442905620)
-        rolePrivate = discord.utils.get(guild.roles, name='Private')
+        rolePrivate = discord.utils.get(guild.roles, id=806481292392267796)
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
         roleUnverified = discord.utils.get(guild.roles, id=980885916317003846)
         role_private_unverified = roleUnverified
