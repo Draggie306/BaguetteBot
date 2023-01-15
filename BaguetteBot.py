@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.3.2"
-build = "b"
+build = "c"
 beta_bot = False
 
 """
@@ -10,10 +10,10 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, subprocess, math, openai
 from        discord.ext import commands
-from        discord.errors import Forbidden#                                    CMD Prerequisite: py -3 -m pip install -U discord.py
-from        dotenv import load_dotenv#                                          CMD Prerequisite: py -3 -m pip install -U python-dotenv
-from        youtube_search import YoutubeSearch#                                PIP:            python -m ensurepip
-from        datetime import datetime#                                           UPDATE PIP:     python -m pip install --upgrade pip
+from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
+from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
+from        youtube_search import YoutubeSearch#                                PIP:                python -m ensurepip
+from        datetime import datetime#                                           UPDATE PIP:         python -m pip install --upgrade pip
 from        json import loads
 from        pathlib import Path
 from        io import StringIO
@@ -279,7 +279,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             if word1.lower() == 'add':
                                 if not amount or not userID:
                                     return await interaction.response.send_message(idk_what_u_mean)
-                                added_balance = update_coins(interaction.guild_id, interaction.user.id, amount)
+                                added_balance = update_coins(interaction.guild_id, userID, amount)
                                 return await interaction.response.send_message(f"Successfully added {amount} Coins to the user. They now have **{added_balance}**!")
 
             
@@ -1111,9 +1111,9 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
 async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, code: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
     #await ctx.send("Generating response... <a:loading:935623554215591936>")
     await slash_log(interaction)
-    print(f"[GPT3Slash]     Prompt '{prompt}' entered by {interaction.user.id} ({interaction.user.name}) in {interaction.guild_id}. Model: {model} // Limit: {limit}")
+    print(f"/ [GPT-3]     Prompt '{prompt}' entered by {interaction.user.id} ({interaction.user.name}) in {interaction.guild_id}. Model: {model} // Limit: {limit}")
     if not temperature:
-        temperature = 0.15
+        temperature = 0.69
     else:
         temperature = temperature/100
 
@@ -1851,10 +1851,12 @@ def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     The amount of coins to add/subtract as an integer must be added too.\n
     Returns new amount of Coins."""
     coin_dir = f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins{s_slash}{user_id}.txt"
+    if not os.path.exists(f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins"):
+        os.makedirs(f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins")
     mode = 'r+' if os.path.exists(coin_dir) else 'w+'
     with open(coin_dir, mode) as file:
         balance = int(file.read()) if mode == "r+" else 0
-        print(f"[CoinsUpdate]       Balance called for {user_id} in {server_id}.")
+        print(f"[CoinsUpdate]       Balance queried for {user_id} in {server_id}. (Balance: {balance})")
         new_balance = balance + coins_calc
         print(f"[CoinsUpdate]       The new balance for {user_id} is {new_balance}.")
         file.seek(0)
@@ -2067,7 +2069,6 @@ async def on_ready():
     downvote = client.get_emoji(803578918464258068)
     epic_memes = client.get_channel(809112184902778890)
     public_memes = client.get_channel(930488945144397905)
-
     memes_channels = [epic_memes, public_memes]
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
 
@@ -2278,7 +2279,7 @@ async def on_voice_state_update(member, before, after):
 @client.event
 async def on_member_join(member):
     await bot_runtime_events(1)
-    print(f"[MemberJoined]  on_member_join triggered: Member: {member.name} ({member.id}) in guild {member.guild.name} ({member.guild_id}).")
+    print(f"[MemberJoined]  on_member_join triggered: Member: {member.name} ({member.id}) in guild {member.guild.name} ({member.guild.id}).")
     sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
     if member.guild.id == 759861456300015657:
         #await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
@@ -2633,7 +2634,7 @@ async def on_member_update(before, after):
         embed.add_field(name='Role added', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"Events Listener: ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"[RoleAdd]       ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         if after.guild.id == 759861456300015657 or after.guild.id == 384403250172133387:
             if new_role.name == "Server Booster":
                 coinDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}Coins{s_slash}{after.guild.id}.txt")
@@ -2677,7 +2678,7 @@ async def on_member_update(before, after):
         embed.add_field(name='Role removed', value=new_role)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"Events Listener: ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"[RoleRemove]    ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         settings = await get_user_settings(after.id)
         if settings['get_dm_notification_for_role_removal'] == "true":
             await after.send(f'{after.mention}, you\'ve been removed from the role **"{new_role}"** in {after.guild.name}!')
@@ -2690,7 +2691,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.name)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"Events Listener: NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"[NameChange]    NAME of {after} has been updated FROM {before.name} TO {after.name} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
 
     elif before.discriminator != after.discriminator:
         embed = discord.Embed(title=f"Changed discriminator", colour=0x5865F2)
@@ -2699,7 +2700,7 @@ async def on_member_update(before, after):
         embed.add_field(name='After', value=after.discriminator)
         embed.add_field(name='Date/Time', value=tighem)
         send = True
-        print(f"Events Listener: DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
+        print(f"[TagChange]     DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
     sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
