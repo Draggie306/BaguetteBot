@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.2"
-BUILD = "c"
+BUILD = "e"
 BETA_BOT = False
 
 """
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -39,7 +39,7 @@ ID_DRAGGIE = 382784106984898560
 DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
-AUDIO_SUBSYSTEM = "ffmpeg"
+AUDIO_SUBSYSTEM = "ffmpeg/wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -53,6 +53,13 @@ if NOLWENNIUM_DIR_CHECKER.is_file():
     BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
     S_SLASH = "\\"
     JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+    if BETA_BOT:
+        print("Beta Bot mode is on! This should only print in development situations. Switching directories...")
+        MINIFIED_BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\"
+        BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot\\"
+        BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot"
+        S_SLASH = "\\"
+        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"    
     TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
@@ -77,8 +84,8 @@ else:
     keep_alive.keep_alive()
 
 
-#if running_locally:
-#    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
+if running_locally:
+    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -94,6 +101,43 @@ client = commands.Bot(
     )
 
 print("Done!\nSlash commands initialising...")
+
+
+class Music(commands.Cog):
+    """Music cog to hold Wavelink related commands and listeners."""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+        bot.loop.create_task(self.connect_nodes())
+
+    async def connect_nodes(self):
+        """Connect to our Lavalink nodes."""
+        await self.bot.wait_until_ready()
+
+        await wavelink.NodePool.create_node(bot=bot,
+                                            host='0.0.0.0',
+                                            port=2333,
+                                            password='YOUR_LAVALINK_PASSWORD')
+
+    @commands.Cog.listener()
+    async def on_wavelink_node_ready(self, node: wavelink.Node):
+        """Event fired when a node has finished connecting."""
+        print(f'Node: <{node.identifier}> is ready!')
+
+    @commands.command()
+    async def newplay(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
+        """Play a song with the given search query.
+
+        If not connected, connect to our voice channel.
+        """
+        if not ctx.voice_client:
+            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+        else:
+            vc: wavelink.Player = ctx.voice_client
+
+        await vc.play(search)
+
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
