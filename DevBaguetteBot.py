@@ -1,6 +1,6 @@
-DRAGGIEBOT_VERSION = "v1.3.2"
-BUILD = "c"
-BETA_BOT = False
+DRAGGIEBOT_VERSION = "v1.3.3"
+BUILD = "dev"
+BETA_BOT = True
 
 """
 To complete:
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -39,7 +39,7 @@ ID_DRAGGIE = 382784106984898560
 DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
-AUDIO_SUBSYSTEM = "ffmpeg"
+AUDIO_SUBSYSTEM = "ffmpeg/wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -53,6 +53,13 @@ if NOLWENNIUM_DIR_CHECKER.is_file():
     BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
     S_SLASH = "\\"
     JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+    if BETA_BOT:
+        print("Beta Bot mode is on! This should only print in development situations. Switching directories...")
+        MINIFIED_BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\"
+        BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot\\"
+        BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot"
+        S_SLASH = "\\"
+        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"    
     TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
@@ -77,8 +84,11 @@ else:
     keep_alive.keep_alive()
 
 
-#if running_locally:
-#    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
+if running_locally:
+    if BETA_BOT:
+        subprocess.Popen(['java', '-jar', f'D:\\Draggie Programs\\BetaBaguetteBot\\BaguetteBot\\Lavalink_Stable.jar'])
+    else:
+        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -2037,6 +2047,8 @@ async def on_ready():
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
     await client.tree.sync() 
+    await client.load_extension('cogs.music')
+    print("COG: Music loaded!")
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
     await log_channel.send(f"Online at **{datetime.now()}**")
     with open(GlobalLogDir, "a", encoding="utf-8") as f:
@@ -2984,59 +2996,6 @@ async def on_message(message):
             print(x[1])
             await message.channel.send(x[1])
 
-    #   Send Emoji for Face!
-
-    if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
-        if hasPrivate in person.roles:
-            messageContent = message.content.lower()
-            #for word in messageContent.split():
-            #    print("")
-            #    if word in nollyWords:
-            ##        await message.add_reaction("<:nolly:786177817993805844>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in oliverWords:
-            #        await message.add_reaction("<:oliver:790576109795409920>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in jackWords:
-            #        await message.add_reaction("<:jacc:786275811405070337>")
-             #       print(f"Matched word in message! {word}")
-            ##    if word in joeWords:
-            #        await message.add_reaction("<:CuteJoe:897467228545503242>")
-            ##        print(f"Matched word in message! {word}")
-            #    if word in haydnWords:
-            #        await message.add_reaction("<:haydn:786276584671412244>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in maisyWords:
-            #        await message.add_reaction("<:maisy:786276271809101840>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in benWords:
-            #        await message.add_reaction("<:bennybooze:788311580768075786>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in ishWords:
-            ##        await message.add_reaction("<:ish:791381704278540369>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in mayaWords:
-            #        await message.add_reaction("<:maya:785942478448230470>") 
-            #        print(f"Matched word in message! {word}")
-            #    if word in samWords:
-            #        await message.add_reaction("<:samf:785942793280815114>")
-            #        print(f"Matched word in message! {word}")
-            #for word in josephTighe:
-            ##    if word in messageContent:
-            #        print(f"Matched word in message! {word}")
-            #        integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
-            #        if integer == 1:
-            #            await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
-            ##        if integer == 2:
-            #                await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
-            #for word in charlieSewards:
-            #    if word in messageContent:
-            #        print(f"Matched word in message! {word}")
-           ##         integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
-           #         if integer == 1:
-            #            await message.add_reaction("<:charlie:903324276147499041>")
-            #        if integer == 2:
-            #            await message.add_reaction("<:CharlieUwU:857907947371495424>")
 #
     #  here we can do global server ones because its funny
 
