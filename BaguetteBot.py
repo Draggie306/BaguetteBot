@@ -1,6 +1,6 @@
-DraggieBot_version = "v1.3.2"
-build = "c"
-beta_bot = False
+DRAGGIEBOT_VERSION = "v1.3.2"
+BUILD = "c"
+BETA_BOT = False
 
 """
 To complete:
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, subprocess, math, openai
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -16,71 +16,69 @@ from        youtube_search import YoutubeSearch#                                
 from        datetime import datetime#                                           UPDATE PIP:         python -m pip install --upgrade pip
 from        json import loads
 from        pathlib import Path
-from        io import StringIO
 from        discord import app_commands
-from        typing import Literal, Optional
+from        typing import Optional
 
-global voiceVolume, upvote, downvote, Croissants, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
+global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
-voiceVolume = 0.3
-Croissants = [796777705520758795, 821405856285196350, 588081261537394730]
-croissant_names = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
-tester_guilds = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
-brigaders = 759861456300015657
-random_word = ["Expulser!", "Troubador!", "Delenda!", "Vincit!", "Consilium!", "Renovatur!", "Acheronta!", "Oderint!"]
-emoji_Coins = "<:Coins:852664685270663194>"
-emoji_Nolwennium = "<:NolwenniumCoin:846464419503931443>"
-emoji_random_lmao = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "😳"]
-emoji_loading = "<a:loading:935623554215591936>"
-emoji_tick_animated = "<a:AnimatedTick:956621591108804652>"
-emoji_cross_animated = "<a:AnimatedCross:956621593113665536>"
-value_Placeholder = "TBD/tbd"
-name_Nolwennium = "Nolwennium"
-id_Draggie = 382784106984898560
-discord_snowflake = 175928847299117063
-discord_epoch = 1420070400000
-YTAPI_Status = "Enabled: yt-dl"
-SCAPI_Status = "Disabled"
-audio_subsystem = "ffmpeg"
-idk_what_u_mean = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
+VOICE_VOLUME = 0.3
+CROISSANTS = [796777705520758795, 821405856285196350, 588081261537394730]
+CROISSANT_NAMES = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
+TESTER_GUILD_IDS = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
+BRIGADERS = 759861456300015657
+RANDOM_WORD = ["Expulser!", "Troubador!", "Delenda!", "Vincit!", "Consilium!", "Renovatur!", "Acheronta!", "Oderint!"]
+EMOJI_COINS = "<:Coins:852664685270663194>"
+EMOJI_NOLWENNIUM = "<:NolwenniumCoin:846464419503931443>"
+EMOJI_RANDOM_LMAO = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "😳"]
+EMOJI_LOADING = "<a:loading:935623554215591936>"
+EMOJI_TICK_ANIMATED = "<a:AnimatedTick:956621591108804652>"
+EMOJI_CROSS_ANIMATED = "<a:AnimatedCross:956621593113665536>"
+VALUE_PLACEHOLDER = "TBD/tbd"
+NAME_NOLWENNIUM = "Nolwennium"
+ID_DRAGGIE = 382784106984898560
+DISCORD_EPOCH = 1420070400000
+YTAPI_STATUS = "Enabled: yt-dl"
+SCAPI_STATUS = "Disabled"
+AUDIO_SUBSYSTEM = "ffmpeg"
+IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
-nolwennium_checker_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
-nolwenniumDirChecker = Path(nolwennium_checker_directory)
-if nolwenniumDirChecker.is_file():
+NOLWENNIUM_CHECK_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
+NOLWENNIUM_DIR_CHECKER = Path(NOLWENNIUM_CHECK_DIR)
+if NOLWENNIUM_DIR_CHECKER.is_file():
     running_locally = True
     print("Running locally! Using enhanced features.")
-    minified_base_directory = "D:\\Draggie Programs\\BaguetteBot\\"
-    base_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\"
-    base_directory_minus_slash = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
-    s_slash = "\\"
-    json_dir = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
-    temp_folder = f"Z:{s_slash}"
+    MINIFIED_BASE_DIR = "D:\\Draggie Programs\\BaguetteBot\\"
+    BASE_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\"
+    BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
+    S_SLASH = "\\"
+    JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+    TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(filename=f'{minified_base_directory}Logs\\{DraggieBot_version}{build}-{time.time()}.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(filename=f'{MINIFIED_BASE_DIR}Logs\\{DRAGGIEBOT_VERSION}{BUILD}-{time.time()}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 else:
     running_locally = False
-    print(f"Not running locally, coins and {name_Nolwennium} values may not be up to date and some features may be disabled")
-    base_directory = "/"
-    base_directory_minus_slash = ""
-    s_slash = "/"
-    json_dir = "JSONs/"
-    temp_folder = f"Temp{s_slash}"
-    minified_base_directory = "D:\\Draggie Programs\\BaguetteBot\\.useful"
+    print(f"Not running locally, coins and {NAME_NOLWENNIUM} values may not be up to date and some features may be disabled")
+    BASE_DIR = "/"
+    BASE_DIR_MINUS_SLASH = ""
+    S_SLASH = "/"
+    JSON_DIR = "JSONs/"
+    TEMP_FOLDER = f"Temp{S_SLASH}"
+    MINIFIED_BASE_DIR = "D:\\Draggie Programs\\BaguetteBot\\.useful"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(filename=f'.useful{s_slash}{DraggieBot_version}{build}-{time.time()}.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(filename=f'.useful{S_SLASH}{DRAGGIEBOT_VERSION}{BUILD}-{time.time()}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
-    import keep_alive
+    import keep_alive       # This is only in BaguetteBot's Replit page to run 24/7.
     keep_alive.keep_alive()
 
 
 #if running_locally:
-#    subprocess.Popen(['java', '-jar', f'{base_directory}GitHub\\BaguetteBot\\Lavalink.jar'])
+#    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -91,10 +89,9 @@ client = commands.Bot(
     command_prefix=commands.when_mentioned_or('.'),
     case_insensitive=True,
     intents=intents,
-    description=f"BaguetteBot - version {DraggieBot_version}{build} - d.py {discord.__version__}",
+    description=f"BaguetteBot - version {DRAGGIEBOT_VERSION}{BUILD} - d.py {discord.__version__}",
     help_command=commands.DefaultHelpCommand(no_category='Dot Commands')
     )
-
 
 print("Done!\nSlash commands initialising...")
 
@@ -104,7 +101,7 @@ print("Done!\nSlash commands initialising...")
 
 @client.tree.command(name="command-2")
 @app_commands.guilds(discord.Object(id=384403250172133387))
-async def my_private_command(interaction: discord.Interaction):
+async def my_private_command(interaction: discord.Interaction) -> None:
     """ /command-2 """
     await interaction.response.send_message("Hello from private command!", ephemeral=True)
 
@@ -113,7 +110,7 @@ async def my_command(interaction: discord.Interaction) -> None:
   await interaction.response.send_message("Hello from my command!")
 
 @client.tree.command(name="sync-commands", description="[Admin] Sync edited client tree commands to Discord servers")
-async def sync(interaction: discord.Interaction):
+async def sync(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     if interaction.user.id == 382784106984898560:
         await interaction.response.defer() # Defer due to rate limiting being annoying sometimes grr
@@ -125,7 +122,7 @@ async def sync(interaction: discord.Interaction):
 
 
 @client.tree.command(name="stats", description="Just a few useful bot statistics.")
-async def stats(interaction: discord.Interaction):
+async def stats(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     await bot_runtime_events(1)
     if round(client.latency * 1000) <= 100:
@@ -137,9 +134,9 @@ async def stats(interaction: discord.Interaction):
     else:
         pingColour = (0x990000)
 
-    fileSizeBytes = os.path.getsize(f'{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py')
+    fileSizeBytes = os.path.getsize(f'{BASE_DIR}GitHub{S_SLASH}BaguetteBot{S_SLASH}BaguetteBot.py')
 
-    num_lines = sum(1 for line in open (f"{base_directory}GitHub{s_slash}BaguetteBot{s_slash}BaguetteBot.py", encoding='utf-8'))
+    num_lines = sum(1 for line in open (f"{BASE_DIR}GitHub{S_SLASH}BaguetteBot{S_SLASH}BaguetteBot.py", encoding='utf-8'))
     secsOrMins1 = "seconds"
     current_time = time.time()
     uptimeInSeconds = int(round(current_time - start_time))
@@ -179,11 +176,11 @@ async def stats(interaction: discord.Interaction):
     embed.add_field(name="**Command Logging:**", value="Enabled")
     embed.add_field(name="**Message Logging:**", value="Enabled")
     embed.add_field(name="**Voice Channels:**", value="Enabled")
-    embed.add_field(name="**YouTube Player:**", value=YTAPI_Status)
-    embed.add_field(name="**Audio Subsystem:**", value=audio_subsystem)
-    embed.add_field(name="**Supercell API:**", value=SCAPI_Status)
+    embed.add_field(name="**YouTube Player:**", value=YTAPI_STATUS)
+    embed.add_field(name="**Audio Subsystem:**", value=AUDIO_SUBSYSTEM)
+    embed.add_field(name="**Supercell API:**", value=SCAPI_STATUS)
 
-    embed.set_footer(text=(f"\nDraggieBot.py | {DraggieBot_version}"))
+    embed.set_footer(text=(f"\nDraggieBot.py | {DRAGGIEBOT_VERSION}"))
     await interaction.response.send_message(embed=embed)
 
     with open(GlobalLogDir, "a", encoding="UTF-8") as f:
@@ -192,14 +189,14 @@ async def stats(interaction: discord.Interaction):
 #   baguettes
     
 @client.tree.command(name="baguette", description="Sends a random baguette image.")
-async def baguette(interaction: discord.Interaction):
+async def baguette(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     await interaction.response.send_message(f"Use French Cuisine bot for this and much more! The commad is `/baguette`.\nAdd it! https://ibaguette.com/api/BotInvs/FrenchCuisine&permissions=V2")
 
 
 @client.tree.command(name="snowflake", description="Convert a Discord snowflake into a DateTime object, accurate to the second.")
 @app_commands.describe(flake="Input the snowflake here, something like '382784106984898560'.")
-async def snowflake(interaction: discord.Interaction, flake: str):
+async def snowflake(interaction: discord.Interaction, flake: str) -> None:
     await slash_log(interaction)
     snowflake = int(flake)
     try: #      Try and change the message content after the '.snowflake' into an integer.
@@ -215,12 +212,12 @@ async def snowflake(interaction: discord.Interaction, flake: str):
 #   coins
 
 @commands.Cog.listener("on_app_command_error")
-async def get_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+async def get_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
     await interaction.response.send_message(f'An error occured: {error}')
 
 @client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!", )
 @app_commands.describe(operation="[Admin Only] set/add/lookup.", target_id="[Admin Only] Enter the user id for the operation to target", mod_value="[Admin Only] Use this as the value for the operation")
-async def coins(interaction: discord.Interaction, operation: Optional[str], target_id: Optional[str], mod_value: Optional[str]):
+async def coins(interaction: discord.Interaction, operation: Optional[str], target_id: Optional[str], mod_value: Optional[str]) -> None:
     await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
         print(operation,target_id,mod_value)
@@ -238,12 +235,12 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 
             coinBal = await get_coins(serverID, interaction.user.id)
 
-            nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{authorID}.txt")
+            nolwenniumUserDir = (f"{BASE_DIR}Nolwennium{S_SLASH}{authorID}.txt")
             my_file = Path(nolwenniumUserDir)
 
             if not my_file.is_file():
                 with open(nolwenniumUserDir, 'a') as f:
-                    print (f"\nSet {name_Nolwennium} value to 0, {authorID} is a new user.")
+                    print (f"\nSet {NAME_NOLWENNIUM} value to 0, {authorID} is a new user.")
                     try:
                         f.write('0')
                         f.close()
@@ -268,8 +265,8 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         if interaction.user.guild_permissions.administrator == True:
                             if word1.lower() == 'set':
                                 if not amount or not userID:
-                                    return await interaction.response.send_message(idk_what_u_mean)
-                                users_coins = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{userID}.txt")
+                                    return await interaction.response.send_message(IDK_WHAT_U_MEAN)
+                                users_coins = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Coins{S_SLASH}{userID}.txt")
                                 old_coins = await get_coins(interaction.guild_id, userID)
                                 with open(users_coins, 'w+') as f:
                                     f.write(str(amount))
@@ -278,33 +275,33 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             
                             if word1.lower() == 'add':
                                 if not amount or not userID:
-                                    return await interaction.response.send_message(idk_what_u_mean)
+                                    return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                                 added_balance = update_coins(interaction.guild_id, userID, amount)
                                 return await interaction.response.send_message(f"Successfully added {amount} Coins to the user. They now have **{added_balance}**!")
 
             
                             if word1.lower() == 'lookup':
                                 if not userID:
-                                    return await interaction.response.send_message(idk_what_u_mean)
+                                    return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                                 
                                 return await interaction.response.send_message(f"<@{userID}> has **{await get_coins(interaction.guild_id, userID)}** Coins.")
                             else:
-                                return await interaction.response.send_message(idk_what_u_mean)
+                                return await interaction.response.send_message(IDK_WHAT_U_MEAN)
 
                         else:
                             await interaction.response.send_message("You don't have full administrator privileges to run this command. Try `/coins` without any added options?")
 
                     except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
-                        hasCitizen = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[0], interaction.guild.roles)
-                        hasKnight = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[1], interaction.guild.roles)
-                        hasBaron = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[2], interaction.guild.roles)
-                        hasViscount = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[3], interaction.guild.roles)
-                        hasEarl = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[4], interaction.guild.roles)
-                        hasMarquess = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[5], interaction.guild.roles)
-                        hasDuke = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[6], interaction.guild.roles)
-                        hasPrince = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[7], interaction.guild.roles)
-                        hasKing = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[8], interaction.guild.roles)
-                        hasAdmin = discord.utils.find(lambda r: r.id == Roles.Roles_order_ID[9], interaction.guild.roles)
+                        hasCitizen = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[0], interaction.guild.roles)
+                        hasKnight = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[1], interaction.guild.roles)
+                        hasBaron = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[2], interaction.guild.roles)
+                        hasViscount = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[3], interaction.guild.roles)
+                        hasEarl = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[4], interaction.guild.roles)
+                        hasMarquess = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[5], interaction.guild.roles)
+                        hasDuke = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[6], interaction.guild.roles)
+                        hasPrince = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[7], interaction.guild.roles)
+                        hasKing = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[8], interaction.guild.roles)
+                        hasAdmin = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[9], interaction.guild.roles)
 
                         randomCry = random.randint(1,7)
                         global cry
@@ -350,18 +347,18 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         if hasKing in user.roles:
                             roles_tier = Roles.King_Tier
 
-                        topRole_name = Roles.Roles_order_List[roles_tier]
+                        topRole_name = Roles.ROLES_LIST[roles_tier]
                         #await interaction.response.send_message(f"The user's top role is {topRole_name}")
-                        nextRole = Roles.Roles_order_List[(roles_tier + 1)]
-                        next_available_role_cost = Roles.Roles_Cost[(roles_tier + 1)]
+                        nextRole = Roles.ROLES_LIST[(roles_tier + 1)]
+                        next_available_role_cost = Roles.ROLES_COSTS[(roles_tier + 1)]
 
-                        #await interaction.response.send_message(f"the next role is {nextRole} which will cost {roles.Roles_Cost[(roles_tier + 1)]} coins. this means they are {next_available_role_cost - int(coinBal)} coins away.")
+                        #await interaction.response.send_message(f"the next role is {nextRole} which will cost {roles.ROLES_COSTS[(roles_tier + 1)]} coins. this means they are {next_available_role_cost - int(coinBal)} coins away.")
 
                         if roles_tier != -1:
                             roles_liste = ""
 
                             for i in range((roles_tier + 1)):
-                                roles_liste = (f"{roles_liste}" + f"{(Roles.Roles_order_List[i])}: Unlocked! 🔓\n")
+                                roles_liste = (f"{roles_liste}" + f"{(Roles.ROLES_LIST[i])}: Unlocked! 🔓\n")
                                 i = i + 1
                             #await interaction.response.send_message(roles_liste)
 
@@ -369,22 +366,22 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                                 nolwennium_balance = round(float(nolwennium_balance_file.read()), 2)
                                 nolwennium_balance_file.close()
 
-                            finalSum = f"{roles_liste}" + f"{nextRole}: {Roles.Roles_Cost[(roles_tier + 1)]} {emoji_Coins} 🔒"
+                            finalSum = f"{roles_liste}" + f"{nextRole}: {Roles.ROLES_COSTS[(roles_tier + 1)]} {EMOJI_COINS} 🔒"
 
                             if "🔓" not in finalSum:
-                                if f"{emoji_Coins}" not in finalSum:
+                                if f"{EMOJI_COINS}" not in finalSum:
                                     finalSum = f"***You have bought all possible roles! Maybe some more will come out in the future...***"
                         else:
-                            embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {emoji_Coins} coins and {nolwennium_bal} {emoji_Nolwennium} Nolwennium available to spend."), colour=0xFFD700)
+                            embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
                             embed.add_field(
                                 name="Items curently available for you to buy:",
-                                value=f"**Citizen**: FREE {emoji_Coins}\n\nType `/buy item:citizen` to start ascending through purchasable roles!",
+                                value=f"**Citizen**: FREE {EMOJI_COINS}\n\nType `/buy item:citizen` to start ascending through purchasable roles!",
                                 inline=False)
-                            embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (in all servers).'))
+                            embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (in all servers).'))
                             await interaction.response.send_message(embed=embed)
                             return
                         
-                        embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {emoji_Coins} coins and {nolwennium_bal} {emoji_Nolwennium} Nolwennium available to spend."), colour=0xFFD700)
+                        embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
                         embed.add_field(
                             name="Items available to buy:",
                             value=finalSum,
@@ -393,13 +390,13 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         if next_available_role_cost > 0:
                             embed.add_field(
                                 name="Next item available to buy in:",
-                                value=f"{next_available_role_cost - int(coinBal)} {emoji_Coins} Coins (**{nextRole}**)",
+                                value=f"{next_available_role_cost - int(coinBal)} {EMOJI_COINS} Coins (**{nextRole}**)",
                                 inline=False
                                 )
                         elif next_available_role_cost <= 0:
-                            embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {emoji_Coins} Coins are needed until the next role.")
+                            embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {EMOJI_COINS} Coins are needed until the next role.")
 
-                        embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {name_Nolwennium} to run bot commands (saved across all servers).'))
+                        embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (saved across all servers).'))
                          
                         x = await get_user_settings(interaction.user.id)
                         view = discord.ui.View()
@@ -418,8 +415,8 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                     with open(nolwenniumUserDir, 'r') as nolwennium_balance_file:
                         nolwennium_balance = nolwennium_balance_file.read()
                         nolwennium_balance_file.close()
-                    nolly = f"{nolwennium_balance} {emoji_Nolwennium}"
-                await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check https://ibaguette.com/discord for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {emoji_Nolwennium}")
+                    nolly = f"{nolwennium_balance} {EMOJI_NOLWENNIUM}"
+                await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check https://ibaguette.com/discord for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {EMOJI_NOLWENNIUM}")
         else:
             await error_code(interaction, 1)
 
@@ -428,7 +425,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 async def extended_shop(interaction):
     coinBal = await get_coins(interaction.guild_id, interaction.user.id)
 
-    embed = discord.Embed(title="User Balance", description=(f"Welcome to the extended shop.\n You have {coinBal} {emoji_Coins} Coins available to spend."), colour=0x00ACFF)
+    embed = discord.Embed(title="User Balance", description=(f"Welcome to the extended shop.\n You have {coinBal} {EMOJI_COINS} Coins available to spend."), colour=0x00ACFF)
 
                             
     await interaction.response.edit_message(embed=embed)
@@ -439,7 +436,7 @@ async def extended_shop(interaction):
 @app_commands.describe(item="Enter the item to buy here")
 async def buy(interaction:discord.Interaction, item: str):
     await slash_log(interaction)
-    if interaction.guild_id in tester_guilds:
+    if interaction.guild_id in TESTER_GUILD_IDS:
         canRunCommand = rolePrivate
         owner = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
         staff = discord.utils.find(lambda r: r.name == 'Staff', interaction.guild.roles)
@@ -462,7 +459,7 @@ async def buy(interaction:discord.Interaction, item: str):
             serverID = interaction.guild_id
             determiner = item.lower()
 
-            filedir = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Coins{s_slash}{authorID}.txt")
+            filedir = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Coins{S_SLASH}{authorID}.txt")
             coinBal = await get_coins(interaction.guild_id, interaction.user.id)
 
             if determiner == "2":
@@ -480,9 +477,9 @@ async def buy(interaction:discord.Interaction, item: str):
     
                 role = discord.utils.get(interaction.guild.roles, name="Citizen")
                 await member.add_roles(role)
-                embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought Citizen for free! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought Citizen for free! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                 embed.add_field(name="Perks", 
-                    value=f"• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus {name_Nolwennium}", 
+                    value=f"• Above Member in the Member List\n• Custom nickname\n• Add reactions\n• Bonus {NAME_NOLWENNIUM}", 
                     inline=False)   
                 await interaction.response.send_message(embed=embed)
                 return
@@ -510,7 +507,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Citizen"))
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Create private threads", 
                         inline=False)   
@@ -548,9 +545,9 @@ async def buy(interaction:discord.Interaction, item: str):
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Knight"))
                     await member.add_roles(role)
 
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
-                            value=f"Everything in Citizen, and:\n• Use external stickers\n• Increased Coins earning\n• Bonus {name_Nolwennium}", 
+                            value=f"Everything in Citizen, and:\n• Use external stickers\n• Increased Coins earning\n• Bonus {NAME_NOLWENNIUM}", 
                             inline=False)   
                     await interaction.response.send_message(embed=embed)
                 else:
@@ -585,7 +582,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Baron"))
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Baron, and:\n• Use TTS messages\n• Use server activities", 
                         inline=False)   
@@ -623,7 +620,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Viscount"))
                     await member.add_roles(role)
 
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Viscount, and:\n• Add and edit server events", 
                         inline=False)   
@@ -660,7 +657,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Baron"))
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Earl, and:\n• View detailed server statistics\n• Access to some more stuff, you'll figure it out", 
                         inline=False)   
@@ -697,7 +694,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Marquess"))
 
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Marquess, and:\n• Mute members\n• Manage threads\n• View private threads\n• Access to history of <#1035684553546809456>", 
                         inline=False)   
@@ -729,7 +726,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Duke"))
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Duke, and:\n• Move members in voice channels\n• Use Priority speaker in voice chat\n• Change others' nicknames\n• Time out members if they are being annoying\n• Add emojis and stickers\n• Add custom channels", 
                         inline=False)   
@@ -760,7 +757,7 @@ async def buy(interaction:discord.Interaction, item: str):
                     role = discord.utils.get(interaction.guild.roles, name="King")
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Prince"))
-                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought King for {cost} {emoji_Coins}! Remaining balance: {coinBal} {emoji_Coins}"), colour=0xFFD700)
+                    embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought King for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
                     embed.add_field(name="Perks", 
                         value=f"Everything in Prince, and:\n• Deafen members\n• Pin and manage messages\n• Add custom webhooks\n• Add custom bots\n• Add into Other Channels and define permissions", 
                         inline=False)
@@ -784,8 +781,8 @@ async def buy(interaction:discord.Interaction, item: str):
             f = open(nolwenniumUserDir, 'r')
             nolwennium_bal = f.read()
             f.close()
-            nolly = f"{nolwennium_bal} {emoji_Nolwennium}"
-        await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {emoji_Nolwennium}")
+            nolly = f"{nolwennium_bal} {EMOJI_NOLWENNIUM}"
+        await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {EMOJI_NOLWENNIUM}")
 
 #   setdelay
 
@@ -837,14 +834,14 @@ async def emojis(interaction:discord.Interaction, guild_id: str):
         emoji_exturl = emoji_exturl.split(".")
         extension = (emoji_exturl[3])
 
-        if os.path.exists(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}'):
-            with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
+        if os.path.exists(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}'):
+            with open(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}{emoji.name}.{extension}', 'wb') as f:
                 f.write(x.content)
                 print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
         else:
-            os.mkdir(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}')
+            os.mkdir(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}')
             print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
-            with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
+            with open(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}{emoji.name}.{extension}', 'wb') as f:
                 f.write(x.content)
                 print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
 
@@ -871,14 +868,14 @@ async def emojis(interaction:discord.Interaction, guild_id: str):
                 emoji_exturl = emoji_exturl.split(".")
                 extension = (emoji_exturl[1])
 
-                if os.path.exists(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}'):
-                    with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
+                if os.path.exists(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}'):
+                    with open(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}{emoji.name}.{extension}', 'wb') as f:
                         f.write(x.content)
                         print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
                 else:
-                    os.mkdir(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}')
+                    os.mkdir(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}')
                     print(f"Made emoji directory for {newGuild.id} // {newGuild.name}")
-                    with open(f'{base_directory}Servers{s_slash}{newGuild.id}{s_slash}Emojis{s_slash}{emoji.name}.{extension}', 'wb') as f:
+                    with open(f'{BASE_DIR}Servers{S_SLASH}{newGuild.id}{S_SLASH}Emojis{S_SLASH}{emoji.name}.{extension}', 'wb') as f:
                         f.write(x.content)
                         print(f"Saved emoji {emoji.name} ({extension.upper()}) // {newGuild.name}")
             try:
@@ -920,7 +917,7 @@ async def log(interaction:discord.Interaction, term:str):
     else:
         serverName = interaction.guild.name
     
-    file=open((f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}MessageLog.txt"),encoding="UTF-8").read().lower()
+    file=open((f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Logs{S_SLASH}MessageLog.txt"),encoding="UTF-8").read().lower()
     count=file.count(term)
 
     count = count - 1
@@ -1056,7 +1053,7 @@ async def play(interaction:discord.Interaction, video:str):
     print("Send embed")
 
 @client.tree.command(name="volume", description=f"[Audio] Change the audio player's volume or lock it.")
-@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {voiceVolume*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
+@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
 async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
     try:
         volume_float = float(percentage/100)
@@ -1068,25 +1065,25 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
     if volume_float > 10:
         volume_float = 10
 
-    if not os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt"):
-        with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(voiceVolume*100))
-            print(f"[VoiceVolume]       Created a directory for guild_id {interaction.guild_id}")
+    if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
+        with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
+            f.write(str(VOICE_VOLUME*100))
+            print(f"[VOICE_VOLUME]       Created a directory for guild_id {interaction.guild_id}")
 
     if lock:
         if not interaction.user.guild_permissions.manage_guild:
             return await interaction.response.send_message(f"You are trying to lock a voice channel without having the right priviliges: `manage_guild`.")
-        if not os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt"):
-            with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w+') as file:
+        if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
+            with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
                 file.write(str(volume_float))
-            with open(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt", 'w') as file:
+            with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
                 file.close()
-            return await interaction.response.send_message(f"{emoji_tick_animated} Locked the voice chat volume to {volume_float*100}% for this server.")
+            return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float*100}% for this server.")
         else:
-            os.remove(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt")
+            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
             str_to_send = f"{str_to_send}Removed the lock on voice volume."
     
-    if os.path.isfile(f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_IsLocked.txt"):
+    if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
         if interaction.user.guild_permissions.manage_guild:
             return await interaction.response.send_message ("You can't modify the volume as it has been locked. Change the value of `lock` to `True` when using `/volume` to toggle it off again.")
         return await interaction.response.send_message("You can't modify the volume as it has been locked by a guild manager.")
@@ -1098,10 +1095,10 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
             voice_client.source.volume = volume_float
 
     
-    with open (f"{base_directory}Servers{s_slash}{interaction.guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w+') as file:
+    with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
         file.write(str(volume_float))
-        print(f"[VoiceVolume]       Written to {interaction.guild_id} file: {str(volume_float)}")
-        str_to_send=(f"{str_to_send}\n{emoji_tick_animated} Set the server's voice percentage to: **{volume_float*100}%.**")
+        print(f"[VOICE_VOLUME]       Written to {interaction.guild_id} file: {str(volume_float)}")
+        str_to_send=(f"{str_to_send}\n{EMOJI_TICK_ANIMATED} Set the server's voice percentage to: **{volume_float*100}%.**")
 
     await interaction.response.send_message(str_to_send)
 
@@ -1135,7 +1132,7 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
     if not dm:
         dm = False
         
-    if os.path.isfile(f"{base_directory}openai_disabled.txt"):
+    if os.path.isfile(f"{BASE_DIR}openai_disabled.txt"):
         return await interaction.response.send_message("The OpenAI subsystem has been disabled.")
 
     if prompt is None:
@@ -1160,7 +1157,7 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
         #   Now defer as it may take a long time lmao
     await interaction.response.defer()
     
-    with open(f"{base_directory}openai_api_key.txt", 'r') as f:
+    with open(f"{BASE_DIR}openai_api_key.txt", 'r') as f:
         openai_key = f.read()
     openai.api_key = openai_key
     
@@ -1236,10 +1233,10 @@ async def get_server_voice_volume(guild_id: int) -> float:
     """Returns the volume of a guild chosen by its members.\n
     Must include parameter of the guild id\n
     Returns an float which can be used as the percentage to play at"""
-    if not os.path.isfile(f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt"):
-        with open (f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(voiceVolume*100))
-    with open (f"{base_directory}Servers{s_slash}{guild_id}{s_slash}Preferences{s_slash}Voice_Chat_Volume.txt", 'r') as file:
+    if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
+        with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
+            f.write(str(VOICE_VOLUME*100))
+    with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
         volume = file.read()
     print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}")
     return float(volume)
@@ -1320,12 +1317,12 @@ async def pause(interaction:discord.Interaction):
 @app_commands.checks.cooldown(1, 29, key=lambda i: (i.user.id))
 async def mine(interaction:discord.Interaction):
     await slash_log(interaction)
-    print(f"CURRENCY - {name_Nolwennium} > {interaction.user.id} is mining")
+    print(f"CURRENCY - {NAME_NOLWENNIUM} > {interaction.user.id} is mining")
 
     base_mined_amount = random.randint(-5, 88)
 
-    #   Nolwennium UPDATED LOCATION 2/11/2021: {base_directory}Nolwennium{s_slash}
-    filedir = (f"{base_directory}Nolwennium{s_slash}{interaction.user.id}.txt")
+    #   Nolwennium UPDATED LOCATION 2/11/2021: {BASE_DIR}Nolwennium{S_SLASH}
+    filedir = (f"{BASE_DIR}Nolwennium{S_SLASH}{interaction.user.id}.txt")
 
     #   Calculate fees first, so the calculations after account for it.
     fee = base_mined_amount / random.randint(10, 40)
@@ -1353,13 +1350,13 @@ async def mine(interaction:discord.Interaction):
 
     #    Initiate the embed sequence
     embed = discord.Embed(title="⛏️ Miner ⛏️", colour=0x44ff44)
-    embed.add_field(name="**Initially Mined**", value=f"{base_mined_amount} {emoji_Nolwennium} {name_Nolwennium}!")
+    embed.add_field(name="**Initially Mined**", value=f"{base_mined_amount} {EMOJI_NOLWENNIUM} {NAME_NOLWENNIUM}!")
 
     #   Perform first check if a user is Boosting the server. If so, then give them a big bonus.
     #   If not, check if they have Nitro. If yes, checked by an animated profile picture, encourage to use a Boost.
     if interaction.user.premium_since:
         BoosterBonus = random.randint(30, 150)
-        embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+        embed.add_field(name="**Server Booster Bonus**", value=(f"{BoosterBonus} {EMOJI_NOLWENNIUM} {NAME_NOLWENNIUM}"), inline=False)
         balance = balance + BoosterBonus
         bonuses += BoosterBonus
     else:
@@ -1372,7 +1369,7 @@ async def mine(interaction:discord.Interaction):
     #   Check shared guilds. If it's only one server, i.e the current one, then encourage them to add it to another server.
     if shared_number > 1:
         SharedServerBonus = random.randint(1, (shared_number * 3))
-        embed.add_field(name="**Shared Servers Bonus**", value=(f"{SharedServerBonus} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+        embed.add_field(name="**Shared Servers Bonus**", value=(f"{SharedServerBonus} {EMOJI_NOLWENNIUM} {NAME_NOLWENNIUM}"), inline=False)
         balance = balance + SharedServerBonus
         bonuses += SharedServerBonus
     else:
@@ -1381,11 +1378,11 @@ async def mine(interaction:discord.Interaction):
     #   Set the embed desription to the above mined string (determined by whether or not the user has mined before.
     #   The output will be something like "Mined another 10 Nolwennium!"
     #   As it's a description, it will be placed *above* the added fields.
-    embed.description = f"Mined a total of {base_mined_amount + bonuses} {emoji_Nolwennium} {name_Nolwennium}!"
+    embed.description = f"Mined a total of {base_mined_amount + bonuses} {EMOJI_NOLWENNIUM} {NAME_NOLWENNIUM}!"
 
     #   Finally, show the fees, also paid to a random 'Croissant'.
     croissant_to_pay = random.randint(0, 2)
-    croissant_paid = Croissants[croissant_to_pay]
+    croissant_paid = CROISSANTS[croissant_to_pay]
     croisssant_name = croissant_names[croissant_to_pay]
     embed.add_field(name="**Fees Paid**", value=f"{fee} to **{croisssant_name}**", inline=False)
 
@@ -1403,7 +1400,7 @@ async def mine(interaction:discord.Interaction):
             luck = random.randint(0, 11)
             bonus_perk = bonus_perks[luck]
             bonus_perk_reward = bonus_perk_reward[luck]
-            embed.add_field(name="***You found rare loot!***", value=f"**{bonus_perk}**: {bonus_perk_reward} bonus {name_Nolwennium}!")
+            embed.add_field(name="***You found rare loot!***", value=f"**{bonus_perk}**: {bonus_perk_reward} bonus {NAME_NOLWENNIUM}!")
             balance = balance + int(bonus_perk_reward)
             bonuses = bonuses + int(bonus_perk_reward)
 
@@ -1412,7 +1409,7 @@ async def mine(interaction:discord.Interaction):
     new_balance = balance + newNumberAfterFee
 
     #   Set fields and footers, then send the final compiled result.
-    embed.add_field(name="**Total Balance**", value=(f"{(round (new_balance, 3))} {emoji_Nolwennium} {name_Nolwennium}"), inline=False)
+    embed.add_field(name="**Total Balance**", value=(f"{(round (new_balance, 3))} {EMOJI_NOLWENNIUM} {NAME_NOLWENNIUM}"), inline=False)
     embed.set_footer(text=f"ID: {interaction.user.id} | Bonuses ({bonuses}) + base: ({base_mined_amount}) = {bonuses + base_mined_amount}")
 
     await interaction.response.send_message(embed=embed)
@@ -1426,7 +1423,7 @@ async def mine(interaction:discord.Interaction):
     f.close()
 
     #   Add the fees to the aforementioned croissant
-    randomcroissant = (f"{base_directory}Nolwennium{s_slash}{croissant_paid}.txt")
+    randomcroissant = (f"{BASE_DIR}Nolwennium{S_SLASH}{croissant_paid}.txt")
     try:
         e = open(randomcroissant, 'r')
         balance = float(e.read())
@@ -1446,7 +1443,7 @@ async def mine(interaction:discord.Interaction):
     f.write(str(balance))
     f.close()
     await bot_runtime_events(1)
-    print(f"CURRENCY - {name_Nolwennium} > {interaction.user.id} has gained {newNumberAfterFee} {name_Nolwennium} (fee: {fee}). Their total is {new_balance}")
+    print(f"CURRENCY - {NAME_NOLWENNIUM} > {interaction.user.id} has gained {newNumberAfterFee} {NAME_NOLWENNIUM} (fee: {fee}). Their total is {new_balance}")
 
 #   yn
 
@@ -1468,7 +1465,7 @@ async def yn(interaction:discord.Interaction):
 async def BrawlStars(interaction:discord.Interaction):
     await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
-        num_lines = sum(1 for line in open (f"C:{s_slash}Users{s_slash}Draggie{s_slash}iCloudDrive{s_slash}iCloud~is~workflow~my~workflows{s_slash}Brawl Stars Counter.txt"))
+        num_lines = sum(1 for line in open (f"C:{S_SLASH}Users{S_SLASH}Draggie{S_SLASH}iCloudDrive{S_SLASH}iCloud~is~workflow~my~workflows{S_SLASH}Brawl Stars Counter.txt"))
         await interaction.response.send_message(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
         f = open(GlobalLogDir, "a")
         f.write(f"\nCOMMAND RAN -> '.lines' ran by {interaction.user} at {datetime.now()}")
@@ -1555,7 +1552,7 @@ async def vbucks_usd(interaction:discord.Interaction, amount:str, tier:Optional[
 @client.tree.command(name="settings", description="Edit a ton of the bot's settings here. [Ephemeral]")
 async def settings(interaction:discord.Interaction):
     await slash_log(interaction)
-    user_settings_json_path = f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json"
+    user_settings_json_path = f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json"
     # Check if the file exists
     if not os.path.isfile(user_settings_json_path):
         with open(user_settings_json_path, 'w') as f:
@@ -1639,11 +1636,11 @@ class AcceptToSButtons(discord.ui.Button):
     def __init__(self, label:str, style:discord.ButtonStyle):
         super().__init__(label=label, style = style)
     async def callback(self, interaction):
-        if not os.path.isfile(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json"):
+        if not os.path.isfile(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json"):
             first_save_user_settings(interaction.user.id)
-        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
+        with open(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json", 'r') as f:
             settings = json.load(f)
-        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
+        with open(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json", 'w') as f:
             settings['accepted_tos'] = 'true'
             json.dump(settings, f)
             await interaction.response.edit_message(content="iBaguette Terms of Service have been accepted! Please rerun the command. To change your preferences, use `/settings`.")
@@ -1665,7 +1662,7 @@ class OptionButton(discord.ui.Button):
     def __init__(self, label:str, style:discord.ButtonStyle):
         super().__init__(label=label, style = style)
     async def callback(self, interaction):
-        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
+        with open(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json", 'r') as f:
             settings = json.load(f)
 
         def enableanddisable(self, text: str):
@@ -1676,7 +1673,7 @@ class OptionButton(discord.ui.Button):
                 print(f"/ [UserSettings] {text} is being changed to False for user {interaction.user.id}")
                 settings['user_settings'][text] = "false"
             
-            with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'w') as f:
+            with open(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json", 'w') as f:
                 json.dump(settings, f)
 
         if self.label == "Send General DMs":
@@ -1701,7 +1698,7 @@ class OptionButton(discord.ui.Button):
 
         string = "This message has buttons!"
     
-        with open(f"{base_directory}Users{s_slash}JSONSettings{s_slash}{interaction.user.id}.json", 'r') as f:
+        with open(f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json", 'r') as f:
             settings = json.load(f)
 
         embed=discord.Embed(title="BaguetteBot Settings", description="Use the buttons to interact and change these settings. These apply to all servers.")
@@ -1734,13 +1731,13 @@ class OptionButton(discord.ui.Button):
 
 async def slash_log(interaction):
     print(f"/ [SlashCommand]   {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})")
-    if not os.path.isfile(f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json"):
+    if not os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{interaction.user.id}.json"):
         view = discord.ui.View()
         view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
         view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
         return await interaction.response.send_message("You must accept the Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
     else:
-        with open (f"{base_directory}Users\\JSONSettings{s_slash}{interaction.user.id}.json", 'r') as json_file:
+        with open (f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{interaction.user.id}.json", 'r') as json_file:
             json_data = json.load(json_file)
             if not json_data['accepted_tos'] == 'true':
                 view = discord.ui.View()
@@ -1754,8 +1751,8 @@ async def slash_log(interaction):
   
 async def get_user_settings(user_id):
     """Returns a JSON dict with the user's settings."""
-    if os.path.isfile(f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json"):
-        with open (f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json", "r") as file:
+    if os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json"):
+        with open (f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json", "r") as file:
             json_data = json.load(file)
         if json_data['accepted_tos'] == 'true':
             settings = json_data['user_settings']
@@ -1784,7 +1781,7 @@ default_configfile = {
 # Function to save the user settings to a JSON file
 def first_save_user_settings(user_id):
     # Read the existing JSON file, if it exists
-    filepath = f"{base_directory}Users\\JSONSettings{s_slash}{user_id}.json"
+    filepath = f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json"
     # Read the JSON file
     if not os.path.exists(filepath):
         # Create the file with default values
@@ -1805,9 +1802,9 @@ youtube_dl.utils.bug_reports_message = lambda: ''
 sys.setrecursionlimit(99999999)
 
 class Roles:
-    Roles_order_List = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
-    Roles_order_ID = [795738020967743491, 796360098108538901, 943259355619418163, 943259337185435699, 943259319821021194, 943259291484295218, 943259217123496028, 796362374827343923, 796362553541656576, 943974413810933802]
-    Roles_Cost = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
+    ROLES_LIST = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
+    ROLES_LIST_ID = [795738020967743491, 796360098108538901, 943259355619418163, 943259337185435699, 943259319821021194, 943259291484295218, 943259217123496028, 796362374827343923, 796362553541656576, 943974413810933802]
+    ROLES_COSTS = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
 
     Citizen_Tier = 0
 
@@ -1833,13 +1830,12 @@ PYTHONIOENCODING = "utf-8"
 
 def nolwenniumUserDirectory(ctx):
     global nolwenniumUserDir
-    nolwenniumUserDir = f"{base_directory}Nolwennium{s_slash}{ctx.user.id}.txt"
-
+    nolwenniumUserDir = f"{BASE_DIR}Nolwennium{S_SLASH}{ctx.user.id}.txt"
 
 
 async def get_coins(server_id: int, user_id: int) -> int:
     """Gets a user's coins. The `server_id` and `user_id` as integers must be provided."""
-    coin_dir = f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins{s_slash}{user_id}.txt"
+    coin_dir = f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}.txt"
     with open(coin_dir, 'r') as f:
         balance = int(f.read())
     print(f"[CoinsQuery]    Balance called for {user_id} in {server_id}. (Balance: {balance})")
@@ -1850,9 +1846,9 @@ def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     """Gets then updates a user's coins. The `server_id` and `user_id` as integers must be provided.\n
     The amount of coins to add/subtract as an integer must be added too.\n
     Returns new amount of Coins."""
-    coin_dir = f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins{s_slash}{user_id}.txt"
-    if not os.path.exists(f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins"):
-        os.makedirs(f"{base_directory}Servers{s_slash}{server_id}{s_slash}Coins")
+    coin_dir = f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}.txt"
+    if not os.path.exists(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins"):
+        os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins")
     mode = 'r+' if os.path.exists(coin_dir) else 'w+'
     with open(coin_dir, mode) as file:
         balance = int(file.read()) if mode == "r+" else 0
@@ -1893,7 +1889,7 @@ async def error_code(interaction, code:int, *note:str, **raw_error:Exception):
         await interaction.followup.send(embed=embed)
 
     if raw_error:
-        with open(f"{base_directory}errors.txt", "a") as f:
+        with open(f"{BASE_DIR}errors.txt", "a") as f:
             f.write(f"\nERROR: An error occured! Original command initialised by {interaction.user} at {datetime.now()}. ERROR MESSAGE: {str(raw_error)}")
 
 
@@ -1991,7 +1987,7 @@ DisabledComponents = "Unknown"
 EnabledComponents = "Unknown"
 
 if running_locally:
-  GlobalLogDir=(f"{base_directory}GlobalLog.txt")
+  GlobalLogDir=(f"{BASE_DIR}GlobalLog.txt")
 else:
   GlobalLogDir=("GlobalLog.txt")
 
@@ -2002,33 +1998,33 @@ else:
 
 #	Modified in repl.it
 
-with open(f"{json_dir}NollyMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}NollyMention.json", "r", encoding="utf8") as file:
     nollyWords = loads(file.read())
-with open(f"{json_dir}OliverMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}OliverMention.json", "r", encoding="utf8") as file:
     oliverWords = loads(file.read())
-with open(f"{json_dir}SamMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}SamMention.json", "r", encoding="utf8") as file:
     samWords = loads(file.read())
-with open(f"{json_dir}JackMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}JackMention.json", "r", encoding="utf8") as file:
     jackWords = loads(file.read())
-with open(f"{json_dir}JoeMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}JoeMention.json", "r", encoding="utf8") as file:
     joeWords = loads(file.read())
-with open(f"{json_dir}HaydnMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}HaydnMention.json", "r", encoding="utf8") as file:
     haydnWords = loads(file.read())
-with open(f"{json_dir}MaisyMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}MaisyMention.json", "r", encoding="utf8") as file:
     maisyWords = loads(file.read())
-with open(f"{json_dir}BenMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}BenMention.json", "r", encoding="utf8") as file:
     benWords = loads(file.read())
-with open(f"{json_dir}FloMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}FloMention.json", "r", encoding="utf8") as file:
     floWords = loads(file.read())
-with open(f"{json_dir}IshMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}IshMention.json", "r", encoding="utf8") as file:
     ishWords = loads(file.read())
-with open(f"{json_dir}BorisMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}BorisMention.json", "r", encoding="utf8") as file:
     borisWords = loads(file.read())
-with open(f"{json_dir}MayaMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}MayaMention.json", "r", encoding="utf8") as file:
     mayaWords = loads(file.read())
-with open(f"{json_dir}JosephTigheMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}JosephTigheMention.json", "r", encoding="utf8") as file:
     josephTighe = loads(file.read())
-with open(f"{json_dir}CharlieMention.json", "r", encoding="utf8") as file:
+with open(f"{JSON_DIR}CharlieMention.json", "r", encoding="utf8") as file:
     charlieSewards = loads(file.read())
 
 print("Done!\nInitialising Bot...")
@@ -2052,10 +2048,10 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
-    if build != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{build} | .help | {servers} servers + {members} members")))
+    if BUILD != "":
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION}{BUILD} | .help | {servers} servers + {members} members")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members")))
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION} | .help | {servers} servers + {members} members")))
     global draggie, general, console, upvote, downvote, hasMembersforGlobalServer
     draggie = client.get_user(382784106984898560)
     general = client.get_channel(759861456761258045)#  Brigaders_channel 
@@ -2081,7 +2077,7 @@ async def on_ready():
 
     voice_time = test_voice_time.content
 
-    with open(f'{base_directory}Servers{s_slash}759861456300015657{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+') as x:
+    with open(f'{BASE_DIR}Servers{S_SLASH}759861456300015657{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w+') as x:
         x.write(voice_time)
 
     async for message in epic_memes.history():
@@ -2124,13 +2120,13 @@ async def on_ready():
         for Member in VoiceChannel.members:
             print(f"[ReadyUpVoice]      {Member.id} is in a Voice Chat.")
             if not os.path.isfile(f"D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice\\tempuserstate_{Member.id}.txt"):
-                with open(f"{base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt", "w+") as new_synced_user_from_offline:
+                with open(f"{BASE_DIR}Servers{S_SLASH}{guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{Member.id}.txt", "w+") as new_synced_user_from_offline:
                     join_time = str(round(time.time()))
                     new_synced_user_from_offline.write(join_time)
                     new_synced_user_from_offline.close()
-                    print(f"[ReadyUpVoice]      Written {join_time} to {base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt")
+                    print(f"[ReadyUpVoice]      Written {join_time} to {BASE_DIR}Servers{S_SLASH}{guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{Member.id}.txt")
             else:
-                print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {base_directory}Servers{s_slash}{guild.id}{s_slash}Voice{s_slash}tempuserstate_{Member.id}.txt")
+                print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {BASE_DIR}Servers{S_SLASH}{guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{Member.id}.txt")
 
     print(f"[ReadyUp]       Calibrated Voice Chat time to {voice_time} seconds")
 
@@ -2144,12 +2140,12 @@ async def StatusAutoUpdator():
         members += guild.member_count - 1
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-    if build !="":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{build} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+    if BUILD !="":
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION}{BUILD} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
         await bot_runtime_events(1)
     else:
         await bot_runtime_events(1)
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     print(f"[SelfStatus]        {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")
     #await asyncio.sleep(random.randint(100,500))
     await bot_runtime_events(1)
@@ -2169,13 +2165,13 @@ async def on_voice_state_update(member, before, after):
                     if after.channel.id != 1045032578190684181:
                         channel = client.get_channel(1045032578190684181) 
                         await member.move_to(channel)
-        if not os.path.isfile(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt'):
+        if not os.path.isfile(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}voice_info.txt'):
             try:
-                os.mkdir(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice')
+                os.mkdir(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice')
             except Exception:
                 print("Area already exists.")
             print(f"[VoiceChatJoin]    User {member.name} joined VC in {member.guild.id} ({member.guild.name}) at {datetime.now()} ")
-            x = open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}voice_info.txt', 'w')
+            x = open(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}voice_info.txt', 'w')
             x.close()
     else:
         print(f"[VoiceChatLeave]    User {member.name} left VC in {member.guild.id} ({member.guild.name}) at {datetime.now()}")
@@ -2192,14 +2188,14 @@ async def on_voice_state_update(member, before, after):
 
     if not before.channel: #When VC joined.
         join_time = round(time.time())
-        with open(f'{base_directory}Servers{s_slash}{after.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'w') as x:
+        with open(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt', 'w') as x:
             x.write(str(join_time))
     if not after.channel:
         await bot_runtime_events(1)
         leave_time = round(time.time())
-        with open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt', 'r') as x:
+        with open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt', 'r') as x:
             start_time = int(x.read())
-        os.remove(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Voice{s_slash}tempuserstate_{new_user}.txt')
+        os.remove(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt')
         time_spent = leave_time - start_time
         print(f"[VoiceChatLeave]    {member.name} just spent {time_spent}s in a Voice Chat.")
 
@@ -2232,7 +2228,7 @@ async def on_voice_state_update(member, before, after):
                         settings = await get_user_settings(member.id)
                         if settings is not None:
                             if settings['reminders_for_voice_time'] == "true":
-                                string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {emoji_Coins} for spending {new_time_spent} {units} in voice!\n\n*Type `/coins` in Baguette Brigaders to see what you can buy!*")
+                                string = (f"{member.mention}, you have earned an extra {coins_to_add} Coins {EMOJI_COINS} for spending {new_time_spent} {units} in voice!\n\n*Type `/coins` in Baguette Brigaders to see what you can buy!*")
                                 print(f"[VoiceChatEvent]    Member leaving has subscribed to Voice Reminders. Message sent: {string}")
                         else:
                             print(f"[VoiceChatEvent]    Member has not specified their Settings preferences.")
@@ -2248,12 +2244,12 @@ async def on_voice_state_update(member, before, after):
 
         # Get total guild time spent in Voice Chat
         # Firstly, if there is not a record of voice chat time, create the file
-        if not os.path.isfile(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt'):
-            x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w')
+        if not os.path.isfile(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt'):
+            x = open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w')
             x.close()
         
         #   Then, open up the file for reading.
-        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'r')
+        x = open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'r')
         try:
             #   Try and convert the value into an integer. If error, then the value would be zero.
             preTime = int(x.read())
@@ -2266,7 +2262,7 @@ async def on_voice_state_update(member, before, after):
         print(f"Total time spent in VCs in {member.guild.name}: {total_guild_time_spent} seconds.")
         
         #   Write new sum to the file for later reading.
-        x = open(f'{base_directory}Servers{s_slash}{before.channel.guild.id}{s_slash}Logs{s_slash}TotalUserVoiceTime.txt', 'w+')
+        x = open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w+')
         x.write(str(total_guild_time_spent)) 
         x.close()
 
@@ -2280,7 +2276,7 @@ async def on_voice_state_update(member, before, after):
 async def on_member_join(member):
     await bot_runtime_events(1)
     print(f"[MemberJoined]  on_member_join triggered: Member: {member.name} ({member.id}) in guild {member.guild.name} ({member.guild.id}).")
-    sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
+    sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{member.guild.id}{S_SLASH}sendMessages.txt")
     if member.guild.id == 759861456300015657:
         #await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
         print("Not welcomed user")
@@ -2291,15 +2287,15 @@ async def on_member_join(member):
         members += guild.member_count - 1
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-    if build != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{build} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+    if BUILD != "":
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION}{BUILD} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + {memoryUsage}%")))
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + {memoryUsage}%")))
 
 @client.event
 async def on_member_remove(member):
     await bot_runtime_events(1)
-    sendLogsDir = (f"{base_directory}Servers{s_slash}{member.guild.id}{s_slash}sendMessages.txt")
+    sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{member.guild.id}{S_SLASH}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         try:
             channel = discord.utils.get(member.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -2312,10 +2308,10 @@ async def on_member_remove(member):
     memoryUsage = psutil.virtual_memory().percent
     for guild in client.guilds:
         members += guild.member_count - 1
-    if build != "":
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version}{build} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+    if BUILD != "":
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION}{BUILD} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     else:
-        await client.change_presence(activity=discord.Game(name=(f"{DraggieBot_version} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
+        await client.change_presence(activity=discord.Game(name=(f"{DRAGGIEBOT_VERSION} | .help | {servers} servers + {members} members | CPU {cpuPercentage}% + RAM {memoryUsage}%")))
     
 @client.event
 async def on_raw_reaction_add(payload=None):
@@ -2328,7 +2324,7 @@ async def on_raw_reaction_add(payload=None):
         smp2ID = 912012054414630973
         birthdayID = 892114380005715978
         birthday2ID = 1024404603866988704
-        guild = discord.utils.get(client.guilds, id=brigaders)
+        guild = discord.utils.get(client.guilds, id=BRIGADERS)
         roleAllRandoms = discord.utils.get(guild.roles, id=930186230442905620)
         rolePrivate = discord.utils.get(guild.roles, id=806481292392267796)
         roleVaccinated = discord.utils.get(guild.roles, name='Vaccinated ✅')
@@ -2348,8 +2344,8 @@ async def on_raw_reaction_add(payload=None):
                 #    reaction = discord.utils.get(message.reactions, emoji=payload.emoji)
                 #    count = reaction.count
                 #    if count > 4:
-                #        await channel.send(f"{message.author.mention}'s 'epic' meme from {message.created_at.date()} was removed {random.choice(emoji_random_lmao)}")
-                #        await message.author.send(f"Your 'epic' meme has been removed as it reached too many downvotes. Please only put your *best* locally grown epic memes! {random.choice(emoji_random_lmao)} {random.choice(emoji_random_lmao)}")
+                #        await channel.send(f"{message.author.mention}'s 'epic' meme from {message.created_at.date()} was removed {random.choice(EMOJI_RANDOM_LMAO)}")
+                #        await message.author.send(f"Your 'epic' meme has been removed as it reached too many downvotes. Please only put your *best* locally grown epic memes! {random.choice(EMOJI_RANDOM_LMAO)} {random.choice(EMOJI_RANDOM_LMAO)}")
                 #        await message.delete()
                 #        return
             authorName = payload.member.name
@@ -2448,7 +2444,7 @@ async def on_message_delete(message):
     await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    sendRedactionsInChannel = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendRedactions.txt")
+    sendRedactionsInChannel = (f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}sendRedactions.txt")
     print(f"[MessageDeletion]   Message deleted: '{message.content}' channel: '{message.channel.name}' server: '{message.guild.name}'")
     if message.channel.id == 825470734453047297:
         if message.author.bot == False:
@@ -2459,7 +2455,7 @@ async def on_message_delete(message):
             await message.channel.send(f"{message.author.mention}'s message has been *redacted*.")
             user = client.get_user(int(message.author.id))
             await user.send(f"Your message, '`{message.content}`', has been ***redacted***.")
-    if os.path.isfile(f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt"):
+    if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}sendMessages.txt"):
         LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
         embed = discord.Embed(title=f"User's message deleted", colour=0xFF0000)
         embed.add_field(name="User", value=message.author.mention)
@@ -2488,7 +2484,7 @@ async def on_message_edit(before, after):
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     if not after.guild:
         return print("[Mod/Edits]       Message edited in a non guild channel or ephemeral message")
-    sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
+    sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{after.guild.id}{S_SLASH}sendMessages.txt")
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
@@ -2539,7 +2535,7 @@ async def on_typing(channel, user, when):
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        sendLogsDir = (f"{base_directory}Servers{s_slash}{channel.guild.id}{s_slash}sendMessages.txt")
+        sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{channel.guild.id}{S_SLASH}sendMessages.txt")
     except Exception as e:
         print(e)
         await draggie.send(f"{user.mention} ({user}) is DMing me")
@@ -2637,12 +2633,12 @@ async def on_member_update(before, after):
         print(f"[RoleAdd]       ROLES of {after} has been updated: ADDED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         if after.guild.id == 759861456300015657 or after.guild.id == 384403250172133387:
             if new_role.name == "Server Booster":
-                coinDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}Coins{s_slash}{after.guild.id}.txt")
-                nolwenniumUserDir = (f"{base_directory}Nolwennium{s_slash}{after.id}.txt")
+                coinDir = (f"{BASE_DIR}Servers{S_SLASH}{after.guild.id}{S_SLASH}Coins{S_SLASH}{after.guild.id}.txt")
+                nolwenniumUserDir = (f"{BASE_DIR}Nolwennium{S_SLASH}{after.id}.txt")
                 my_file = Path(nolwenniumUserDir)
                 if not my_file.is_file():
                     with open(nolwenniumUserDir, 'a') as f:
-                        print (f"\n[CURRENCY - {name_Nolwennium}] Set {name_Nolwennium} value to 0, new user. {after.id} - {after.name}")
+                        print (f"\n[CURRENCY - {NAME_NOLWENNIUM}] Set {NAME_NOLWENNIUM} value to 0, new user. {after.id} - {after.name}")
                         f.write('0')
                         f.close()
 
@@ -2658,12 +2654,12 @@ async def on_member_update(before, after):
 
                 with open(nolwenniumUserDir, 'a') as f:
                     f.write(str (addedAmount))
-                    print (f"\n[CURRENCY - {name_Nolwennium}] Added balance of {toAdd} (total: {addedAmount} for boosting the server: {after.id} - {after.name}")
+                    print (f"\n[CURRENCY - {NAME_NOLWENNIUM}] Added balance of {toAdd} (total: {addedAmount} for boosting the server: {after.id} - {after.name}")
                     f.close()
     
                 new_coins = update_coins(after.guild.id, after.id, 100)
 
-                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {new_coins}) and {name_Nolwennium} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
+                await general.send(f"Thank you {after.mention} for boosting the server! You have received the Server Booster role, an exclusive name colour, and a bonus sum of Coins (total: {new_coins}) and {NAME_NOLWENNIUM} (total: {addedAmount}). You can also change your name to any colour you want, see the command /namecolour for more information.")
             #await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
             
         settings = await get_user_settings(after.id)
@@ -2702,7 +2698,7 @@ async def on_member_update(before, after):
         send = True
         print(f"[TagChange]     DISCRIMINATOR of {after} has been updated FROM {before.discriminator} TO {after.discriminator} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
     
-    sendLogsDir = (f"{base_directory}Servers{s_slash}{after.guild.id}{s_slash}sendMessages.txt")
+    sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{after.guild.id}{S_SLASH}sendMessages.txt")
     if os.path.isfile(sendLogsDir):
         if send == True:
             LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
@@ -2758,15 +2754,15 @@ async def on_message(message):
                 await message.add_reaction(upvote)
                 await message.add_reaction(downvote)
             try:
-                attachmentsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Attachments{s_slash}")
+                attachmentsDir = (f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}Attachments{S_SLASH}")
                 if not os.path.exists(attachmentsDir):
-                    os.makedirs(f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}Attachments{s_slash}")
+                    os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}Attachments{S_SLASH}")
                     print("Made directory" + (attachmentsDir))
             except AttributeError:
                 print("Attachment sent in DMs.")
-                attachmentsDir = (f"{base_directory}DMs{s_slash}Attachments{s_slash}{message.author.id}{s_slash}")
+                attachmentsDir = (f"{BASE_DIR}DMs{S_SLASH}Attachments{S_SLASH}{message.author.id}{S_SLASH}")
                 if not os.path.exists(attachmentsDir):
-                    os.makedirs(f"{base_directory}DMs{s_slash}Attachments{s_slash}{message.author.id}{s_slash}")
+                    os.makedirs(f"{BASE_DIR}DMs{S_SLASH}Attachments{S_SLASH}{message.author.id}{S_SLASH}")
                     print("Made directory" + (attachmentsDir))
             nameOfFile = str(message.attachments).split("filename='")[1]
             filename = str(nameOfFile).split("' ")[0]
@@ -2780,7 +2776,7 @@ async def on_message(message):
 
             try:
                 LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                sendLogsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt")
+                sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}sendMessages.txt")
                 if os.path.isfile(sendLogsDir):
                     await LoggingChannel.send(f"Attachment sent in <#{message.channel.id}>: **{filename}**: {attachment.url}")
             except:
@@ -2814,7 +2810,7 @@ async def on_message(message):
         #await draggie.send(f"\n'{message}' DMed by {person} at {datetime.now()}")
         print(f"\n'{message.content}' DMed by {person} at {datetime.now()}")
 
-        dmLocation = (f"{base_directory}DMs{s_slash}{personID}.txt")
+        dmLocation = (f"{BASE_DIR}DMs{S_SLASH}{personID}.txt")
         logAllMessages = open(dmLocation, "a", encoding='utf-8')
         logAllMessages.write(f"\n'{message}' DMed by {person} at {datetime.now()}")
         logAllMessages.close()
@@ -2829,12 +2825,12 @@ async def on_message(message):
     channelName = message.channel.name
     channelID = message.channel.id
 
-    filedir = (f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
+    filedir = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Logs{S_SLASH}")
     if not os.path.exists(filedir):
       if running_locally: # Modified repl.it
-        os.makedirs(f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
+        os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Logs{S_SLASH}")
       else:
-        os.makedirs(f"{base_directory}Servers{s_slash}{serverID}{s_slash}Logs{s_slash}")
+        os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Logs{S_SLASH}")
     
     try:
         with open((f"{filedir}MessageLog.txt"), "a", encoding='utf-8') as logAllMessages:
@@ -2917,17 +2913,11 @@ async def on_message(message):
 
 #   Hi autorun
 
-    if message.guild.id in tester_guilds:
-        if message.content == ("hi"):
-            await message.reply(content='hi')
+    if message.guild.id in TESTER_GUILD_IDS:
+        if message.content.lower() == ("hi"):
+            await message.reply(content=(random.choice(["Hi", "hi", "Hey", "hey", "hi how r u?", "Hello there!", "Hello", "hello", "hello!", "Bonjour.", "Heyyyyy", "Hi, how are you?", "Hello! How are you today?", "Yo!", "What's up?"])))
             f = open(GlobalLogDir, "a")
             f.write(f"\nWORD MENTIONED -> 'hi' ran by {message.author} at {datetime.now()}")
-            f.close()
-
-        if message.content == ("Hi"):
-            await message.channel.send('Hi')
-            f = open(GlobalLogDir, "a")
-            f.write(f"\nWORD MENTIONED -> 'Hi' said by {message.author} at {datetime.now()}")
             f.close()
 
 # Animated emoji sender.
@@ -3094,7 +3084,7 @@ async def convert(ctx):
     url = 'https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=1&symbol=ETH'
     #await ctx.send("IDE detected! Unable to run command. Aborting.")
     #return
-    with open(f"{base_directory}cmc_api_key.txt", encoding="utf-8") as f:
+    with open(f"{BASE_DIR}cmc_api_key.txt", encoding="utf-8") as f:
         api_key = f.read()
 
     parameters = {}
@@ -3124,7 +3114,7 @@ async def currency(ctx):
 
     if not my_file.is_file():
         with open(nolwenniumUserDir, 'a') as f:
-            print (f"\n[CURRENCY - {name_Nolwennium}] Set {name_Nolwennium} value to 0, new user. {ctx.author.id} - {ctx.author.name}")
+            print (f"\n[CURRENCY - {NAME_NOLWENNIUM}] Set {NAME_NOLWENNIUM} value to 0, new user. {ctx.author.id} - {ctx.author.name}")
             try:
                 f.write('0')
                 f.close()
@@ -3143,7 +3133,7 @@ async def currency(ctx):
         number = number + 1
 
     await ctx.send(f"Multiplier: 1.{number}x ({number}0%) bonus {nolwennium_bal}")
-    await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {emoji_Nolwennium}")
+    await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
                 
 
 #   offline status for replit
@@ -3160,7 +3150,7 @@ async def online(ctx):
 
 @client.command(hidden=True)
 async def variable(ctx):
-    if ctx.author.id == id_Draggie:
+    if ctx.author.id == ID_DRAGGIE:
         x = ctx.message.content.split()
         word1 = (str (x[1]))
         word2 = (str (x[2]))
@@ -3183,7 +3173,7 @@ async def radio(ctx):
     def after_audio():
         voice_client = ctx.guild.voice_client
         randomnumber = random.randint(1,69)
-        musicDir = (f"D:{s_slash}App Files{s_slash}Brawl Music{s_slash}py{s_slash}music_{randomnumber}.ogg")
+        musicDir = (f"D:{S_SLASH}App Files{S_SLASH}Brawl Music{S_SLASH}py{S_SLASH}music_{randomnumber}.ogg")
         voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
         print(f"RADIO: Playing 'music_{randomnumber} in [{serverName} / {channel}] Debug data: in after_audio")
         if debugMode == True:
@@ -3198,7 +3188,7 @@ async def radio(ctx):
             voice_client.stop()
             await asyncio.sleep(0.2)
             randomnumber = random.randint(1,69)
-            musicDir = (f"D:{s_slash}App Files{s_slash}Brawl Music{s_slash}py{s_slash}music_{randomnumber}.ogg")
+            musicDir = (f"D:{S_SLASH}App Files{S_SLASH}Brawl Music{S_SLASH}py{S_SLASH}music_{randomnumber}.ogg")
             voice_client.play(discord.FFmpegPCMAudio(source=musicDir), after=lambda e: after_audio())
             print(f"RADIO: Playing 'music_{randomnumber}' in [{serverName}/{channel}] Debug data: in BaguetteBot v1.2.py/funcion/playtheaudio/try")
             if debugMode == True:
@@ -3228,16 +3218,16 @@ async def saveanddelete(ctx):
         await ctx.message.add_reaction('<a:AnimatedTick:956621591108804652>')
         async for message in channel.history(limit=None):
             if len(message.attachments) < 1: # Checks if there is an attachment on the message
-                with open((f"{temp_folder}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
+                with open((f"{TEMP_FOLDER}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
                     logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}")
                     print(f"\n'{message.content}' sent by {message.author}")
                     logAllMessages.close()
                     count = count + 1
             else: # If there is it gets the filename from message.attachments
                 try:
-                    attachmentsDir = (f"{temp_folder}{message.channel.name}{s_slash}Attachments{s_slash}")
+                    attachmentsDir = (f"{TEMP_FOLDER}{message.channel.name}{S_SLASH}Attachments{S_SLASH}")
                     if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"{temp_folder}{message.channel.name}{s_slash}Attachments{s_slash}")
+                        os.makedirs(f"{TEMP_FOLDER}{message.channel.name}{S_SLASH}Attachments{S_SLASH}")
                         print("Made directory" + (attachmentsDir))
                     nameOfFile = str(message.attachments).split("filename='")[1]
                     filename = str(nameOfFile).split("' ")[0]
@@ -3251,7 +3241,7 @@ async def saveanddelete(ctx):
                     await message.delete()
 
                     #LoggingChannel = discord.utils.get(message.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
-                    #sendLogsDir = (f"{base_directory}Servers{s_slash}{message.guild.id}{s_slash}sendMessages.txt")
+                    #sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{message.guild.id}{S_SLASH}sendMessages.txt")
                     #if os.path.isfile(sendLogsDir):
                         #await LoggingChannel.send(f"Attachment sent in <#{message.channel.id}>: **{filename}**: {attachment.url}")
                     count = count + 1
@@ -3292,17 +3282,17 @@ async def save_messages(ctx):
         async for message in channel.history(limit=None):
             if len(message.attachments) < 1: # Checks if there is an attachment on the message
                 if "https" not in message.content:
-                    line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> MESSAGE: Sent at {(message.created_at)} by {message.author}: '{message.content}'")
+                    line_prepender(f"Z:{S_SLASH}{channel.name}_log.txt", 1, f"\n>> MESSAGE: Sent at {(message.created_at)} by {message.author}: '{message.content}'")
                     count = count + 1
                 else:
-                    line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> LINK:    Sent at {(message.created_at)} by {message.author}: {message.content}")
+                    line_prepender(f"Z:{S_SLASH}{channel.name}_log.txt", 1, f"\n>> LINK:    Sent at {(message.created_at)} by {message.author}: {message.content}")
             else: # If there is it gets the filename from message.attachments
                 try:
-                    with open((f"Z:{s_slash}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
-                        line_prepender(f"Z:{s_slash}{channel.name}_log.txt", 1, f"\n>> MEDIA:   Sent at {(message.created_at)} by {message.author}: {message.attachments[0].url}")
-                    attachmentsDir = (f"Z:{s_slash}{message.channel.name}{s_slash}Attachments{s_slash}")
+                    with open((f"Z:{S_SLASH}{channel.name}_log.txt"), "a", encoding='utf-8') as logAllMessages:
+                        line_prepender(f"Z:{S_SLASH}{channel.name}_log.txt", 1, f"\n>> MEDIA:   Sent at {(message.created_at)} by {message.author}: {message.attachments[0].url}")
+                    attachmentsDir = (f"Z:{S_SLASH}{message.channel.name}{S_SLASH}Attachments{S_SLASH}")
                     if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"Z:{s_slash}{message.channel.name}{s_slash}Attachments{s_slash}")
+                        os.makedirs(f"Z:{S_SLASH}{message.channel.name}{S_SLASH}Attachments{S_SLASH}")
                         print("Made directory" + (attachmentsDir))
                     nameOfFile = str(message.attachments).split("filename='")[1]
                     filename = str(nameOfFile).split("' ")[0]
@@ -3566,9 +3556,9 @@ async def purge(ctx):
 async def uwu(ctx):
     uwuwu = random.randint(1,2)
     if uwuwu == 1:
-        await ctx.send(file=discord.File(f"{base_directory}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
+        await ctx.send(file=discord.File(f"{BASE_DIR}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
     if uwuwu == 2:
-        await ctx.send(file=discord.File(f"{base_directory}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
+        await ctx.send(file=discord.File(f"{BASE_DIR}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
     f = open(GlobalLogDir, "a")
     f.write(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
     f.close()
@@ -3605,7 +3595,7 @@ async def bs(ctx):
         if (x[2]) == 'brawlers':
             url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}')
             print(f'url = {url}')
-            with open(f"{base_directory}supercell_api_key.txt", encoding="utf-8") as f:
+            with open(f"{BASE_DIR}supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
 
             headers = {
@@ -3640,7 +3630,7 @@ async def bs(ctx):
         if (x[2]) == 'battles':
             url = (f'https://api.brawlstars.com/v1/players/%23{playerTag}/battlelog')
 
-            with open(f"{base_directory}supercell_api_key.txt", encoding="utf-8") as f:
+            with open(f"{BASE_DIR}supercell_api_key.txt", encoding="utf-8") as f:
                 api_key = f.read()
             headers = {
             'Accept': 'application/json',
@@ -3675,7 +3665,7 @@ async def birthday(ctx):
             birthDate = text.split(' ', 2)[-1]
             x = text.split()
             if x[1] == "file":
-                with open(f"{base_directory}logs{s_slash}birthdays.txt") as file:
+                with open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -3689,7 +3679,7 @@ async def birthday(ctx):
                 return
 
             if x[1] == "file":
-                with open(f"{base_directory}logs{s_slash}birthdays.txt") as file:
+                with open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt") as file:
                     birthdays = file.read()
                     embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
                     await ctx.send(embed=embed)
@@ -3698,14 +3688,14 @@ async def birthday(ctx):
 
             if x[1] == "set":
                 author = (str (interaction.user.id))
-                file=open(f"{base_directory}Logs{s_slash}birthdays.txt",encoding="UTF-8").read()
+                file=open(f"{BASE_DIR}Logs{S_SLASH}birthdays.txt",encoding="UTF-8").read()
                 count=file.count(author)
                 print (count)
                 if count != 0:
                     await ctx.send("Error! You have already added your birthday to the file. Please ask an admin to remove it if you believe this is an error.")    
                     return
 
-                f = open(f"{base_directory}logs{s_slash}birthdays.txt", "a")
+                f = open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt", "a")
                 f.write(f"\n<@!{interaction.user.id}>'s birthday is on the {birthDate}")
                 f.close()
                 await ctx.send(f"\n{interaction.user}'s birthday has been set to `{birthDate}`. A custom message will be sent, enjoy!")
@@ -3854,14 +3844,14 @@ async def on_command_error(ctx, error):
     f = open(GlobalLogDir, "a")
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
-    f = open(f"{base_directory}errors.txt", "a")#	Modified in repl.it
+    f = open(f"{BASE_DIR}errors.txt", "a")#	Modified in repl.it
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
 
 #   poggerspogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpog
 
 def main():
-    if not beta_bot:
+    if not BETA_BOT:
         dotenvPath = 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\.env'
         if os.path.isfile(dotenvPath):
             load_dotenv(dotenv_path=dotenvPath)
