@@ -8,6 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, subprocess, math, openai
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
@@ -50,12 +51,12 @@ nolwenniumDirChecker = Path(nolwennium_checker_directory)
 if nolwenniumDirChecker.is_file():
     running_locally = True
     print("Running locally! Using enhanced features.")
-    minified_base_directory = "D:\\Draggie Programs\\BaguetteBot\\"
-    base_directory = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\"
-    base_directory_minus_slash = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
-    s_slash = "\\"
-    json_dir = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
-    temp_folder = f"Z:{s_slash}"
+    MINIFIED_BASE_DIR = "D:\\Draggie Programs\\BaguetteBot\\"
+    BASE_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\"
+    BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BaguetteBot\\draggiebot"
+    S_SLASH = "\\"
+    JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+    TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(filename=f'{minified_base_directory}Logs\\{DraggieBot_version}{build}-{time.time()}.log', encoding='utf-8', mode='w')
@@ -80,7 +81,7 @@ else:
 
 
 #if running_locally:
-#    subprocess.Popen(['java', '-jar', f'{base_directory}GitHub\\BaguetteBot\\Lavalink.jar'])
+#    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -97,6 +98,42 @@ client = commands.Bot(
 
 
 print("Done!\nSlash commands initialising...")
+
+class Music(commands.Cog):
+    """Music cog to hold Wavelink related commands and listeners."""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+        bot.loop.create_task(self.connect_nodes())
+
+    async def connect_nodes(self):
+        """Connect to our Lavalink nodes."""
+        await self.bot.wait_until_ready()
+
+        await wavelink.NodePool.create_node(bot=bot,
+                                            host='0.0.0.0',
+                                            port=2333,
+                                            password='YOUR_LAVALINK_PASSWORD')
+
+    @commands.Cog.listener()
+    async def on_wavelink_node_ready(self, node: wavelink.Node):
+        """Event fired when a node has finished connecting."""
+        print(f'Node: <{node.identifier}> is ready!')
+
+    @commands.command()
+    async def play(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
+        """Play a song with the given search query.
+
+        If not connected, connect to our voice channel.
+        """
+        if not ctx.voice_client:
+            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+        else:
+            vc: wavelink.Player = ctx.voice_client
+
+        await vc.play(search)
+
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
@@ -1253,8 +1290,9 @@ async def stop(interaction:discord.Interaction):
     voice_client = interaction.guild.voice_client
     if voice_client is not None:
         voice_client.stop()
+        await voice_client.disconnect()
     else:
-        return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
+        return await interaction.response.send_message("There is no currently active voice client in this server!")
 
     await interaction.response.send_message((str ("Stopped playing audio.")))
     f = open(GlobalLogDir, "a")
