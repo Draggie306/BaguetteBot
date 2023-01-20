@@ -21,7 +21,7 @@ from        typing import Optional
 
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
-VOICE_VOLUME = 0.3
+VOICE_VOLUME = 30
 CROISSANTS = [796777705520758795, 821405856285196350, 588081261537394730]
 CROISSANT_NAMES = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
 TESTER_GUILD_IDS = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -1023,6 +1023,7 @@ async def play(interaction:discord.Interaction, video:str):
     print(f"/ [PlayCommand]      ({datetime.now()}) - Extracted info")
 
     volume = await get_server_voice_volume(interaction.guild_id)
+    volume = volume*100
 
     try:
         source = discord.FFmpegPCMAudio(source=url, options=FFMPEG_OPTIONS)
@@ -1066,18 +1067,18 @@ async def play(interaction:discord.Interaction, video:str):
 @app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
 async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
     try:
-        volume_float = float(percentage/100)
+        volume_float = int(percentage)
     except Exception as e:
         return await interaction.response.send_message(f"Unable to convert {volume_float} into an integer.")
 
     str_to_send = ""
 
-    if volume_float > 10:
-        volume_float = 10
+    if volume_float > 1000:
+        volume_float = 1000
 
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
         with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(VOICE_VOLUME*100))
+            f.write(str(VOICE_VOLUME))
             print(f"[VOICE_VOLUME]       Created a directory for guild_id {interaction.guild_id}")
 
     if lock:
@@ -1104,11 +1105,17 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
         if voice_client.is_playing():
             voice_client.source.volume = volume_float
 
-    
     with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
         file.write(str(volume_float))
         print(f"[VOICE_VOLUME]       Written to {interaction.guild_id} file: {str(volume_float)}")
-        str_to_send=(f"{str_to_send}\n{EMOJI_TICK_ANIMATED} Set the server's voice percentage to: **{volume_float*100}%.**")
+        str_to_send=(f"{str_to_send}\n{EMOJI_TICK_ANIMATED} Set the server's voice percentage to: **{volume_float}%.**")
+
+    vc: wavelink.Player = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+    if vc.is_playing():
+        volume = await get_server_voice_volume(interaction.guild.id)
+        volume = (volume) # as Wavelink uses native percentages
+        await vc.set_volume(volume)
+        str_to_send=f"{str_to_send}\nNOTE: An experimental, faster HD player, Wavelink, is being used to handle audio, so it may take an extra few seconds to normalise audio output."
 
     await interaction.response.send_message(str_to_send)
 
@@ -1239,17 +1246,17 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
         await interaction.followup.send(response_content)
 
 
-async def get_server_voice_volume(guild_id: int) -> float:
+async def get_server_voice_volume(guild_id: int) -> int:
     """Returns the volume of a guild chosen by its members.\n
     Must include parameter of the guild id\n
-    Returns an float which can be used as the percentage to play at"""
+    Returns an percentage as an integer. You can divide this by 100 if you want a float."""
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
         with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(VOICE_VOLUME*100))
+            f.write(str(VOICE_VOLUME))
     with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
         volume = file.read()
-    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}")
-    return float(volume)
+    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}%")
+    return int(volume)
 
 
 @client.tree.command(name="stop", description="Stops whatever is going on in voice chat")
@@ -3801,7 +3808,7 @@ async def on_command_error(ctx, error):
     await ctx.send(embed=embed)
     print (str(error))
     f = open(GlobalLogDir, "a")
-    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
     f = open(f"{BASE_DIR}errors.txt", "a")#	Modified in repl.it
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
