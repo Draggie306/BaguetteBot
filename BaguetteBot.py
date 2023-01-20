@@ -1,5 +1,5 @@
 DraggieBot_version = "v1.3.2"
-build = "c"
+build = "d"
 beta_bot = False
 
 """
@@ -59,7 +59,7 @@ if nolwenniumDirChecker.is_file():
     TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(filename=f'{minified_base_directory}Logs\\{DraggieBot_version}{build}-{time.time()}.log', encoding='utf-8', mode='w')
+    handler = logging.FileHandler(filename=f'{MINIFIED_BASE_DIR}Logs\\{DraggieBot_version}{build}-{time.time()}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 else:
@@ -98,41 +98,6 @@ client = commands.Bot(
 
 
 print("Done!\nSlash commands initialising...")
-
-class Music(commands.Cog):
-    """Music cog to hold Wavelink related commands and listeners."""
-
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
-        bot.loop.create_task(self.connect_nodes())
-
-    async def connect_nodes(self):
-        """Connect to our Lavalink nodes."""
-        await self.bot.wait_until_ready()
-
-        await wavelink.NodePool.create_node(bot=bot,
-                                            host='0.0.0.0',
-                                            port=2333,
-                                            password='YOUR_LAVALINK_PASSWORD')
-
-    @commands.Cog.listener()
-    async def on_wavelink_node_ready(self, node: wavelink.Node):
-        """Event fired when a node has finished connecting."""
-        print(f'Node: <{node.identifier}> is ready!')
-
-    @commands.command()
-    async def play(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
-        """Play a song with the given search query.
-
-        If not connected, connect to our voice channel.
-        """
-        if not ctx.voice_client:
-            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-        else:
-            vc: wavelink.Player = ctx.voice_client
-
-        await vc.play(search)
 
 
 ###########################################################################################################################################################
