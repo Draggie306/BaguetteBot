@@ -69,11 +69,12 @@ class Music(commands.Cog):
             await player.channel.send(e)
 
     @commands.command()
-    async def play(self, ctx: commands.Context, *, search: str):
+    async def play(self, ctx: commands.Context, *, search):
         """Play a song with the given search query.
 
         If not connected, connect to our voice channel.
         """
+
         if ctx.author.voice is None:
             return await ctx.send("Not in voice channel")
         vc: wavelink.Player = ctx.voice_client or await ctx.author.voice.channel.connect(cls=wavelink.Player)
@@ -87,28 +88,32 @@ class Music(commands.Cog):
             async for track in spotify.SpotifyTrack.iterator(query=search, type=spotify.SpotifySearchType.album):
                 await ctx.send(track)
 
+        track = wavelink.YouTubeTrack(search)
+
+
         if tracks:
             for track in tracks:
                 await vc.queue.put_wait(track)
-            await ctx.send(f'Added {len(tracks)} tracks to the queue...')
-            volume = await get_server_voice_volume(ctx.guild.id)
-            await vc.set_volume(volume)
-            await ctx.send(f"Now playing: {vc.queue[0]}. There are {len(vc.queue)-1} songs remaining in the queue.")
-            await vc.play(track)
+            await ctx.send(f'Added {len(tracks)} tracks to the queue. There are {len(vc.queue)-1} tracks currently queued.')
+            if not vc.is_playing():
+                volume = await get_server_voice_volume(ctx.guild.id)
+                await vc.set_volume(volume)
+                await ctx.send(f"Now playing: **{vc.queue[0]}**.")
+                await vc.play(track)
 
         else:
             if vc.queue.is_empty and not vc.is_playing():
                 volume = await get_server_voice_volume(ctx.guild.id)
                 await vc.set_volume(volume)
-                await vc.play(result[0])
+                await vc.play(search)
                 await ctx.send(f'Playing `{search.title}` in the voice channel...')
                 await ctx.send(f"debug: Queue:```{vc.queue}```")
             else:
-                await vc.queue.put_wait(result)
-                await ctx.send(f'Added `{result.title}` to the queue...')
+                await vc.queue.put_wait(search)
+                await ctx.send(f'Added `{search.title}` to the queue...')
 
     @commands.command()
-    async def shutup(self, ctx: commands.Context):
+    async def stop(self, ctx: commands.Context):
         vc: wavelink.Player = ctx.voice_client
         if vc.is_playing():
             await vc.stop()
@@ -127,7 +132,7 @@ class Music(commands.Cog):
         vc: wavelink.Player = ctx.voice_client
         if not vc.queue.is_empty:
             await vc.stop()
-            await ctx.send(f"Now playing: {vc.queue[0]}")
+            await ctx.send(f"Now playing: {vc.queue[0]}. There are {len(vc.queue)-1} songs left.")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Music(bot))

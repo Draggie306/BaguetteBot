@@ -1647,6 +1647,107 @@ async def join(interaction:discord.Interaction):
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
 
+from wavelink.ext import spotify
+
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_api_key.txt", 'r') as spapi:
+    spotify_id = spapi.read()
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
+    spotify_client_id = spcid.read()
+
+async def connect_nodes():
+    """Connect to our Lavalink nodes."""
+    await client.wait_until_ready()
+
+    await wavelink.NodePool.create_node(
+        bot=client,
+        host="localhost",
+        port=2333,
+        password="youshallnotpass",
+        spotify_client=spotify.SpotifyClient(
+            client_id=spotify_client_id,
+            client_secret=spotify_id,
+        ),
+    )
+
+async def on_wavelink_node_ready(node: wavelink.Node):
+    """Event fired when a node has finished connecting."""
+    print(f"Node: <{node.identifier}> is ready!")
+
+async def on_wavelink_track_end(player: wavelink.Player, track, reason):
+    try:
+        if not player.queue.is_empty:
+            new = await player.queue.get_wait()
+            volume = await get_server_voice_volume(player.guild.id)
+            print("Playing new song.")
+            await player.play(new, volume=int(volume))
+        else:
+            await player.stop()
+    except Exception as e:
+        await player.channel.send(e)
+
+from wavelink.ext import spotify
+
+@client.tree.command(name="powerplay", description="Test wavelink command series.")
+@app_commands.describe(search="What YouTube video would you like to search for?", spotify_track="Is this a Spotify track?")
+async def powerplay(interaction: discord.Interaction, search:str, spotify_track:Optional[bool]=False):
+    """Play a song with the given search query.
+
+    If not connected, connect to our voice channel.
+    """
+    await interaction.response.defer()
+    if interaction.user.voice is None:
+        return await interaction.followup.send("Not in voice channel")
+
+    vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+
+    tracks = False
+    if spotify_track:
+        if "open.spotify.com/playlist" in search:
+            #await interaction.response.send_message("Searching spotify playlist...")
+            tracks = await spotify.SpotifyTrack.search(query=search)
+            print("Searching spotify playlist")
+
+        elif "open.spotify.com/track" in search:
+            #await interaction.response.send_message("Searching spotify individual track")
+            print("Searching spotify individual track")
+            async for track in spotify.SpotifyTrack.iterator(query=search, type=spotify.SpotifySearchType.album):
+                print(track)
+    else:
+        search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
+   
+
+    if tracks:
+        for track in tracks:
+            await vc.queue.put_wait(track)
+        tracklen = len(tracks)
+        remaining_tracks = len(vc.queue)-1
+        await interaction.followup.send(f'Added {tracklen} tracks to the queue. There are {remaining_tracks} tracks currently queued.')
+        if not vc.is_playing():
+            volume = await get_server_voice_volume(interaction.guild_id)
+            await vc.set_volume(volume)
+            await interaction.followup.send(f"Now playing: **{vc.queue[0]}**.")
+            await vc.play(track)
+
+    else:
+        if vc.queue.is_empty and not vc.is_playing():
+            volume = await get_server_voice_volume(interaction.guild_id)
+            await vc.set_volume(volume)
+            await vc.play(search)
+            await interaction.followup.send(f'Playing `{search.title}` in the voice channel...')
+            await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
+        else:
+            await vc.queue.put_wait(search)
+            await interaction.followup.send(f'Added `{search.title}` to the queue...')
+
+@client.command()
+async def stop(ctx):
+    vc = ctx.voice_client
+    if vc.is_playing():
+        vc.stop()
+
+
+
+
 print("Done!\nDefining function and constants...")
 
 class AcceptToSButtons(discord.ui.Button):  
@@ -2054,7 +2155,7 @@ async def on_ready():
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
     await client.tree.sync() 
-    await client.load_extension('cogs.music')
+    #await client.load_extension('cogs.music')
     print("COG: Music loaded!")
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
     await log_channel.send(f"Online at **{datetime.now()}**")
@@ -2148,6 +2249,11 @@ async def on_ready():
                 print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {BASE_DIR}Servers{S_SLASH}{guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{Member.id}.txt")
 
     print(f"[ReadyUp]       Calibrated Voice Chat time to {voice_time} seconds")
+
+    client.loop.create_task(connect_nodes())
+    client.add_listener(on_wavelink_node_ready, 'on_wavelink_node_ready')
+    client.add_listener(on_wavelink_track_end, 'on_wavelink_track_end')
+
 
     await bot_runtime_events(1)
     await StatusAutoUpdator()
