@@ -1677,7 +1677,8 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             new = await player.queue.get_wait()
             volume = await get_server_voice_volume(player.guild.id)
             print("Playing new song.")
-            embed = discord.Embed(title="Playing new song", description=track.title)
+            embed = discord.Embed(title="Playing new song", description=f"[{new.title}]({new.uri})")
+            embed.set_image(url=new.thumbnail)
             embed.add_field(name="Author", value=track.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
             embed.add_field(name="Link", value=track.uri)
@@ -1725,7 +1726,10 @@ async def powerplay(interaction: discord.Interaction, search:str):
             await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             return await interaction.followup.send(f'Added `{search.title}` to the queue...')
     else:
-        search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
+        try:
+            search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
+        except IndexError:
+            return await interaction.followup.send("There was no valid YouTube track for this search term. Please make sure the video is public.")
    
 
     if tracks:
@@ -1738,7 +1742,12 @@ async def powerplay(interaction: discord.Interaction, search:str):
         if not vc.is_playing():
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
-            await interaction.followup.send(f"Now playing: **{track}**.")
+            embed = discord.Embed(title="Playing new song", description=f"[{track.title}]({track.uri})")
+            embed.set_image(url=track.thumbnail)
+            embed.add_field(name="Author", value=track.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
+            embed.add_field(name="Link", value=track.uri)
+            await interaction.followup.send(embed=embed)
             await vc.play(track)
 
     else:
@@ -1746,7 +1755,12 @@ async def powerplay(interaction: discord.Interaction, search:str):
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
             await vc.play(search)
-            await interaction.followup.send(f'Playing `{search.title}` in the voice channel...')
+            embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
+            embed.set_image(url=search.thumbnail)
+            embed.add_field(name="Author", value=search.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+            embed.add_field(name="Link", value=search.uri)
+            await interaction.response.send_message(embed=embed)
         else:
             await vc.queue.put_wait(search)
             await interaction.followup.send(f'Added `{search.title}` to the queue...')
@@ -1770,7 +1784,13 @@ async def skip(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc is not None:
         if not vc.queue.is_empty:
-            await vc.stop()
+            await vc.stop() # Sort this out make sure it works
+            #embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
+            #embed.set_image(url=search.thumbnail)
+            #embed.add_field(name="Author", value=search.author)
+            #embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+            #embed.add_field(name="Link", value=search.uri)
+            #await interaction.response.send_message(embed=embed)
             await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
         else:
             await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
