@@ -68,7 +68,7 @@ class Music(commands.Cog):
         except Exception as e:
             await player.channel.send(e)
 
-    @commands.command()
+    @commands.command() # migrated and improved.
     async def play(self, ctx: commands.Context, *, search):
         """Play a song with the given search query.
 
@@ -112,7 +112,7 @@ class Music(commands.Cog):
                 await vc.queue.put_wait(search)
                 await ctx.send(f'Added `{search.title}` to the queue...')
 
-    @commands.command()
+    @commands.command() # migrated
     async def stop(self, ctx: commands.Context):
         vc: wavelink.Player = ctx.voice_client
         if vc.is_playing():
@@ -120,14 +120,14 @@ class Music(commands.Cog):
             await ctx.send("I stopped it.")
 
 
-    @commands.command()
+    @commands.command() # migrated
     async def queue(self, ctx: commands.Context):
         vc: wavelink.Player = ctx.voice_client
         if not vc.queue.is_empty:
             print(f"Here is the current queue: {vc.queue}")
             await ctx.send(f"Here is the current queue: {vc.queue}")
     
-    @commands.command()
+    @commands.command() # migrated
     async def skip(self, ctx: commands.Context):
         vc: wavelink.Player = ctx.voice_client
         if not vc.queue.is_empty:

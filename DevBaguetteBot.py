@@ -1274,7 +1274,6 @@ async def stop(interaction:discord.Interaction):
         return await interaction.response.send_message("Stopped playing audio.")
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
-    return
 
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
@@ -1678,6 +1677,11 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             new = await player.queue.get_wait()
             volume = await get_server_voice_volume(player.guild.id)
             print("Playing new song.")
+            embed = discord.Embed(title="Playing new song", description=track.title)
+            embed.add_field(name="Author", value=track.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
+            embed.add_field(name="Link", value=track.uri)
+            await player.channel.send(embed=embed)
             await player.play(new, volume=int(volume))
         else:
             await player.stop()
@@ -1710,19 +1714,27 @@ async def powerplay(interaction: discord.Interaction, search:str):
     elif "open.spotify.com/track" in search:
         #await interaction.response.send_message("Searching spotify individual track")
         print("Searching spotify individual track")
-        async for track in spotify.SpotifyTrack.iterator(query=search, type=spotify.SpotifySearchType.album):
-            print(track)
-
+        search = await spotify.SpotifyTrack.search(query=search, return_first=True)
+        if vc.queue.is_empty and not vc.is_playing():
+            volume = await get_server_voice_volume(interaction.guild_id)
+            await vc.set_volume(volume)
+            await vc.play(search)
+            return await interaction.followup.send(f'Playing `{search.title}` in the voice channel...')
+        else:
+            await vc.queue.put_wait(search)
+            await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
+            return await interaction.followup.send(f'Added `{search.title}` to the queue...')
     else:
         search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
    
 
     if tracks:
+        #await interaction.followup.send("Adding playlist to the queue.")
         for track in tracks:
             await vc.queue.put_wait(track)
         tracklen = len(tracks)
         remaining_tracks = len(vc.queue)-1
-        await interaction.followup.send(f'Added {tracklen} tracks to the queue. There are {remaining_tracks} tracks currently queued.')
+        await interaction.followup.send(f'Added {tracklen} tracks to the queue. There are {remaining_tracks+1} tracks currently queued.')
         if not vc.is_playing():
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
@@ -1735,35 +1747,35 @@ async def powerplay(interaction: discord.Interaction, search:str):
             await vc.set_volume(volume)
             await vc.play(search)
             await interaction.followup.send(f'Playing `{search.title}` in the voice channel...')
-            await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
         else:
             await vc.queue.put_wait(search)
             await interaction.followup.send(f'Added `{search.title}` to the queue...')
 
-@client.tree.command(name="skip", description="Wavelink skip audio subclass.")
-async def skip(interaction: discord.Interaction):
+    total_duration = 0
+    for track in vc.queue:
+        total_duration += track.duration
+    print(total_duration)
+    await interaction.followup.send(f"Current Queue Length: {total_duration}s")
+
+
+@client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
+async def queue(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.queue.is_empty:
-        await vc.stop()
-        await interaction.response.send_message(f"Now playing: {vc.queue[0]}. There are {len(vc.queue)-1} songs left.")
-    else:
-        await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
-
-
-@commands.command()
-async def stop(self, ctx: commands.Context):
-    vc: wavelink.Player = ctx.voice_client
-    if vc.is_playing():
-        await vc.stop()
-        await ctx.send("I stopped it.")
-
-
-@commands.command()
-async def queue(self, ctx: commands.Context):
-    vc: wavelink.Player = ctx.voice_client
-    if not vc.queue.is_empty:
         print(f"Here is the current queue: {vc.queue}")
-        await ctx.send(f"Here is the current queue: {vc.queue}")
+        await interaction.response.send_message(f"Here is the current queue: {vc.queue}")
+        
+@client.tree.command(name="skip", description="Wavelink skip audio.")
+async def skip(interaction: discord.Interaction):
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc is not None:
+        if not vc.queue.is_empty:
+            await vc.stop()
+            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
+        else:
+            await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
+    else:
+        await interaction.response.send_message("I'm not in a Voice Channel.")
 
 
 
@@ -2636,7 +2648,7 @@ async def on_message_edit(before, after):
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
-    if LoggingChannel is not None:
+    if LoggingChannel is not None and not BETA_BOT:
         if before.content == after.content:
             embed = discord.Embed(title=f"Message modified", description=f"Embed preview added to message ([jump]({after.jump_url}))")
             await LoggingChannel.send(embed=embed)
