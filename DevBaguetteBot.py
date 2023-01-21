@@ -1265,16 +1265,15 @@ async def stop(interaction:discord.Interaction):
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     voice_client = interaction.guild.voice_client
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc.is_playing():
+        await vc.stop()
+        return await interaction.response.send_message("Stopped playing wavelink player audio.")
     if voice_client is not None:
         voice_client.stop()
+        return await interaction.response.send_message("Stopped playing audio.")
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
-
-    await interaction.response.send_message((str ("Stopped playing audio.")))
-    f = open(GlobalLogDir, "a")
-    f.write(f"\nAUDIO COMMAND RAN -> '.stop' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
-    f.close()
-    print(f"\nAUDIO COMMAND RAN -> '.stop' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
     return
 
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
@@ -1682,14 +1681,15 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             await player.play(new, volume=int(volume))
         else:
             await player.stop()
+            await player.channel.send("No more stuff in the queue.")
     except Exception as e:
         await player.channel.send(e)
 
 from wavelink.ext import spotify
 
 @client.tree.command(name="powerplay", description="Test wavelink command series.")
-@app_commands.describe(search="What YouTube video would you like to search for?", spotify_track="Is this a Spotify track?")
-async def powerplay(interaction: discord.Interaction, search:str, spotify_track:Optional[bool]=False):
+@app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?")
+async def powerplay(interaction: discord.Interaction, search:str):
     """Play a song with the given search query.
 
     If not connected, connect to our voice channel.
@@ -1701,17 +1701,18 @@ async def powerplay(interaction: discord.Interaction, search:str, spotify_track:
     vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
 
     tracks = False
-    if spotify_track:
-        if "open.spotify.com/playlist" in search:
-            #await interaction.response.send_message("Searching spotify playlist...")
-            tracks = await spotify.SpotifyTrack.search(query=search)
-            print("Searching spotify playlist")
 
-        elif "open.spotify.com/track" in search:
-            #await interaction.response.send_message("Searching spotify individual track")
-            print("Searching spotify individual track")
-            async for track in spotify.SpotifyTrack.iterator(query=search, type=spotify.SpotifySearchType.album):
-                print(track)
+    if "open.spotify.com/playlist" in search:
+        #await interaction.response.send_message("Searching spotify playlist...")
+        tracks = await spotify.SpotifyTrack.search(query=search)
+        print("Searching spotify playlist")
+
+    elif "open.spotify.com/track" in search:
+        #await interaction.response.send_message("Searching spotify individual track")
+        print("Searching spotify individual track")
+        async for track in spotify.SpotifyTrack.iterator(query=search, type=spotify.SpotifySearchType.album):
+            print(track)
+
     else:
         search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
    
@@ -1725,7 +1726,7 @@ async def powerplay(interaction: discord.Interaction, search:str, spotify_track:
         if not vc.is_playing():
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
-            await interaction.followup.send(f"Now playing: **{vc.queue[0]}**.")
+            await interaction.followup.send(f"Now playing: **{track}**.")
             await vc.play(track)
 
     else:
@@ -1739,12 +1740,30 @@ async def powerplay(interaction: discord.Interaction, search:str, spotify_track:
             await vc.queue.put_wait(search)
             await interaction.followup.send(f'Added `{search.title}` to the queue...')
 
-@client.command()
-async def stop(ctx):
-    vc = ctx.voice_client
-    if vc.is_playing():
-        vc.stop()
+@client.tree.command(name="skip", description="Wavelink skip audio subclass.")
+async def skip(interaction: discord.Interaction):
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.queue.is_empty:
+        await vc.stop()
+        await interaction.response.send_message(f"Now playing: {vc.queue[0]}. There are {len(vc.queue)-1} songs left.")
+    else:
+        await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
 
+
+@commands.command()
+async def stop(self, ctx: commands.Context):
+    vc: wavelink.Player = ctx.voice_client
+    if vc.is_playing():
+        await vc.stop()
+        await ctx.send("I stopped it.")
+
+
+@commands.command()
+async def queue(self, ctx: commands.Context):
+    vc: wavelink.Player = ctx.voice_client
+    if not vc.queue.is_empty:
+        print(f"Here is the current queue: {vc.queue}")
+        await ctx.send(f"Here is the current queue: {vc.queue}")
 
 
 
@@ -2158,7 +2177,7 @@ async def on_ready():
     #await client.load_extension('cogs.music')
     print("COG: Music loaded!")
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
-    await log_channel.send(f"Online at **{datetime.now()}**")
+    #await log_channel.send(f"Online at **{datetime.now()}**")
     with open(GlobalLogDir, "a", encoding="utf-8") as f:
         f.write(f"\n\nREADY at {datetime.now()}")
         f.write(' - Logged in as {0.user}'.format(client))
@@ -2200,6 +2219,14 @@ async def on_ready():
     with open(f'{BASE_DIR}Servers{S_SLASH}759861456300015657{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w+') as x:
         x.write(voice_time)
 
+
+    client.loop.create_task(connect_nodes())
+    client.add_listener(on_wavelink_node_ready, 'on_wavelink_node_ready')
+    client.add_listener(on_wavelink_track_end, 'on_wavelink_track_end')
+
+    if BETA_BOT:
+        return
+    
     async for message in epic_memes.history():
         if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
             #print(message.reactions)
@@ -2249,11 +2276,6 @@ async def on_ready():
                 print(f"[ReadyUpVoice]      Path to Voice Time file already exists. {BASE_DIR}Servers{S_SLASH}{guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{Member.id}.txt")
 
     print(f"[ReadyUp]       Calibrated Voice Chat time to {voice_time} seconds")
-
-    client.loop.create_task(connect_nodes())
-    client.add_listener(on_wavelink_node_ready, 'on_wavelink_node_ready')
-    client.add_listener(on_wavelink_track_end, 'on_wavelink_track_end')
-
 
     await bot_runtime_events(1)
     await StatusAutoUpdator()
@@ -2391,8 +2413,9 @@ async def on_voice_state_update(member, before, after):
         x.write(str(total_guild_time_spent)) 
         x.close()
 
-        if before.channel.guild.id == 759861456300015657:
-            await test__bb_voice_channel.send(total_guild_time_spent)
+        if not BETA_BOT:
+            if before.channel.guild.id == 759861456300015657:
+                await test__bb_voice_channel.send(total_guild_time_spent)
 
         #   Finally, send sum to me as a test.
         await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
@@ -2651,7 +2674,8 @@ async def on_message_edit(before, after):
             case_b = str(after)
             output_list = [li for li in difflib.ndiff(case_a, case_b) if li[0] != ' ']
             embed.add_field(name='Modified strings (beta)', value=output_list, inline=False)
-            await LoggingChannel.send(embed=embed)
+            if not BETA_BOT:
+                await LoggingChannel.send(embed=embed)
             return
     
 @client.event
