@@ -1699,11 +1699,15 @@ async def powerplay(interaction: discord.Interaction, search:str):
 
     If not connected, connect to our voice channel.
     """
-    await interaction.response.defer()
+    
     if interaction.user.voice is None:
         return await interaction.followup.send("Not in voice channel")
+    try:
+        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+    except Exception:
+        return await interaction.followup.send("Nodes are still being connected, please wait a minute...")
 
-    vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+    await interaction.response.defer()
 
     tracks = False
 
@@ -1760,7 +1764,7 @@ async def powerplay(interaction: discord.Interaction, search:str):
             embed.add_field(name="Author", value=search.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
             embed.add_field(name="Link", value=search.uri)
-            await interaction.response.send_message(embed=embed)
+            await interaction.followup.send(embed=embed)
         else:
             await vc.queue.put_wait(search)
             await interaction.followup.send(f'Added `{search.title}` to the queue...')
