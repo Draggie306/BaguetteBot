@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -1724,7 +1724,10 @@ async def powerplay(interaction: discord.Interaction, search:str):
             await vc.play(search)
 
             embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
-            embed.set_image(url=search.thumbnail)
+            try:
+                embed.set_image(url=search.thumbnail)
+            except:
+                pass
             embed.add_field(name="Author", value=search.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
             embed.add_field(name="Link", value=search.uri)
@@ -1733,11 +1736,12 @@ async def powerplay(interaction: discord.Interaction, search:str):
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
+                total_duration += (vc.track.length - vc.last_position) # Add the current track length
             print(total_duration)
             await vc.queue.put_wait(search)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{total_duration} seconds.')
+                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{round(total_duration)} seconds.')
 
     if "open.spotify.com/playlist" in search:
         #await interaction.response.send_message("Searching spotify playlist...")
@@ -1753,8 +1757,13 @@ async def powerplay(interaction: discord.Interaction, search:str):
 
     elif "https://www.youtu" in search:
         node = wavelink.NodePool.get_node()
-        search = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
-        await play_track(search)
+        try:
+            search = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            #print(traceback.extract_stack())
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+        await play_track(search[0])
 
     else:
         try:
@@ -1770,6 +1779,13 @@ async def powerplay(interaction: discord.Interaction, search:str):
     else:
         await play_track(search)
 
+
+@client.tree.command(name="shuffle", description="Shuffles the music queue")
+async def shuffle(interaction: discord.Interaction):
+    vc: wavelink.Player = interaction.guild.voice_client
+    random.shuffle(vc.queue._queue)
+    await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
+    print(vc.queue._queue)
 
 @client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
 async def queue(interaction: discord.Interaction):
