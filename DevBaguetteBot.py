@@ -986,8 +986,6 @@ async def play(interaction:discord.Interaction, video:str):
     url = result
     log_string = f"{log_string}\nurl: {result}"
 
-    YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
-
     print(f"[PlayCommand]    ({datetime.now()}) - Got YDL_OPTIONS")
     with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
         try:
@@ -1711,24 +1709,53 @@ async def powerplay(interaction: discord.Interaction, search:str):
 
     tracks = False
 
+    async def play_track(search, type:Optional[str] = None) -> None:
+        if type == "spotify_playlist": # Spotify playlists need special handling as there are multiple songs.
+            #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
+            for track in search:
+                await play_track(track, type="processed_playlist")
+            tracklen = len(tracks)
+            remaining_tracks = len(vc.queue)
+            return await interaction.followup.send(f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
+    
+        if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
+            volume = await get_server_voice_volume(interaction.guild_id)
+            await vc.set_volume(volume)
+            await vc.play(search)
+
+            embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
+            embed.set_image(url=search.thumbnail)
+            embed.add_field(name="Author", value=search.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+            embed.add_field(name="Link", value=search.uri)
+            await interaction.followup.send(embed=embed)
+        else: # Or, if there is something playing, we can put it into the queue.
+            total_duration = 0
+            for track in vc.queue:
+                total_duration += track.duration
+            print(total_duration)
+            await vc.queue.put_wait(search)
+            #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
+            if not type == "processed_playlist":
+                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{total_duration} seconds.')
+
     if "open.spotify.com/playlist" in search:
         #await interaction.response.send_message("Searching spotify playlist...")
+        await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
         tracks = await spotify.SpotifyTrack.search(query=search)
-        print("Searching spotify playlist")
+        print("Processed Spotify playlist.")
 
     elif "open.spotify.com/track" in search:
         #await interaction.response.send_message("Searching spotify individual track")
         print("Searching spotify individual track")
         search = await spotify.SpotifyTrack.search(query=search, return_first=True)
-        if vc.queue.is_empty and not vc.is_playing():
-            volume = await get_server_voice_volume(interaction.guild_id)
-            await vc.set_volume(volume)
-            await vc.play(search)
-            return await interaction.followup.send(f'Playing `{search.title}` in the voice channel...')
-        else:
-            await vc.queue.put_wait(search)
-            await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
-            return await interaction.followup.send(f'Added `{search.title}` to the queue...')
+        await play_track(search)
+
+    elif "https://www.youtu" in search:
+        node = wavelink.NodePool.get_node()
+        search = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
+        await play_track(search)
+
     else:
         try:
             search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
@@ -1737,43 +1764,11 @@ async def powerplay(interaction: discord.Interaction, search:str):
    
 
     if tracks:
+        await play_track(tracks, "spotify_playlist")
         #await interaction.followup.send("Adding playlist to the queue.")
-        for track in tracks:
-            await vc.queue.put_wait(track)
-        tracklen = len(tracks)
-        remaining_tracks = len(vc.queue)-1
-        await interaction.followup.send(f'Added {tracklen} tracks to the queue. There are {remaining_tracks+1} tracks currently queued.')
-        if not vc.is_playing():
-            volume = await get_server_voice_volume(interaction.guild_id)
-            await vc.set_volume(volume)
-            embed = discord.Embed(title="Playing new song", description=f"[{track.title}]({track.uri})")
-            embed.set_image(url=track.thumbnail)
-            embed.add_field(name="Author", value=track.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
-            embed.add_field(name="Link", value=track.uri)
-            await interaction.followup.send(embed=embed)
-            await vc.play(track)
 
     else:
-        if vc.queue.is_empty and not vc.is_playing():
-            volume = await get_server_voice_volume(interaction.guild_id)
-            await vc.set_volume(volume)
-            await vc.play(search)
-            embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
-            embed.set_image(url=search.thumbnail)
-            embed.add_field(name="Author", value=search.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
-            embed.add_field(name="Link", value=search.uri)
-            await interaction.followup.send(embed=embed)
-        else:
-            await vc.queue.put_wait(search)
-            await interaction.followup.send(f'Added `{search.title}` to the queue...')
-
-    total_duration = 0
-    for track in vc.queue:
-        total_duration += track.duration
-    print(total_duration)
-    await interaction.followup.send(f"Current Queue Length: {total_duration}s")
+        await play_track(search)
 
 
 @client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
@@ -1804,6 +1799,8 @@ async def skip(interaction: discord.Interaction):
 
 
 print("Done!\nDefining function and constants...")
+
+YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
 
 class AcceptToSButtons(discord.ui.Button):  
     def __init__(self, label:str, style:discord.ButtonStyle):
@@ -3582,29 +3579,36 @@ async def addroles(ctx):
 #   Get links
 
 @client.command(help="Gets YouTube video raw links.", brief="Gets YouTube video's and raw audio URL", pass_context=True, hidden=True)
-async def links(ctx):
+async def links(ctx, url:str):
     async with ctx.typing():
-        text = ctx.message.content
-        searchTerm = text.split(' ', 1)[-1]
+        with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+            try:
+                video_info = ydl.extract_info(url, download=False)
+                print(f"video_info: {video_info}")
+            except youtube_dl.DownloadError as error:
+                print(f"ERROR: {error}")
+                return await ctx(f"A download error occured: {error}")
 
-        results = YoutubeSearch(searchTerm, max_results=1).to_dict()
+            url = video_info['formats'][0]['url']
+            with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
+                f.write(f"{video_info}")
+            if "manifest.googlevideo.com" in url:
+                url = video_info['url']#[0]['fragment_base_url']
+                #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
+                
+            # Find the element in the `formats` list with the highest value of `abr`
+            print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
+            best_format = max([f for f in video_info['formats'] if 'abr' in f], key=lambda x: x['abr'])
+            print(f"\nbest_format: {best_format}")
 
-        for v in results:
-            result = ('https://www.youtube.com/watch?v=' + v['id'])
-            print(result)
-            url = result
-        
-            text = ctx.message.content
+            # Extract the `url` attribute of the element
+            url = best_format['url']
+            print(f"\nbest_format - url: {url}")
 
-            ydl_opts = {'format': 'bestaudio'}
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-                URL = info['formats'][0]['url']
-                print(f"\n\nurl = {URL}")
-                embed = discord.Embed()
-                embed.description = (f"[audio url]({URL})")
-                await ctx.send(embed=embed)
-
+            audio_bitrate = best_format['abr']
+            print(f"\nbest_format - abr level: {audio_bitrate}")
+            embed = discord.Embed(title="Audio Links", description=f"[audio url]({url}), abr: {audio_bitrate}")
+            await ctx.send(embed=embed)
 
 @client.command(hidden=True)
 async def create_voice_chat(ctx):
