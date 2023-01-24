@@ -18,6 +18,7 @@ from        json import loads
 from        pathlib import Path
 from        discord import app_commands
 from        typing import Optional
+from        wavelink.ext import spotify
 
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
@@ -83,6 +84,10 @@ else:
     import keep_alive       # This is only in BaguetteBot's Replit page to run 24/7.
     keep_alive.keep_alive()
 
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_api_key.txt", 'r') as spapi:
+    spotify_id = spapi.read()
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
+    spotify_client_id = spcid.read()
 
 if running_locally:
     if BETA_BOT:
@@ -1643,13 +1648,6 @@ async def join(interaction:discord.Interaction):
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
 
-from wavelink.ext import spotify
-
-with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_api_key.txt", 'r') as spapi:
-    spotify_id = spapi.read()
-with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
-    spotify_client_id = spcid.read()
-
 async def connect_nodes():
     """Connect to our Lavalink nodes."""
     await client.wait_until_ready()
@@ -1688,11 +1686,10 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
     except Exception as e:
         await player.channel.send(e)
 
-from wavelink.ext import spotify
-
 @client.tree.command(name="powerplay", description="Test wavelink command series.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?")
 async def powerplay(interaction: discord.Interaction, search:str):
+    await slash_log(interaction)
     """Play a song with the given search query.
 
     If not connected, connect to our voice channel.
@@ -1705,7 +1702,7 @@ async def powerplay(interaction: discord.Interaction, search:str):
     except Exception:
         return await interaction.followup.send("Nodes are still being connected, please wait a minute...")
 
-    await interaction.response.defer()
+    x = await interaction.response.defer()
 
     tracks = False
 
@@ -1716,7 +1713,7 @@ async def powerplay(interaction: discord.Interaction, search:str):
                 await play_track(track, type="processed_playlist")
             tracklen = len(tracks)
             remaining_tracks = len(vc.queue)
-            return await interaction.followup.send(f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
+            return await interaction.followup.send(content=f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
     
         if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
             volume = await get_server_voice_volume(interaction.guild_id)
@@ -1730,7 +1727,7 @@ async def powerplay(interaction: discord.Interaction, search:str):
                 pass
             embed.add_field(name="Author", value=search.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
-            embed.add_field(name="Link", value=search.uri)
+            embed.add_field(name="Queue Length", value=vc.queue.count)
             await interaction.followup.send(embed=embed)
         else: # Or, if there is something playing, we can put it into the queue.
             total_duration = 0
@@ -1741,11 +1738,11 @@ async def powerplay(interaction: discord.Interaction, search:str):
             await vc.queue.put_wait(search)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{round(total_duration)} seconds.')
+                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{await duration_to_time(round(total_duration))}.')
 
     if "open.spotify.com/playlist" in search:
         #await interaction.response.send_message("Searching spotify playlist...")
-        await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
+        #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
         tracks = await spotify.SpotifyTrack.search(query=search)
         print("Processed Spotify playlist.")
 
@@ -1782,6 +1779,7 @@ async def powerplay(interaction: discord.Interaction, search:str):
 
 @client.tree.command(name="shuffle", description="Shuffles the music queue")
 async def shuffle(interaction: discord.Interaction):
+    await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     random.shuffle(vc.queue._queue)
     await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
@@ -1789,6 +1787,7 @@ async def shuffle(interaction: discord.Interaction):
 
 @client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
 async def queue(interaction: discord.Interaction):
+    await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.queue.is_empty:
         print(f"Here is the current queue: {vc.queue}")
@@ -1796,6 +1795,7 @@ async def queue(interaction: discord.Interaction):
         
 @client.tree.command(name="skip", description="Wavelink skip audio.")
 async def skip(interaction: discord.Interaction):
+    await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if vc is not None:
         if not vc.queue.is_empty:
@@ -1811,8 +1811,6 @@ async def skip(interaction: discord.Interaction):
             await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
     else:
         await interaction.response.send_message("I'm not in a Voice Channel.")
-
-
 
 print("Done!\nDefining function and constants...")
 
@@ -1940,13 +1938,16 @@ async def get_user_settings(user_id):
     if os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json"):
         with open (f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json", "r") as file:
             json_data = json.load(file)
+        
         if json_data['accepted_tos'] == 'true':
             settings = json_data['user_settings']
             return settings
         else:
             return None
     else:
-        return None
+        print(f"[GetUserSettings]   No valid user settings file for user id {user_id}")
+        first_save_user_settings(user_id)
+        await get_user_settings(user_id)
 
 # Define the default file layout
 default_configfile = {
@@ -1957,7 +1958,7 @@ default_configfile = {
         "get_dm_notification_for_coin_threshold": "false",
         "reminders_for_voice_time": "false",
         "participate_in_experiments": "false",
-        "can_use_shop_section_2": "true",
+        "can_use_shop_section_2": "false",
         "contribute_to_statistics": "true",
     },
     "accepted_tos": "false",
