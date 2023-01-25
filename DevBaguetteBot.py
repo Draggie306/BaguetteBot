@@ -946,129 +946,9 @@ async def log(interaction:discord.Interaction, term:str):
     f.write(f"\nCOMMAND RAN -> '.log' ran by {interaction.user} at {datetime.now()}")
     f.close()
 
-#   ytstream
-
-@client.tree.command(name="play", description="[Audio] Streams YT audio. Sligthly buggy, may die randomly.")
-@app_commands.describe(video="What video would you like to search for and play?")
-async def play(interaction:discord.Interaction, video:str):
-    await slash_log(interaction)
-    """This uses `youtube-dl` to extract and get links to a searched term. If the search term is a link with a video ID,
-    it will extract straight to that ID. If not, it will search for the most liely video.\n
-    When it has found a matching video, its formats are extracted. It then uses list comprehension to filter out any 
-    elements in the formats list that do not have the `abr` (audio bitrate) key to prevent errors. The resulting list 
-    is then passed to the `max` function. The `max` function then returns the element with the highest value of `abr`, 
-    as to get the best quality audio to stream into the `VoiceChannel`. This ensures that the `KeyError` error will not 
-    occur, since the list only contains elements that have the `abr`     key."""
-    print(f"/ [SlashCommand] 'play' ran by {interaction.user.id} in {interaction.guild_id}. The search term was '{video}'.")
-    if not interaction.user.guild_permissions.stream:
-        return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
-    await interaction.response.defer() # Defer due to rate limiting being annoying sometimes grr
-
-
-    if not interaction.user.voice:
-        return await interaction.followup.send("You aren't in a Voice Channel.")
-
-    voice_client = interaction.guild.voice_client
-    if not voice_client:
-        channel = interaction.user.voice.channel
-        await channel.connect()
-        voice_client = interaction.guild.voice_client
-    log_string = ""
-    searchTerm = video
-    millisecs = round(time.time() * 1000)
-    if "spotify.com" in searchTerm:
-        print(f"/ [SlashCommand]       Returning a spotify link: {searchTerm}")
-        return await interaction.followup.send("Spotify links are not supported because no")
-    if "?v=" in searchTerm:
-        vid_id = searchTerm[searchTerm.find("v=")+2:searchTerm.find("v=")+13]
-        result = f'https://www.youtube.com/watch?v={vid_id}'
-        log_string = f"{log_string}\nresult: {result}"
-    else:
-        results = YoutubeSearch(searchTerm, max_results=1).to_dict()
-        result = f'https://www.youtube.com/watch?v={results[0]["id"]}'
-        log_string = f"{log_string}\nresult: {result}"
-
-    url = result
-    log_string = f"{log_string}\nurl: {result}"
-
-    print(f"[PlayCommand]    ({datetime.now()}) - Got YDL_OPTIONS")
-    with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-        try:
-            video_info = ydl.extract_info(url, download=False)
-            log_string = f"{log_string}\nvideo_info: {video_info}"
-        except youtube_dl.DownloadError as error:
-            log_string = f"{log_string}\nERROR: {error}"
-            return await interaction.response.send_message(f"A download error occured: {error}")
-
-        url = video_info['formats'][0]['url']
-        with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
-            f.write(f"{video_info}")
-        if "manifest.googlevideo.com" in url:
-            url = video_info['url']#[0]['fragment_base_url']
-            #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
-            
-        # Find the element in the `formats` list with the highest value of `abr`
-        print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
-        info = video_info
-        best_format = max([f for f in info['formats'] if 'abr' in f], key=lambda x: x['abr'])
-        log_string = f"{log_string}\nbest_format: {best_format}"
-
-        # Extract the `url` attribute of the element
-        url = best_format['url']
-        log_string = f"{log_string}\nbest_format - url: {url}"
-
-        audio_bitrate = best_format['abr']
-        log_string = f"{log_string}\nbest_format - abr level: {audio_bitrate}"
-    
-        #await interaction.followup.send(f"[debug] `{url}`")
-        print(f"/ [PlayCommand]     ({datetime.now()}) - Probing URL: {url}")
-
-    print(f"/ [PlayCommand]      ({datetime.now()}) - Extracted info")
-
-    volume = await get_server_voice_volume(interaction.guild_id)
-    volume = volume*100
-
-    try:
-        source = discord.FFmpegPCMAudio(source=url, options=FFMPEG_OPTIONS)
-        #voice_client.source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-        source = discord.PCMVolumeTransformer(source, volume=volume)
-    except Exception as error:
-        print(error)
-        return await interaction.followup.send(f"[debug] An unexpected error has occured and audio cannot proceed to be played: {error}")
-    
-    if voice_client.is_playing():
-        voice_client.stop()
-    
-    voice_client.play(source)
-    voice_client.is_playing()
-
-    #voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
-    
-    doneMillisecs = round(time.time() * 1000)
-    timeDelay = doneMillisecs - millisecs
-    video_title = info.get('title')
-    
-    og_duration = info.get('duration')
-
-    duration = await duration_to_time(og_duration)
-
-    embed=discord.Embed(title="Playing audio", description=f"**[{video_title}]({info.get('webpage_url')})**", colour=0x228B22)
-    embed.add_field(name="Channel", value=f"[{info.get('channel')}]({info.get('channel_url')})")
-    embed.add_field(name="Duration", value=duration)
-    embed.add_field(name="Views", value=format(int(info.get('view_count')), ","))
-    #embed.add_field(name="Likes", value=f"{info.get('like_count')}")
-    embed.add_field(name="Publish Time", value=(results[0]['publish_time']))
-    embed.add_field(name="Time taken", value=f"{timeDelay}ms")
-    embed.add_field(name="Audio bitrate", value=f"{audio_bitrate} kbps")
-    embed.set_thumbnail(url=(info.get('thumbnail')))
-    if int(og_duration) > 3600:
-        embed.add_field(name="⚠️ Warning", value=f"This video is very long, and may not work properly. If there is no audio or it is a little buggy, please use another video. But I'll try as best I can!", inline=True)
-    await interaction.followup.send(embed=embed)
-    print("Send embed")
-
 @client.tree.command(name="volume", description=f"[Audio] Change the audio player's volume or lock it.")
 @app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME}%. Values above 1000 don't work.", lock="[Manage Server] Would you this volume to be locked? ('True' be specified each time.)")
-async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
+async def volume(interaction:discord.Interaction, percentage: int, lock: bool=False):  
     try:
         volume_float = int(percentage)
     except Exception as e:
@@ -1688,9 +1568,9 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
     except Exception as e:
         await player.channel.send(e)
 
-@client.tree.command(name="powerplay", description="Test wavelink command series.")
+@client.tree.command(name="play", description="Test wavelink command series.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
-async def powerplay(interaction: discord.Interaction, search:str, seek:Optional[int], dev_stuff:Optional[bool] = False):
+async def play(interaction: discord.Interaction, search:str, seek:Optional[int], dev_stuff:Optional[bool] = False):
     await slash_log(interaction)
     """Play a song with the given search query.
 
