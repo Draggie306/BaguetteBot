@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, re
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -1067,7 +1067,7 @@ async def play(interaction:discord.Interaction, video:str):
     print("Send embed")
 
 @client.tree.command(name="volume", description=f"[Audio] Change the audio player's volume or lock it.")
-@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
+@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME}%. Values above 1000 don't work.", lock="[Manage Server] Would you this volume to be locked? ('True' be specified each time.)")
 async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
     try:
         volume_float = int(percentage)
@@ -1087,15 +1087,19 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
     if lock:
         if not interaction.user.guild_permissions.manage_guild:
             return await interaction.response.send_message(f"You are trying to lock a voice channel without having the right priviliges: `manage_guild`.")
-        if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
-            with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
-                file.write(str(volume_float))
-            with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
-                file.close()
-            return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float*100}% for this server.")
-        else:
-            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
-            str_to_send = f"{str_to_send}Removed the lock on voice volume."
+        with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
+            file.write(str(volume_float))
+        with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
+            file.close()
+
+        vc: wavelink.Player = interaction.guild.voice_client
+        if vc.is_playing():
+            await vc.set_volume(volume_float)
+
+        return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float}% for this server.")
+    else:
+        os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
+        str_to_send = f"{str_to_send}Removed the lock on voice volume."
     
     if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
         if interaction.user.guild_permissions.manage_guild:
@@ -1319,12 +1323,12 @@ async def bitrates(interaction:discord.Interaction, bitrate: Optional[str]):
 @client.tree.command(name="pause", description="[Audio] Pauses or resumes audio being played")
 async def pause(interaction:discord.Interaction):
     await slash_log(interaction)
-    voice_client = interaction.guild.voice_client
-    if voice_client.is_playing():
-        voice_client.pause()
+    vc = interaction.guild.voice_client
+    if not vc._paused:
+        await vc.pause()
         await interaction.response.send_message("*✅ Paused the current audio playing!*")
-    elif voice_client.is_paused():
-        voice_client.resume()
+    elif vc._paused:
+        await vc.resume()
         await interaction.response.send_message("*✅ Resumed playing the audio!*")
     else:
         await interaction.response.send_message("Audio is unable to be paused")
@@ -1685,8 +1689,8 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
         await player.channel.send(e)
 
 @client.tree.command(name="powerplay", description="Test wavelink command series.")
-@app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?")
-async def powerplay(interaction: discord.Interaction, search:str):
+@app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
+async def powerplay(interaction: discord.Interaction, search:str, seek:Optional[int], dev_stuff:Optional[bool] = False):
     await slash_log(interaction)
     """Play a song with the given search query.
 
@@ -1694,20 +1698,23 @@ async def powerplay(interaction: discord.Interaction, search:str):
     """
     
     if interaction.user.voice is None:
-        return await interaction.followup.send("Not in voice channel")
+        return await interaction.response.send_message("Not in voice channel")
     try:
         vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
     except Exception:
-        return await interaction.followup.send("Nodes are still being connected, please wait a minute...")
+        return await interaction.response.send_message("Nodes are still being connected, please wait a minute...")
 
-    x = await interaction.response.defer()
+    await interaction.response.defer()
 
     tracks = False
 
-    async def play_track(search, type:Optional[str] = None) -> None:
+    async def play_track(search_video, type:Optional[str] = None, offset:Optional[int] = False) -> None:
+        print(search_video)
+        if offset:
+            print(f"Offset: {offset}s")
         if type == "spotify_playlist": # Spotify playlists need special handling as there are multiple songs.
             #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
-            for track in search:
+            for track in search_video:
                 await play_track(track, type="processed_playlist")
             tracklen = len(tracks)
             remaining_tracks = len(vc.queue)
@@ -1716,27 +1723,32 @@ async def powerplay(interaction: discord.Interaction, search:str):
         if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
-            await vc.play(search)
-
-            embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
+            await vc.play(search_video)
+            if offset:
+                offset = ((int(offset)) * 1000)
+                await vc.seek(offset)
+            embed = discord.Embed(title="Playing new song", description=f"[{search_video.title}]({search_video.uri})")
             try:
-                embed.set_image(url=search.thumbnail)
+                embed.set_image(url=search_video.thumbnail)
             except:
-                pass
-            embed.add_field(name="Author", value=search.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+                embed.add_field(name="Thumbnail", value="<unable to get.>")
+            embed.add_field(name="Author", value=search_video.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration)))
             embed.add_field(name="Queue Length", value=vc.queue.count)
             await interaction.followup.send(embed=embed)
+
         else: # Or, if there is something playing, we can put it into the queue.
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
             total_duration = total_duration + (vc.track.length) - (vc.last_position) # Add the current track length
             print(total_duration)
-            await vc.queue.put_wait(search)
+            await vc.queue.put_wait(search_video)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+
+    # end of func
 
     if "open.spotify.com/playlist" in search:
         #await interaction.response.send_message("Searching spotify playlist...")
@@ -1750,19 +1762,25 @@ async def powerplay(interaction: discord.Interaction, search:str):
         search = await spotify.SpotifyTrack.search(query=search, return_first=True)
         await play_track(search)
 
-    elif "https://www.youtu" in search:
+    elif "youtu" in search:
         node = wavelink.NodePool.get_node()
+        #if "?t" in search:
+        #    print("splitting...")
+        #    seek = search.split('=')[1]
+        #    search = search.split('?')[0]
         try:
-            search = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
+            search_video = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
+
         except Exception as e:
             print(f"An error occurred: {e}")
             #print(traceback.extract_stack())
             return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
-        await play_track(search[0])
+        print("Playing track youtu")
+        return await play_track((search_video[0]), None, seek)
 
     else:
         try:
-            search: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
+            search_video: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
         except IndexError:
             return await interaction.followup.send("There was no valid YouTube track for this search term. Please make sure the video is public.")
    
@@ -1772,7 +1790,22 @@ async def powerplay(interaction: discord.Interaction, search:str):
         #await interaction.followup.send("Adding playlist to the queue.")
 
     else:
-        await play_track(search)
+        try:
+            await play_track(search_video, None, seek)
+        except Exception as e:
+            print(f"[Error]     An error occurred: {e}")
+            print(traceback.format_exc())
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+
+@client.tree.command(name="seek", description="Seeks to a position in the channel")
+@app_commands.describe(position="Enter the time in seconds to seek to")
+async def seek(interaction: discord.Interaction, position:int):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.is_playing():
+        return await interaction.response.send_message("Noting is playing.")
+    await vc.seek((position*1000))
+    return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 @client.tree.command(name="shuffle", description="Shuffles the music queue")
 async def shuffle(interaction: discord.Interaction):
@@ -1780,6 +1813,7 @@ async def shuffle(interaction: discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc is None:
         return await interaction.response.send_message("There is nothing to shuffle")
+    random.shuffle(vc.queue._queue)
     await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
     print(vc.queue._queue)
 
