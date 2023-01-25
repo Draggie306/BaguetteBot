@@ -1,5 +1,5 @@
-DRAGGIEBOT_VERSION = "v1.3.2"
-BUILD = "e"
+DRAGGIEBOT_VERSION = "v1.3.3"
+BUILD = ""
 BETA_BOT = False
 
 """
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, re
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -18,10 +18,11 @@ from        json import loads
 from        pathlib import Path
 from        discord import app_commands
 from        typing import Optional
+from        wavelink.ext import spotify
 
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
-VOICE_VOLUME = 0.3
+VOICE_VOLUME = 30
 CROISSANTS = [796777705520758795, 821405856285196350, 588081261537394730]
 CROISSANT_NAMES = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
 TESTER_GUILD_IDS = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -39,7 +40,7 @@ ID_DRAGGIE = 382784106984898560
 DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
-AUDIO_SUBSYSTEM = "ffmpeg/wavelink"
+AUDIO_SUBSYSTEM = "wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -83,9 +84,16 @@ else:
     import keep_alive       # This is only in BaguetteBot's Replit page to run 24/7.
     keep_alive.keep_alive()
 
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_api_key.txt", 'r') as spapi:
+    spotify_id = spapi.read()
+with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
+    spotify_client_id = spcid.read()
 
 if running_locally:
-    subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
+    if BETA_BOT:
+        subprocess.Popen(['java', '-jar', f'D:\\Draggie Programs\\BetaBaguetteBot\\BaguetteBot\\Lavalink_Stable.jar'])
+    else:
+        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -101,43 +109,6 @@ client = commands.Bot(
     )
 
 print("Done!\nSlash commands initialising...")
-
-
-class Music(commands.Cog):
-    """Music cog to hold Wavelink related commands and listeners."""
-
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
-        bot.loop.create_task(self.connect_nodes())
-
-    async def connect_nodes(self):
-        """Connect to our Lavalink nodes."""
-        await self.bot.wait_until_ready()
-
-        await wavelink.NodePool.create_node(bot=bot,
-                                            host='0.0.0.0',
-                                            port=2333,
-                                            password='YOUR_LAVALINK_PASSWORD')
-
-    @commands.Cog.listener()
-    async def on_wavelink_node_ready(self, node: wavelink.Node):
-        """Event fired when a node has finished connecting."""
-        print(f'Node: <{node.identifier}> is ready!')
-
-    @commands.command()
-    async def newplay(self, ctx: commands.Context, *, search: wavelink.YouTubeTrack):
-        """Play a song with the given search query.
-
-        If not connected, connect to our voice channel.
-        """
-        if not ctx.voice_client:
-            vc: wavelink.Player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
-        else:
-            vc: wavelink.Player = ctx.voice_client
-
-        await vc.play(search)
-
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
@@ -975,157 +946,40 @@ async def log(interaction:discord.Interaction, term:str):
     f.write(f"\nCOMMAND RAN -> '.log' ran by {interaction.user} at {datetime.now()}")
     f.close()
 
-#   ytstream
-
-@client.tree.command(name="play", description="[Audio] Streams YT audio. Sligthly buggy, may die randomly.")
-@app_commands.describe(video="What video would you like to search for and play?")
-async def play(interaction:discord.Interaction, video:str):
-    await slash_log(interaction)
-    """This uses `youtube-dl` to extract and get links to a searched term. If the search term is a link with a video ID,
-    it will extract straight to that ID. If not, it will search for the most liely video.\n
-    When it has found a matching video, its formats are extracted. It then uses list comprehension to filter out any 
-    elements in the formats list that do not have the `abr` (audio bitrate) key to prevent errors. The resulting list 
-    is then passed to the `max` function. The `max` function then returns the element with the highest value of `abr`, 
-    as to get the best quality audio to stream into the `VoiceChannel`. This ensures that the `KeyError` error will not 
-    occur, since the list only contains elements that have the `abr`     key."""
-    print(f"/ [SlashCommand] 'play' ran by {interaction.user.id} in {interaction.guild_id}. The search term was '{video}'.")
-    if not interaction.user.guild_permissions.stream:
-        return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
-    await interaction.response.defer() # Defer due to rate limiting being annoying sometimes grr
-
-
-    if not interaction.user.voice:
-        return await interaction.followup.send("You aren't in a Voice Channel.")
-
-    voice_client = interaction.guild.voice_client
-    if not voice_client:
-        channel = interaction.user.voice.channel
-        await channel.connect()
-        voice_client = interaction.guild.voice_client
-    log_string = ""
-    searchTerm = video
-    millisecs = round(time.time() * 1000)
-    if "spotify.com" in searchTerm:
-        print(f"/ [SlashCommand]       Returning a spotify link: {searchTerm}")
-        return await interaction.followup.send("Spotify links are not supported because no")
-    if "?v=" in searchTerm:
-        vid_id = searchTerm[searchTerm.find("v=")+2:searchTerm.find("v=")+13]
-        result = f'https://www.youtube.com/watch?v={vid_id}'
-        log_string = f"{log_string}\nresult: {result}"
-    else:
-        results = YoutubeSearch(searchTerm, max_results=1).to_dict()
-        result = f'https://www.youtube.com/watch?v={results[0]["id"]}'
-        log_string = f"{log_string}\nresult: {result}"
-
-    url = result
-    log_string = f"{log_string}\nurl: {result}"
-
-    YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
-
-    print(f"[PlayCommand]    ({datetime.now()}) - Got YDL_OPTIONS")
-    with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-        try:
-            video_info = ydl.extract_info(url, download=False)
-            log_string = f"{log_string}\nvideo_info: {video_info}"
-        except youtube_dl.DownloadError as error:
-            log_string = f"{log_string}\nERROR: {error}"
-            return await interaction.response.send_message(f"A download error occured: {error}")
-
-        url = video_info['formats'][0]['url']
-        with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
-            f.write(f"{video_info}")
-        if "manifest.googlevideo.com" in url:
-            url = video_info['url']#[0]['fragment_base_url']
-            #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
-            
-        # Find the element in the `formats` list with the highest value of `abr`
-        print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
-        info = video_info
-        best_format = max([f for f in info['formats'] if 'abr' in f], key=lambda x: x['abr'])
-        log_string = f"{log_string}\nbest_format: {best_format}"
-
-        # Extract the `url` attribute of the element
-        url = best_format['url']
-        log_string = f"{log_string}\nbest_format - url: {url}"
-
-        audio_bitrate = best_format['abr']
-        log_string = f"{log_string}\nbest_format - abr level: {audio_bitrate}"
-    
-        #await interaction.followup.send(f"[debug] `{url}`")
-        print(f"/ [PlayCommand]     ({datetime.now()}) - Probing URL: {url}")
-
-    print(f"/ [PlayCommand]      ({datetime.now()}) - Extracted info")
-
-    volume = await get_server_voice_volume(interaction.guild_id)
-
-    try:
-        source = discord.FFmpegPCMAudio(source=url, options=FFMPEG_OPTIONS)
-        #voice_client.source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-        source = discord.PCMVolumeTransformer(source, volume=volume)
-    except Exception as error:
-        print(error)
-        return await interaction.followup.send(f"[debug] An unexpected error has occured and audio cannot proceed to be played: {error}")
-    
-    if voice_client.is_playing():
-        voice_client.stop()
-    
-    voice_client.play(source)
-    voice_client.is_playing()
-
-    #voice_client.play(discord.FFmpegPCMAudio(URL, options=FFMPEG_OPTIONS, executable="D:\\Downloads\\FFMPEG\\bin\\ffmpeg.exe"))
-    
-    doneMillisecs = round(time.time() * 1000)
-    timeDelay = doneMillisecs - millisecs
-    video_title = info.get('title')
-    
-    og_duration = info.get('duration')
-
-    duration = await duration_to_time(og_duration)
-
-    embed=discord.Embed(title="Playing audio", description=f"**[{video_title}]({info.get('webpage_url')})**", colour=0x228B22)
-    embed.add_field(name="Channel", value=f"[{info.get('channel')}]({info.get('channel_url')})")
-    embed.add_field(name="Duration", value=duration)
-    embed.add_field(name="Views", value=format(int(info.get('view_count')), ","))
-    #embed.add_field(name="Likes", value=f"{info.get('like_count')}")
-    embed.add_field(name="Publish Time", value=(results[0]['publish_time']))
-    embed.add_field(name="Time taken", value=f"{timeDelay}ms")
-    embed.add_field(name="Audio bitrate", value=f"{audio_bitrate} kbps")
-    embed.set_thumbnail(url=(info.get('thumbnail')))
-    if int(og_duration) > 3600:
-        embed.add_field(name="⚠️ Warning", value=f"This video is very long, and may not work properly. If there is no audio or it is a little buggy, please use another video. But I'll try as best I can!", inline=True)
-    await interaction.followup.send(embed=embed)
-    print("Send embed")
-
 @client.tree.command(name="volume", description=f"[Audio] Change the audio player's volume or lock it.")
-@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME*100}%. Values above 1000 don't work.", lock="[Manage Server] Would you like to toggle the lock?")
-async def play(interaction:discord.Interaction, percentage: int, lock: bool=False):  
+@app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME}%. Values above 1000 don't work.", lock="[Manage Server] Would you this volume to be locked? ('True' be specified each time.)")
+async def volume(interaction:discord.Interaction, percentage: int, lock: bool=False):  
     try:
-        volume_float = float(percentage/100)
+        volume_float = int(percentage)
     except Exception as e:
         return await interaction.response.send_message(f"Unable to convert {volume_float} into an integer.")
 
     str_to_send = ""
 
-    if volume_float > 10:
-        volume_float = 10
+    if volume_float > 1000:
+        volume_float = 1000
 
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
         with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(VOICE_VOLUME*100))
+            f.write(str(VOICE_VOLUME))
             print(f"[VOICE_VOLUME]       Created a directory for guild_id {interaction.guild_id}")
 
     if lock:
         if not interaction.user.guild_permissions.manage_guild:
             return await interaction.response.send_message(f"You are trying to lock a voice channel without having the right priviliges: `manage_guild`.")
-        if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
-            with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
-                file.write(str(volume_float))
-            with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
-                file.close()
-            return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float*100}% for this server.")
-        else:
-            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
-            str_to_send = f"{str_to_send}Removed the lock on voice volume."
+        with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
+            file.write(str(volume_float))
+        with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
+            file.close()
+
+        vc: wavelink.Player = interaction.guild.voice_client
+        if vc.is_playing():
+            await vc.set_volume(volume_float)
+
+        return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float}% for this server.")
+    else:
+        os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
+        str_to_send = f"{str_to_send}Removed the lock on voice volume."
     
     if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
         if interaction.user.guild_permissions.manage_guild:
@@ -1138,11 +992,17 @@ async def play(interaction:discord.Interaction, percentage: int, lock: bool=Fals
         if voice_client.is_playing():
             voice_client.source.volume = volume_float
 
-    
     with open (f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as file:
         file.write(str(volume_float))
         print(f"[VOICE_VOLUME]       Written to {interaction.guild_id} file: {str(volume_float)}")
-        str_to_send=(f"{str_to_send}\n{EMOJI_TICK_ANIMATED} Set the server's voice percentage to: **{volume_float*100}%.**")
+        str_to_send=(f"{str_to_send}\n{EMOJI_TICK_ANIMATED} Set the server's voice percentage to: **{volume_float}%.**")
+
+    vc: wavelink.Player = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+    if vc.is_playing():
+        volume = await get_server_voice_volume(interaction.guild.id)
+        volume = (volume) # as Wavelink uses native percentages
+        await vc.set_volume(volume)
+        str_to_send=f"{str_to_send}\nNOTE: An experimental, faster HD player, Wavelink, is being used to handle audio, so it may take an extra few seconds to normalise audio output."
 
     await interaction.response.send_message(str_to_send)
 
@@ -1273,17 +1133,17 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
         await interaction.followup.send(response_content)
 
 
-async def get_server_voice_volume(guild_id: int) -> float:
+async def get_server_voice_volume(guild_id: int) -> int:
     """Returns the volume of a guild chosen by its members.\n
     Must include parameter of the guild id\n
-    Returns an float which can be used as the percentage to play at"""
+    Returns an percentage as an integer. You can divide this by 100 if you want a float."""
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
         with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(VOICE_VOLUME*100))
+            f.write(str(VOICE_VOLUME))
     with open (f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
         volume = file.read()
-    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}")
-    return float(volume)
+    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}%")
+    return int(volume)
 
 
 @client.tree.command(name="stop", description="Stops whatever is going on in voice chat")
@@ -1292,17 +1152,15 @@ async def stop(interaction:discord.Interaction):
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     voice_client = interaction.guild.voice_client
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc.is_playing():
+        await vc.stop()
+        return await interaction.response.send_message("Stopped playing wavelink player audio.")
     if voice_client is not None:
         voice_client.stop()
+        return await interaction.response.send_message("Stopped playing audio.")
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
-
-    await interaction.response.send_message((str ("Stopped playing audio.")))
-    f = open(GlobalLogDir, "a")
-    f.write(f"\nAUDIO COMMAND RAN -> '.stop' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
-    f.close()
-    print(f"\nAUDIO COMMAND RAN -> '.stop' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
-    return
 
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
@@ -1345,12 +1203,12 @@ async def bitrates(interaction:discord.Interaction, bitrate: Optional[str]):
 @client.tree.command(name="pause", description="[Audio] Pauses or resumes audio being played")
 async def pause(interaction:discord.Interaction):
     await slash_log(interaction)
-    voice_client = interaction.guild.voice_client
-    if voice_client.is_playing():
-        voice_client.pause()
+    vc = interaction.guild.voice_client
+    if not vc._paused:
+        await vc.pause()
         await interaction.response.send_message("*✅ Paused the current audio playing!*")
-    elif voice_client.is_paused():
-        voice_client.resume()
+    elif vc._paused:
+        await vc.resume()
         await interaction.response.send_message("*✅ Resumed playing the audio!*")
     else:
         await interaction.response.send_message("Audio is unable to be paused")
@@ -1427,7 +1285,7 @@ async def mine(interaction:discord.Interaction):
     #   Finally, show the fees, also paid to a random 'Croissant'.
     croissant_to_pay = random.randint(0, 2)
     croissant_paid = CROISSANTS[croissant_to_pay]
-    croisssant_name = croissant_names[croissant_to_pay]
+    croisssant_name = CROISSANT_NAMES[croissant_to_pay]
     embed.add_field(name="**Fees Paid**", value=f"{fee} to **{croisssant_name}**", inline=False)
 
     #   Check for bonuses, new in 1.2.10
@@ -1459,33 +1317,31 @@ async def mine(interaction:discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
     #   Write balance and globally log it!
-    f = open(filedir, 'w+')
-    f.write(str(new_balance))
-    f.close()
-    f = open(GlobalLogDir, "a", encoding='utf-8')
-    f.write(f"COMMAND RAN -> '.mine' ran by {interaction.user} in {interaction.guild.id} at {datetime.now()}")
-    f.close()
+    with open(filedir, 'w+') as f:
+        f.write(str(new_balance))
+        f.close()
+    with open(GlobalLogDir, "a", encoding='utf-8') as f:
+        f.write(f"COMMAND RAN -> '.mine' ran by {interaction.user} in {interaction.guild.id} at {datetime.now()}")
+        f.close()
 
     #   Add the fees to the aforementioned croissant
     randomcroissant = (f"{BASE_DIR}Nolwennium{S_SLASH}{croissant_paid}.txt")
     try:
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
+        with open(randomcroissant, 'r') as e:
+            balance = float(e.read())
     except:
-        e = open(randomcroissant, 'w+')
-        e.write("0")
-        e.close()
+        with open(randomcroissant, 'w+') as e:
+            e.write("0")
+            e.close()
 
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
+        with open(randomcroissant, 'r') as e:
+            balance = float(e.read())
+            e.close()
 
     balance = balance + fee
 
-    f = open(randomcroissant, 'w+')
-    f.write(str(balance))
-    f.close()
+    with open(randomcroissant, 'w+') as f:
+        f.write(str(balance))
     await bot_runtime_events(1)
     print(f"CURRENCY - {NAME_NOLWENNIUM} > {interaction.user.id} has gained {newNumberAfterFee} {NAME_NOLWENNIUM} (fee: {fee}). Their total is {new_balance}")
 
@@ -1674,7 +1530,207 @@ async def join(interaction:discord.Interaction):
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
 
+async def connect_nodes():
+    """Connect to our Lavalink nodes."""
+    await client.wait_until_ready()
+
+    await wavelink.NodePool.create_node(
+        bot=client,
+        host="localhost",
+        port=2333,
+        password="youshallnotpass",
+        spotify_client=spotify.SpotifyClient(
+            client_id=spotify_client_id,
+            client_secret=spotify_id,
+        ),
+    )
+
+async def on_wavelink_node_ready(node: wavelink.Node):
+    """Event fired when a node has finished connecting."""
+    print(f"Node: <{node.identifier}> is ready!")
+
+async def on_wavelink_track_end(player: wavelink.Player, track, reason):
+    try:
+        if not player.queue.is_empty:
+            new = await player.queue.get_wait()
+            volume = await get_server_voice_volume(player.guild.id)
+            print("Playing new song.")
+            embed = discord.Embed(title="Playing new song", description=f"[{new.title}]({new.uri})")
+            embed.set_image(url=new.thumbnail)
+            embed.add_field(name="Author", value=track.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
+            embed.add_field(name="Link", value=track.uri)
+            await player.channel.send(embed=embed)
+            await player.play(new, volume=int(volume))
+        else:
+            await player.stop()
+            await player.channel.send("No more stuff in the queue.")
+    except Exception as e:
+        await player.channel.send(e)
+
+@client.tree.command(name="play", description="Test wavelink command series.")
+@app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
+async def play(interaction: discord.Interaction, search:str, seek:Optional[int], dev_stuff:Optional[bool] = False):
+    await slash_log(interaction)
+    """Play a song with the given search query.
+
+    If not connected, connect to our voice channel.
+    """
+    
+    if interaction.user.voice is None:
+        return await interaction.response.send_message("Not in voice channel")
+    try:
+        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+    except Exception:
+        return await interaction.response.send_message("Nodes are still being connected, please wait a minute...")
+
+    await interaction.response.defer()
+
+    tracks = False
+
+    async def play_track(search_video, type:Optional[str] = None, offset:Optional[int] = False) -> None:
+        print(search_video)
+        if offset:
+            print(f"Offset: {offset}s")
+        if type == "spotify_playlist": # Spotify playlists need special handling as there are multiple songs.
+            #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
+            for track in search_video:
+                await play_track(track, type="processed_playlist")
+            tracklen = len(tracks)
+            remaining_tracks = len(vc.queue)
+            return await interaction.followup.send(content=f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
+    
+        if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
+            volume = await get_server_voice_volume(interaction.guild_id)
+            await vc.set_volume(volume)
+            await vc.play(search_video)
+            if offset:
+                offset = ((int(offset)) * 1000)
+                await vc.seek(offset)
+            embed = discord.Embed(title="Playing new song", description=f"[{search_video.title}]({search_video.uri})")
+            try:
+                embed.set_image(url=search_video.thumbnail)
+            except:
+                embed.add_field(name="Thumbnail", value="<unable to get.>")
+            embed.add_field(name="Author", value=search_video.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration)))
+            embed.add_field(name="Queue Length", value=vc.queue.count)
+            await interaction.followup.send(embed=embed)
+
+        else: # Or, if there is something playing, we can put it into the queue.
+            total_duration = 0
+            for track in vc.queue:
+                total_duration += track.duration
+            total_duration = total_duration + (vc.track.length) - (vc.last_position) # Add the current track length
+            print(total_duration)
+            await vc.queue.put_wait(search_video)
+            #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
+            if not type == "processed_playlist":
+                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+
+    # end of func
+
+    if "open.spotify.com/playlist" in search:
+        #await interaction.response.send_message("Searching spotify playlist...")
+        #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
+        tracks = await spotify.SpotifyTrack.search(query=search)
+        print("Processed Spotify playlist.")
+
+    elif "open.spotify.com/track" in search:
+        #await interaction.response.send_message("Searching spotify individual track")
+        print("Searching spotify individual track")
+        search = await spotify.SpotifyTrack.search(query=search, return_first=True)
+        await play_track(search)
+
+    elif "youtu" in search:
+        node = wavelink.NodePool.get_node()
+        #if "?t" in search:
+        #    print("splitting...")
+        #    seek = search.split('=')[1]
+        #    search = search.split('?')[0]
+        try:
+            search_video = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            #print(traceback.extract_stack())
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+        print("Playing track youtu")
+        return await play_track((search_video[0]), None, seek)
+
+    else:
+        try:
+            search_video: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
+        except IndexError:
+            return await interaction.followup.send("There was no valid YouTube track for this search term. Please make sure the video is public.")
+   
+
+    if tracks:
+        await play_track(tracks, "spotify_playlist")
+        #await interaction.followup.send("Adding playlist to the queue.")
+
+    else:
+        try:
+            await play_track(search_video, None, seek)
+        except Exception as e:
+            print(f"[Error]     An error occurred: {e}")
+            print(traceback.format_exc())
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+
+@client.tree.command(name="seek", description="Seeks to a position in the channel")
+@app_commands.describe(position="Enter the time in seconds to seek to")
+async def seek(interaction: discord.Interaction, position:int):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.is_playing():
+        return await interaction.response.send_message("Noting is playing.")
+    await vc.seek((position*1000))
+    return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
+
+@client.tree.command(name="shuffle", description="Shuffles the music queue")
+async def shuffle(interaction: discord.Interaction):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc is None:
+        return await interaction.response.send_message("There is nothing to shuffle")
+    random.shuffle(vc.queue._queue)
+    await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
+    print(vc.queue._queue)
+
+@client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
+async def queue(interaction: discord.Interaction):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.queue.is_empty:
+        print(f"Here is the current queue: {vc.queue}")
+        await interaction.response.send_message(f"Here is the current queue: {vc.queue}")
+        
+@client.tree.command(name="skip", description="Wavelink skip audio.")
+async def skip(interaction: discord.Interaction):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc is not None:
+        if not vc.queue.is_empty:
+            await vc.stop() # Sort this out make sure it works
+            #embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
+            #embed.set_image(url=search.thumbnail)
+            #embed.add_field(name="Author", value=search.author)
+            #embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+            #embed.add_field(name="Link", value=search.uri)
+            #await interaction.response.send_message(embed=embed)
+            total_duration = 0
+            for track in vc.queue:
+                total_duration += track.duration
+            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
+        else:
+            await vc.stop()
+            await interaction.response.send_message(f"No songs remain in the queue. Stopped the player.")
+    else:
+        await interaction.response.send_message("I'm not in a Voice Channel.")
+
 print("Done!\nDefining function and constants...")
+
+YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist':'True', 'youtube-skip-dash-manifest': 'True'}
 
 class AcceptToSButtons(discord.ui.Button):  
     def __init__(self, label:str, style:discord.ButtonStyle):
@@ -1798,13 +1854,16 @@ async def get_user_settings(user_id):
     if os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json"):
         with open (f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json", "r") as file:
             json_data = json.load(file)
+        
         if json_data['accepted_tos'] == 'true':
             settings = json_data['user_settings']
             return settings
         else:
             return None
     else:
-        return None
+        print(f"[GetUserSettings]   No valid user settings file for user id {user_id}")
+        first_save_user_settings(user_id)
+        await get_user_settings(user_id)
 
 # Define the default file layout
 default_configfile = {
@@ -1815,7 +1874,7 @@ default_configfile = {
         "get_dm_notification_for_coin_threshold": "false",
         "reminders_for_voice_time": "false",
         "participate_in_experiments": "false",
-        "can_use_shop_section_2": "true",
+        "can_use_shop_section_2": "false",
         "contribute_to_statistics": "true",
     },
     "accepted_tos": "false",
@@ -2081,8 +2140,10 @@ async def on_ready():
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
     await client.tree.sync() 
+    #await client.load_extension('cogs.music')
+    print("COG: Music loaded!")
     log_channel = client.get_channel(838107252115374151) # Brigaders_channel
-    await log_channel.send(f"Online at **{datetime.now()}**")
+    #await log_channel.send(f"Online at **{datetime.now()}**")
     with open(GlobalLogDir, "a", encoding="utf-8") as f:
         f.write(f"\n\nREADY at {datetime.now()}")
         f.write(' - Logged in as {0.user}'.format(client))
@@ -2124,6 +2185,14 @@ async def on_ready():
     with open(f'{BASE_DIR}Servers{S_SLASH}759861456300015657{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w+') as x:
         x.write(voice_time)
 
+
+    client.loop.create_task(connect_nodes())
+    client.add_listener(on_wavelink_node_ready, 'on_wavelink_node_ready')
+    client.add_listener(on_wavelink_track_end, 'on_wavelink_track_end')
+
+    if BETA_BOT:
+        return
+    
     async for message in epic_memes.history():
         if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
             #print(message.reactions)
@@ -2310,8 +2379,9 @@ async def on_voice_state_update(member, before, after):
         x.write(str(total_guild_time_spent)) 
         x.close()
 
-        if before.channel.guild.id == 759861456300015657:
-            await test__bb_voice_channel.send(total_guild_time_spent)
+        if not BETA_BOT:
+            if before.channel.guild.id == 759861456300015657:
+                await test__bb_voice_channel.send(total_guild_time_spent)
 
         #   Finally, send sum to me as a test.
         await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
@@ -2532,7 +2602,7 @@ async def on_message_edit(before, after):
 
     LoggingChannel = discord.utils.get(after.guild.channels, name="event-log-baguette", type=discord.ChannelType.text)
 
-    if LoggingChannel is not None:
+    if LoggingChannel is not None and not BETA_BOT:
         if before.content == after.content:
             embed = discord.Embed(title=f"Message modified", description=f"Embed preview added to message ([jump]({after.jump_url}))")
             await LoggingChannel.send(embed=embed)
@@ -2570,7 +2640,8 @@ async def on_message_edit(before, after):
             case_b = str(after)
             output_list = [li for li in difflib.ndiff(case_a, case_b) if li[0] != ' ']
             embed.add_field(name='Modified strings (beta)', value=output_list, inline=False)
-            await LoggingChannel.send(embed=embed)
+            if not BETA_BOT:
+                await LoggingChannel.send(embed=embed)
             return
     
 @client.event
@@ -3028,59 +3099,6 @@ async def on_message(message):
             print(x[1])
             await message.channel.send(x[1])
 
-    #   Send Emoji for Face!
-
-    if message.guild.id == 759861456300015657 or message.guild.id == 384403250172133387:#     Checks whether the server ID matches Baguette Brigaders's server for privacy
-        if hasPrivate in person.roles:
-            messageContent = message.content.lower()
-            #for word in messageContent.split():
-            #    print("")
-            #    if word in nollyWords:
-            ##        await message.add_reaction("<:nolly:786177817993805844>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in oliverWords:
-            #        await message.add_reaction("<:oliver:790576109795409920>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in jackWords:
-            #        await message.add_reaction("<:jacc:786275811405070337>")
-             #       print(f"Matched word in message! {word}")
-            ##    if word in joeWords:
-            #        await message.add_reaction("<:CuteJoe:897467228545503242>")
-            ##        print(f"Matched word in message! {word}")
-            #    if word in haydnWords:
-            #        await message.add_reaction("<:haydn:786276584671412244>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in maisyWords:
-            #        await message.add_reaction("<:maisy:786276271809101840>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in benWords:
-            #        await message.add_reaction("<:bennybooze:788311580768075786>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in ishWords:
-            ##        await message.add_reaction("<:ish:791381704278540369>")
-            #        print(f"Matched word in message! {word}")
-            #    if word in mayaWords:
-            #        await message.add_reaction("<:maya:785942478448230470>") 
-            #        print(f"Matched word in message! {word}")
-            #    if word in samWords:
-            #        await message.add_reaction("<:samf:785942793280815114>")
-            #        print(f"Matched word in message! {word}")
-            #for word in josephTighe:
-            ##    if word in messageContent:
-            #        print(f"Matched word in message! {word}")
-            #        integer = random.randint(1,2)#      Sets random emoji reaction as he has 2 emojis.
-            #        if integer == 1:
-            #            await message.add_reaction("<:hmmnotsureaboutthis:870745923171549234>")#    if random int is 1 search for and add tighe 1
-            ##        if integer == 2:
-            #                await message.add_reaction("<:Joseph:865213431900143656>")#    else, search for and add tighe 2#
-            #for word in charlieSewards:
-            #    if word in messageContent:
-            #        print(f"Matched word in message! {word}")
-           ##         integer = random.randint(1,2)#      Again, sets random emoji reaction as he has 2 emojis.
-           #         if integer == 1:
-            #            await message.add_reaction("<:charlie:903324276147499041>")
-            #        if integer == 2:
-            #            await message.add_reaction("<:CharlieUwU:857907947371495424>")
 #
     #  here we can do global server ones because its funny
 
@@ -3494,29 +3512,36 @@ async def addroles(ctx):
 #   Get links
 
 @client.command(help="Gets YouTube video raw links.", brief="Gets YouTube video's and raw audio URL", pass_context=True, hidden=True)
-async def links(ctx):
+async def links(ctx, url:str):
     async with ctx.typing():
-        text = ctx.message.content
-        searchTerm = text.split(' ', 1)[-1]
+        with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+            try:
+                video_info = ydl.extract_info(url, download=False)
+                print(f"video_info: {video_info}")
+            except youtube_dl.DownloadError as error:
+                print(f"ERROR: {error}")
+                return await ctx(f"A download error occured: {error}")
 
-        results = YoutubeSearch(searchTerm, max_results=1).to_dict()
+            url = video_info['formats'][0]['url']
+            with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
+                f.write(f"{video_info}")
+            if "manifest.googlevideo.com" in url:
+                url = video_info['url']#[0]['fragment_base_url']
+                #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
+                
+            # Find the element in the `formats` list with the highest value of `abr`
+            print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
+            best_format = max([f for f in video_info['formats'] if 'abr' in f], key=lambda x: x['abr'])
+            print(f"\nbest_format: {best_format}")
 
-        for v in results:
-            result = ('https://www.youtube.com/watch?v=' + v['id'])
-            print(result)
-            url = result
-        
-            text = ctx.message.content
+            # Extract the `url` attribute of the element
+            url = best_format['url']
+            print(f"\nbest_format - url: {url}")
 
-            ydl_opts = {'format': 'bestaudio'}
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-                URL = info['formats'][0]['url']
-                print(f"\n\nurl = {URL}")
-                embed = discord.Embed()
-                embed.description = (f"[audio url]({URL})")
-                await ctx.send(embed=embed)
-
+            audio_bitrate = best_format['abr']
+            print(f"\nbest_format - abr level: {audio_bitrate}")
+            embed = discord.Embed(title="Audio Links", description=f"[audio url]({url}), abr: {audio_bitrate}")
+            await ctx.send(embed=embed)
 
 @client.command(hidden=True)
 async def create_voice_chat(ctx):
@@ -3858,6 +3883,7 @@ async def on_slash_command_error(ctx, error):
 
 @client.event
 async def on_command_error(ctx, error):
+    print("error!")
     await bot_runtime_events(1)
     if "is not found" in str(error):
         print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
@@ -3886,7 +3912,7 @@ async def on_command_error(ctx, error):
     await ctx.send(embed=embed)
     print (str(error))
     f = open(GlobalLogDir, "a")
-    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
     f.close()
     f = open(f"{BASE_DIR}errors.txt", "a")#	Modified in repl.it
     f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
