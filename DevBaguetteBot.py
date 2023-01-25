@@ -1401,7 +1401,7 @@ async def mine(interaction:discord.Interaction):
     #   Finally, show the fees, also paid to a random 'Croissant'.
     croissant_to_pay = random.randint(0, 2)
     croissant_paid = CROISSANTS[croissant_to_pay]
-    croisssant_name = croissant_names[croissant_to_pay]
+    croisssant_name = CROISSANT_NAMES[croissant_to_pay]
     embed.add_field(name="**Fees Paid**", value=f"{fee} to **{croisssant_name}**", inline=False)
 
     #   Check for bonuses, new in 1.2.10
@@ -1433,33 +1433,31 @@ async def mine(interaction:discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
     #   Write balance and globally log it!
-    f = open(filedir, 'w+')
-    f.write(str(new_balance))
-    f.close()
-    f = open(GlobalLogDir, "a", encoding='utf-8')
-    f.write(f"COMMAND RAN -> '.mine' ran by {interaction.user} in {interaction.guild.id} at {datetime.now()}")
-    f.close()
+    with open(filedir, 'w+') as f:
+        f.write(str(new_balance))
+        f.close()
+    with open(GlobalLogDir, "a", encoding='utf-8') as f:
+        f.write(f"COMMAND RAN -> '.mine' ran by {interaction.user} in {interaction.guild.id} at {datetime.now()}")
+        f.close()
 
     #   Add the fees to the aforementioned croissant
     randomcroissant = (f"{BASE_DIR}Nolwennium{S_SLASH}{croissant_paid}.txt")
     try:
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
+        with open(randomcroissant, 'r') as e:
+            balance = float(e.read())
     except:
-        e = open(randomcroissant, 'w+')
-        e.write("0")
-        e.close()
+        with open(randomcroissant, 'w+') as e:
+            e.write("0")
+            e.close()
 
-        e = open(randomcroissant, 'r')
-        balance = float(e.read())
-        e.close()
+        with open(randomcroissant, 'r') as e:
+            balance = float(e.read())
+            e.close()
 
     balance = balance + fee
 
-    f = open(randomcroissant, 'w+')
-    f.write(str(balance))
-    f.close()
+    with open(randomcroissant, 'w+') as f:
+        f.write(str(balance))
     await bot_runtime_events(1)
     print(f"CURRENCY - {NAME_NOLWENNIUM} > {interaction.user.id} has gained {newNumberAfterFee} {NAME_NOLWENNIUM} (fee: {fee}). Their total is {new_balance}")
 
@@ -1733,12 +1731,12 @@ async def powerplay(interaction: discord.Interaction, search:str):
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
-                total_duration += (vc.track.length - vc.last_position) # Add the current track length
+            total_duration = total_duration + (vc.track.length) - (vc.last_position) # Add the current track length
             print(total_duration)
             await vc.queue.put_wait(search)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more songs have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+                return await interaction.followup.send(f'Added **{search.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
 
     if "open.spotify.com/playlist" in search:
         #await interaction.response.send_message("Searching spotify playlist...")
@@ -1776,12 +1774,12 @@ async def powerplay(interaction: discord.Interaction, search:str):
     else:
         await play_track(search)
 
-
 @client.tree.command(name="shuffle", description="Shuffles the music queue")
 async def shuffle(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
-    random.shuffle(vc.queue._queue)
+    if vc is None:
+        return await interaction.response.send_message("There is nothing to shuffle")
     await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
     print(vc.queue._queue)
 
@@ -1806,9 +1804,13 @@ async def skip(interaction: discord.Interaction):
             #embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
             #embed.add_field(name="Link", value=search.uri)
             #await interaction.response.send_message(embed=embed)
+            total_duration = 0
+            for track in vc.queue:
+                total_duration += track.duration
             await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
         else:
-            await interaction.response.send_message(f"No songs remain in the queue; nothing to skip.")
+            await vc.stop()
+            await interaction.response.send_message(f"No songs remain in the queue. Stopped the player.")
     else:
         await interaction.response.send_message("I'm not in a Voice Channel.")
 
@@ -3967,6 +3969,7 @@ async def on_slash_command_error(ctx, error):
 
 @client.event
 async def on_command_error(ctx, error):
+    print("error!")
     await bot_runtime_events(1)
     if "is not found" in str(error):
         print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
