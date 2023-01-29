@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.3"
-BUILD = ""
+BUILD = "a"
 BETA_BOT = False
 
 """
@@ -978,8 +978,9 @@ async def volume(interaction:discord.Interaction, percentage: int, lock: bool=Fa
 
         return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float}% for this server.")
     else:
-        os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
-        str_to_send = f"{str_to_send}Removed the lock on voice volume."
+        if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
+            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
+            str_to_send = f"{str_to_send}Removed the lock on voice volume."
     
     if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
         if interaction.user.guild_permissions.manage_guild:
@@ -2858,6 +2859,9 @@ async def on_message(message):
         await console.send("say FRENCH Detected!!!!")
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
+    if "382784106984898560" in message.content and "help" in message.content.lower():
+        await message.reply("Here's a simple way to fix your problem:")
+        await message.channel.send("https://tenor.com/view/valorant-uninstall-launcher-fuck-valorant-valorass-gif-21535312")
 
     async def DLstuff():
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
