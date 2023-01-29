@@ -1,4 +1,4 @@
-DRAGGIEBOT_VERSION = "v1.3.3"
+DRAGGIEBOT_VERSION = "v1.3.4"
 BUILD = "dev"
 BETA_BOT = True
 
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, re
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, schedule
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -19,6 +19,7 @@ from        pathlib import Path
 from        discord import app_commands
 from        typing import Optional
 from        wavelink.ext import spotify
+import      matplotlib.pyplot as plt
 
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
@@ -113,6 +114,79 @@ print("Done!\nSlash commands initialising...")
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
+
+
+@client.tree.command(name="devtest", description="Developer testing commands.")
+async def devtest(interaction:discord.Interaction):
+    # Read data from JSON file
+    with open('Z:\\testfile.txt') as json_file:
+        data = json.load(json_file)
+
+    # Extract the data for each category
+    dates = [d['date'] for d in data]
+    messages_sent = [d['messages_sent'] for d in data]
+    messages_received = [d['messages_received'] for d in data]
+    time_spent_voice = [d['time_spent_voice'] for d in data]
+
+    # Create the bar chart
+    fig, ax = plt.subplots()
+    bar_width = 0.2
+    bar_x = range(len(data))
+
+    ax.bar(bar_x, messages_sent, bar_width, label='Messages Sent')
+    ax.bar([x + bar_width for x in bar_x], messages_received, bar_width, label='Messages Received')
+    ax.bar([x + 2 * bar_width for x in bar_x], time_spent_voice, bar_width, label='Time Spent in Voice Chat')
+
+    # Add labels and title
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Count')
+    ax.set_title('Discord Chat Stats')
+    ax.set_xticks([x + bar_width for x in bar_x], dates)
+    ax.legend()
+
+    # Show plot
+    plt.savefig("Z:\\discord_chart.png")
+    #plt.show()
+    await interaction.response.send_message(file=discord.File("Z:\\discord_chart.png"))
+
+messages_sent = 0
+messages_received = 0
+
+def save_to_json():
+    global messages_sent, messages_received
+    current_day = datetime.now().day
+    try:
+        with open("data.json", "r") as json_file:
+            data = json.load(json_file)
+            last_day = data["day"]
+            if last_day != current_day:
+                data = {
+                    "messages_sent": messages_sent,
+                    "messages_received": messages_received,
+                    "time_spent_voice": time_spent_voice(),
+                    "day": current_day
+                }
+                messages_sent = 0
+                messages_received = 0
+                with open("data.json", "w") as json_file:
+                    json.dump(data, json_file)
+    except:
+        data = {
+            "messages_sent": messages_sent,
+            "messages_received": messages_received,
+            "time_spent_voice": time_spent_voice(),
+            "day": current_day
+        }
+        messages_sent = 0
+        messages_received = 0
+        with open("data.json", "w") as json_file:
+            json.dump(data, json_file)
+
+schedule.every(1).minutes.do(save_to_json)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
 
 @client.tree.command(name="command-2")
 @app_commands.guilds(discord.Object(id=384403250172133387))
@@ -1680,12 +1754,14 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position:int):
+    start_time = time.perf_counter()
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.is_playing():
         return await interaction.response.send_message("Noting is playing.")
     await vc.seek((position*1000))
-    return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
+    return await generic_operation_complete_message(interaction, start_time, f"Seeked to {position*1000}ms.")
+    #return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 @client.tree.command(name="shuffle", description="Shuffles the music queue")
 async def shuffle(interaction: discord.Interaction):
@@ -2858,6 +2934,9 @@ async def on_message(message):
         await console.send("say FRENCH Detected!!!!")
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
+    if "382784106984898560" in message.content and "help" in message.content.lower():
+        await message.reply("Here's a simple way to fix your problem:")
+        await message.channel.send("https://tenor.com/view/valorant-uninstall-launcher-fuck-valorant-valorass-gif-21535312")
 
     async def DLstuff():
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
@@ -3197,6 +3276,12 @@ async def currency(ctx):
     await ctx.send(f"Multiplier: 1.{number}x ({number}0%) bonus {nolwennium_bal}")
     await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
                 
+async def generic_operation_complete_message(interaction, timer, message:Optional[str] = None):
+    """Pass in the interaction and the current time using something like `timer = time.perf_counter()`"""
+    execution_time = time.perf_counter() - timer
+    embed = discord.Embed(title=message, description=f"Operation completed successfully ({round((execution_time), 6)}s)\n")
+    await interaction.response.send_message(embed=embed)
+
 
 #   offline status for replit
 
