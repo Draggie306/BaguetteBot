@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.3"
-BUILD = "a"
+BUILD = "b"
 BETA_BOT = False
 
 """
@@ -2381,11 +2381,10 @@ async def on_voice_state_update(member, before, after):
         x.close()
 
         if not BETA_BOT:
+            #   Finally, send sum to me as a test.
             if before.channel.guild.id == 759861456300015657:
                 await test__bb_voice_channel.send(total_guild_time_spent)
-
-        #   Finally, send sum to me as a test.
-        await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
+            await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
@@ -2860,8 +2859,7 @@ async def on_message(message):
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
     if "382784106984898560" in message.content and "help" in message.content.lower():
-        await message.reply("Here's a simple way to fix your problem:")
-        await message.channel.send("https://tenor.com/view/valorant-uninstall-launcher-fuck-valorant-valorass-gif-21535312")
+        await message.reply("Here's a simple way to fix your problem:", file=discord.File("D:\\Draggie Programs\\valorant-uninstall-launcher-fuck-valorant-valorass-gif.gif"))
 
     async def DLstuff():
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
