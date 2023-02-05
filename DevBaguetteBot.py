@@ -149,44 +149,45 @@ async def devtest(interaction:discord.Interaction):
     #plt.show()
     await interaction.response.send_message(file=discord.File("Z:\\discord_chart.png"))
 
-messages_sent = 0
-messages_received = 0
+async def wip_command():
+    messages_sent = 0
+    messages_received = 0
 
-def save_to_json():
-    global messages_sent, messages_received
-    current_day = datetime.now().day
-    try:
-        with open("data.json", "r") as json_file:
-            data = json.load(json_file)
-            last_day = data["day"]
-            if last_day != current_day:
-                data = {
-                    "messages_sent": messages_sent,
-                    "messages_received": messages_received,
-                    "time_spent_voice": time_spent_voice(),
-                    "day": current_day
-                }
-                messages_sent = 0
-                messages_received = 0
-                with open("data.json", "w") as json_file:
-                    json.dump(data, json_file)
-    except:
-        data = {
-            "messages_sent": messages_sent,
-            "messages_received": messages_received,
-            "time_spent_voice": time_spent_voice(),
-            "day": current_day
-        }
-        messages_sent = 0
-        messages_received = 0
-        with open("data.json", "w") as json_file:
-            json.dump(data, json_file)
+    def save_to_json():
+        global messages_sent, messages_received
+        current_day = datetime.now().day
+        try:
+            with open("data.json", "r") as json_file:
+                data = json.load(json_file)
+                last_day = data["day"]
+                if last_day != current_day:
+                    data = {
+                        "messages_sent": messages_sent,
+                        "messages_received": messages_received,
+                        "time_spent_voice": time_spent_voice(),
+                        "day": current_day
+                    }
+                    messages_sent = 0
+                    messages_received = 0
+                    with open("data.json", "w") as json_file:
+                        json.dump(data, json_file)
+        except:
+            data = {
+                "messages_sent": messages_sent,
+                "messages_received": messages_received,
+                "time_spent_voice": time_spent_voice(),
+                "day": current_day
+            }
+            messages_sent = 0
+            messages_received = 0
+            with open("data.json", "w") as json_file:
+                json.dump(data, json_file)
 
-schedule.every(1).minutes.do(save_to_json)
+    schedule.every(1).minutes.do(save_to_json)
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 @client.tree.command(name="command-2")
 @app_commands.guilds(discord.Object(id=384403250172133387))
@@ -2456,11 +2457,10 @@ async def on_voice_state_update(member, before, after):
         x.close()
 
         if not BETA_BOT:
+            #   Finally, send sum to me as a test.
             if before.channel.guild.id == 759861456300015657:
                 await test__bb_voice_channel.send(total_guild_time_spent)
-
-        #   Finally, send sum to me as a test.
-        await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
+            await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
@@ -2935,8 +2935,8 @@ async def on_message(message):
     if "EmileTigger lost connection" in message.content:
         await console.send("say Au revoir!")
     if "382784106984898560" in message.content and "help" in message.content.lower():
-        await message.reply("Here's a simple way to fix your problem:")
-        await message.channel.send("https://tenor.com/view/valorant-uninstall-launcher-fuck-valorant-valorass-gif-21535312")
+        await message.reply("Here's a simple way to fix your problem:", file=discord.File("D:\\Draggie Programs\\valorant-uninstall-launcher-fuck-valorant-valorass-gif.gif"))
+
 
     async def DLstuff():
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
