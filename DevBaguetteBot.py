@@ -92,7 +92,7 @@ with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
 
 if running_locally:
     if BETA_BOT:
-        subprocess.Popen(['java', '-jar', f'D:\\Draggie Programs\\BetaBaguetteBot\\BaguetteBot\\Lavalink_Stable.jar'])
+        subprocess.Popen(['java', '-jar', f'C:\\test\\Lavalink_Stable.jar'])
     else:
         subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
@@ -1230,7 +1230,8 @@ async def stop(interaction:discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc.is_playing():
         await vc.stop()
-        return await interaction.response.send_message("Stopped playing wavelink player audio.")
+        vc.queue.clear()
+        return await interaction.response.send_message("Stopped playing audio and stopped the queue.\n*Using `/pause` or `/skip` will not clear the queue.*")
     if voice_client is not None:
         voice_client.stop()
         return await interaction.response.send_message("Stopped playing audio.")
@@ -1564,7 +1565,6 @@ async def settings(interaction:discord.Interaction):
 
         style=discord.ButtonStyle.green if value == "true" else discord.ButtonStyle.red
         view.add_item(OptionButton(label=key, style=style))
-        #OptionButton(label=key, style=style)
 
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
@@ -1624,7 +1624,7 @@ async def on_wavelink_node_ready(node: wavelink.Node):
     """Event fired when a node has finished connecting."""
     print(f"Node: <{node.identifier}> is ready!")
 
-async def on_wavelink_track_end(player: wavelink.Player, track, reason):
+async def on_wavelink_track_end(player: wavelink.Player, track, reason  ):
     try:
         if not player.queue.is_empty:
             new = await player.queue.get_wait()
@@ -1642,6 +1642,81 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             await player.channel.send("No more stuff in the queue.")
     except Exception as e:
         await player.channel.send(e)
+
+class PlayButton(discord.ui.Button):  
+    def __init__(self, label:str, style:discord.ButtonStyle):
+        super().__init__(label=label, style = style)
+
+    async def callback(self, interaction):
+        view=discord.ui.View()
+        view.timeout = None
+        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+
+        ### Pause/Play alternating.
+
+        if self.label == "Pause":
+            if not vc._paused:
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                await vc.pause()
+                await interaction.response.edit_message(view=view)
+            else:
+                await interaction.channel.send("Hi!")
+        elif self.label == "Resume":
+            if vc._paused:
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))      
+                await vc.resume()
+                await interaction.response.edit_message(view=view)
+        
+        ### Skipping
+
+        elif self.label == "Skip":
+            if vc.is_playing:
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                await vc.stop()
+            else:
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.danger))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+
+        ### Restart
+
+        elif self.label == "Restart":
+            if vc.is_playing:
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))    
+                await vc.seek(0)
+            else:
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+
+        ### Skip 10 seconds
+
+        elif self.label == "+10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))      
+                await vc.seek((currentPos+10)*1000) 
+        
+        await interaction.response.edit_message(view=view)
+
+
 
 @client.tree.command(name="play", description="Test wavelink command series.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
@@ -1667,14 +1742,36 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         print(search_video)
         if offset:
             print(f"Offset: {offset}s")
+        total_duration = 0
         if type == "spotify_playlist": # Spotify playlists need special handling as there are multiple songs.
             #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
             for track in search_video:
                 await play_track(track, type="processed_playlist")
+                total_duration = total_duration + track.duration
             tracklen = len(tracks)
             remaining_tracks = len(vc.queue)
-            return await interaction.followup.send(content=f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
-    
+            string_to_send = (f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))} remaining.)')
+
+            embed=discord.Embed(title="Added Tracks!", description=string_to_send)
+            view=discord.ui.View()
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            return await interaction.response.send_message(embed=embed)
+
+
+        if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
+            for track in search_video.tracks:
+                await play_track(track, type="processed_playlist")
+                total_duration = total_duration + track.duration
+            tracklen = len(search_video.tracks)
+            remaining_tracks = len(vc.queue)
+
+            string_to_send = (f'Added {tracklen} YouTube videos to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))} remaining.)')
+            embed=discord.Embed(title="Added Tracks!", description=string_to_send)
+            return await interaction.followup.send(embed=embed)
+            
         if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
@@ -1682,15 +1779,20 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             if offset:
                 offset = ((int(offset)) * 1000)
                 await vc.seek(offset)
-            embed = discord.Embed(title="Playing new song", description=f"[{search_video.title}]({search_video.uri})")
+            embed = discord.Embed(title="Now playing", description=f"[{search_video.title}]({search_video.uri})")
             try:
                 embed.set_image(url=search_video.thumbnail)
             except:
                 embed.add_field(name="Thumbnail", value="<unable to get.>")
-            embed.add_field(name="Author", value=search_video.author)
+            embed.add_field(name="Creator", value=search_video.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration)))
             embed.add_field(name="Queue Length", value=vc.queue.count)
-            await interaction.followup.send(embed=embed)
+            view=discord.ui.View()
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.danger))
+            view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            return await interaction.followup.send(embed=embed, view=view)
 
         else: # Or, if there is something playing, we can put it into the queue.
             total_duration = 0
@@ -1710,12 +1812,14 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
         tracks = await spotify.SpotifyTrack.search(query=search)
         print("Processed Spotify playlist.")
+        return await play_track(tracks, "spotify_playlist")
+        #await interaction.followup.send("Adding playlist to the queue.")
 
     elif "open.spotify.com/track" in search:
         #await interaction.response.send_message("Searching spotify individual track")
         print("Searching spotify individual track")
         search = await spotify.SpotifyTrack.search(query=search, return_first=True)
-        await play_track(search)
+        return await play_track(search)
 
     elif "youtu" in search:
         node = wavelink.NodePool.get_node()
@@ -1723,6 +1827,11 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         #    print("splitting...")
         #    seek = search.split('=')[1]
         #    search = search.split('?')[0]
+        if "playlist" in search:
+            tracks = await wavelink.YouTubePlaylist.search(search)
+            print(tracks)
+            return await play_track(tracks, "yt_playlist")
+
         try:
             search_video = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
 
@@ -1730,27 +1839,27 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             print(f"An error occurred: {e}")
             #print(traceback.extract_stack())
             return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
-        print("Playing track youtu")
-        return await play_track((search_video[0]), None, seek)
+        
+        try:
+            print("Playing youtube track")
+            return await play_track((search_video[0]), None, seek)
+        except IndexError:
+            return await interaction.followup.send(f"No valid video was found with the search term: {search}")
+        except Exception as e:
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
     else:
         try:
             search_video: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
         except IndexError:
             return await interaction.followup.send("There was no valid YouTube track for this search term. Please make sure the video is public.")
-   
 
-    if tracks:
-        await play_track(tracks, "spotify_playlist")
-        #await interaction.followup.send("Adding playlist to the queue.")
-
-    else:
-        try:
-            await play_track(search_video, None, seek)
-        except Exception as e:
-            print(f"[Error]     An error occurred: {e}")
-            print(traceback.format_exc())
-            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+    try:
+        await play_track(search_video, None, seek)
+    except Exception as e:
+        print(f"[Error]     An error occurred: {e}")
+        print(traceback.format_exc())
+        return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
@@ -2460,7 +2569,7 @@ async def on_voice_state_update(member, before, after):
             #   Finally, send sum to me as a test.
             if before.channel.guild.id == 759861456300015657:
                 await test__bb_voice_channel.send(total_guild_time_spent)
-            await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
+                await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
