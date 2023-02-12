@@ -1624,7 +1624,9 @@ async def on_wavelink_node_ready(node: wavelink.Node):
     """Event fired when a node has finished connecting."""
     print(f"Node: <{node.identifier}> is ready!")
 
-async def on_wavelink_track_end(player: wavelink.Player, track, reason  ):
+async def on_wavelink_track_end(player: wavelink.Player, track, reason):
+    if reason == 'REPLACED':
+        return
     try:
         if not player.queue.is_empty:
             new = await player.queue.get_wait()
@@ -1651,71 +1653,148 @@ class PlayButton(discord.ui.Button):
         view=discord.ui.View()
         view.timeout = None
         vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+        embed = None
 
         ### Pause/Play alternating.
 
         if self.label == "Pause":
             if not vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
                 await vc.pause()
-                await interaction.response.edit_message(view=view)
+                #await interaction.response.edit_message(view=view)
             else:
                 await interaction.channel.send("Hi!")
         elif self.label == "Resume":
             if vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))      
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))    
                 await vc.resume()
-                await interaction.response.edit_message(view=view)
+                #await interaction.response.edit_message(view=view)
         
         ### Skipping
 
-        elif self.label == "Skip":
-            if vc.is_playing:
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-                await vc.stop()
+        elif self.label == "Skip ▶️":
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            if hasattr(vc, 'isPlayingFromQueue'):
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength - 1
+                if vc.isPlayingFromQueue:
+                    try:
+                        await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue))-vc.isPlayingFromQueueLength])
+                    except IndexError:
+                        await vc.stop()
+                        vc.isPlayingFromQueue = False
+                else:
+                    await vc.stop()
+                    await interaction.channel.send(f"Skipped audio")
+
             else:
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.danger))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                await vc.stop()
+                await interaction.channel.send(f"Skipped audio")
 
         ### Restart
 
         elif self.label == "Restart":
             if vc.is_playing:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))    
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))   
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple)) 
                 await vc.seek(0)
             else:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
 
         ### Skip 10 seconds
 
         elif self.label == "+10s":
             if vc.is_playing():
                 currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))      
-                await vc.seek((currentPos+10)*1000) 
-        
-        await interaction.response.edit_message(view=view)
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek((currentPos+10)*1000)
 
+        ### Minus 10 seconds
+
+        elif self.label == "-10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek((currentPos-10)*1000)
+
+        ### Previous
+
+        elif self.label == "◀️ Previous": # Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
+            vc.isPlayingFromQueue = True
+            if hasattr(vc, 'isPlayingFromQueueLength'):
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength + 1
+            else:
+                vc.isPlayingFromQueueLength = 2
+            try:
+                await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue))-vc.isPlayingFromQueueLength])
+            except Exception as e:
+                await interaction.followup.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+                vc.isPlayingFromQueueLength = 0
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.green))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            x = vc.queue.history._queue
+            print(len(x))
+            for i in x:
+                print (i)
+
+        
+        await asyncio.sleep(0.5) # wait for the sync up to occur.
+        embed = discord.Embed(title="Now playing", description=f"[{vc.source.title}]({vc.source.uri})")
+        try:
+            embed.set_image(url=vc.source.thumbnail)
+        except:
+            embed.add_field(name="Thumbnail", value="<unable to get.>")
+        embed.add_field(name="Creator", value=vc.source.author)
+        embed.add_field(name="Duration", value=await duration_to_time(int(vc.source.duration-vc.last_position)))
+        embed.add_field(name="Queue Length", value=vc.queue.count)
+        view=view
+
+        if not embed:
+            await interaction.response.edit_message(view=view)
+        elif embed:
+            await interaction.response.edit_message(embed=embed, view=view)
+
+        #if not embed:
+        #    await interaction.followup.edit_message(message_id = interaction.message.webhook_id, view=view)
+        #else:
+        #    await interaction.followup.edit_message(embed=embed, message_id = interaction.response._parent.message.id, view=view)
 
 
 @client.tree.command(name="play", description="Test wavelink command series.")
@@ -1750,15 +1829,17 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
                 total_duration = total_duration + track.duration
             tracklen = len(tracks)
             remaining_tracks = len(vc.queue)
-            string_to_send = (f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))} remaining.)')
+            string_to_send = (f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))})')
 
             embed=discord.Embed(title="Added Tracks!", description=string_to_send)
             view=discord.ui.View()
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-            return await interaction.response.send_message(embed=embed)
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            return await interaction.followup.send(embed=embed)
 
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -1768,7 +1849,7 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             tracklen = len(search_video.tracks)
             remaining_tracks = len(vc.queue)
 
-            string_to_send = (f'Added {tracklen} YouTube videos to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))} remaining.)')
+            string_to_send = (f'Added {tracklen} YouTube videos to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))})')
             embed=discord.Embed(title="Added Tracks!", description=string_to_send)
             return await interaction.followup.send(embed=embed)
             
@@ -1788,10 +1869,13 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration)))
             embed.add_field(name="Queue Length", value=vc.queue.count)
             view=discord.ui.View()
-            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
-            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.danger))
-            view.add_item(PlayButton(label="Skip", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            #DisabledComponents(view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple)))
             return await interaction.followup.send(embed=embed, view=view)
 
         else: # Or, if there is something playing, we can put it into the queue.
