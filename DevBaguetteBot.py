@@ -1632,6 +1632,8 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             new = await player.queue.get_wait()
             volume = await get_server_voice_volume(player.guild.id)
             print("Playing new song.")
+            if hasattr(player, 'isPlayingFromQueue') and hasattr(player, 'isPlayingFromQueue'):
+                player.isPlayingFromQueueLength = player.isPlayingFromQueueLength - 1
             embed = discord.Embed(title="Playing new song", description=f"[{new.title}]({new.uri})")
             embed.set_image(url=new.thumbnail)
             embed.add_field(name="Author", value=track.author)
@@ -1664,11 +1666,19 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
                 await vc.pause()
                 #await interaction.response.edit_message(view=view)
             else:
-                await interaction.channel.send("Hi!")
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.resume()
         elif self.label == "Resume":
             if vc._paused:
                 view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
@@ -1676,6 +1686,7 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))    
                 await vc.resume()
                 #await interaction.response.edit_message(view=view)
@@ -1688,8 +1699,9 @@ class PlayButton(discord.ui.Button):
             view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-            if hasattr(vc, 'isPlayingFromQueue'):
+            if hasattr(vc, 'isPlayingFromQueue') and hasattr(vc, 'isPlayingFromQueue'):
                 vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength - 1
                 if vc.isPlayingFromQueue:
                     try:
@@ -1699,11 +1711,11 @@ class PlayButton(discord.ui.Button):
                         vc.isPlayingFromQueue = False
                 else:
                     await vc.stop()
-                    await interaction.channel.send(f"Skipped audio")
+                    await interaction.channel.send(f"Skipped audio.", delete_after=10)
 
             else:
                 await vc.stop()
-                await interaction.channel.send(f"Skipped audio")
+                await interaction.channel.send(f"Skipped audio.", delete_after=10)
 
         ### Restart
 
@@ -1714,6 +1726,7 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))   
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple)) 
                 await vc.seek(0)
             else:
@@ -1722,7 +1735,9 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek(0)
 
         ### Skip 10 seconds
 
@@ -1733,7 +1748,8 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))      
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
                 await vc.seek((currentPos+10)*1000)
 
@@ -1746,28 +1762,55 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                await vc.seek((currentPos-10)*1000)
+                if currentPos-10 <= 0:
+                    await vc.seek(0)
+                else:
+                    await vc.seek((currentPos-10)*1000)
+
+        ### Shuffling
+
+        elif self.label == "Shuffle":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                vc: wavelink.Player = interaction.guild.voice_client
+                if vc is None:
+                    return await interaction.response.send_message("There is nothing to shuffle")
+                random.shuffle(vc.queue._queue)
+                await interaction.response.send_message(f"Shuffled the {len(vc.queue)} queued tracks.")
+
 
         ### Previous
 
-        elif self.label == "◀️ Previous": # Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
+        elif self.label == "◀️ Previous": # !!! Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
             vc.isPlayingFromQueue = True
             if hasattr(vc, 'isPlayingFromQueueLength'):
+                if vc.isPlayingFromQueueLength <= 0:
+                    vc.isPlayingFromQueueLength = 1
                 vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength + 1
             else:
-                vc.isPlayingFromQueueLength = 2
+                vc.isPlayingFromQueueLength = 1
             try:
                 await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue))-vc.isPlayingFromQueueLength])
             except Exception as e:
-                await interaction.followup.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+                await interaction.channel.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
                 vc.isPlayingFromQueueLength = 0
+                vc.isPlayingFromQueue = False
             view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.green))
             view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             x = vc.queue.history._queue
             print(len(x))
@@ -1775,7 +1818,7 @@ class PlayButton(discord.ui.Button):
                 print (i)
 
         
-        await asyncio.sleep(0.5) # wait for the sync up to occur.
+        await asyncio.sleep(0.6) # wait for the sync up to occur from playnewtrack listener.
         embed = discord.Embed(title="Now playing", description=f"[{vc.source.title}]({vc.source.uri})")
         try:
             embed.set_image(url=vc.source.thumbnail)
@@ -1838,6 +1881,7 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             return await interaction.followup.send(embed=embed)
 
@@ -1874,6 +1918,7 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             #DisabledComponents(view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple)))
             return await interaction.followup.send(embed=embed, view=view)
@@ -1917,6 +1962,9 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             return await play_track(tracks, "yt_playlist")
 
         try:
+            if "&" in search:
+                search = search.split("&")[0]
+
             search_video = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
 
         except Exception as e:
