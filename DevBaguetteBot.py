@@ -1634,12 +1634,12 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             print("Playing new song.")
             if hasattr(player, 'isPlayingFromQueue') and hasattr(player, 'isPlayingFromQueue'):
                 player.isPlayingFromQueueLength = player.isPlayingFromQueueLength - 1
-            embed = discord.Embed(title="Playing new song", description=f"[{new.title}]({new.uri})")
+            embed = discord.Embed(title="Playing new track", description=f"[{new.title}]({new.uri})")
             embed.set_image(url=new.thumbnail)
-            embed.add_field(name="Author", value=track.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
-            embed.add_field(name="Link", value=track.uri)
-            await player.channel.send(embed=embed)
+            embed.add_field(name="Creator", value=new.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(new.duration)))
+            embed.add_field(name="Queue Length", value=player.queue.count)
+            await player.play_controls_message.edit(embed=embed)
             await player.play(new, volume=int(volume))
         else:
             await player.stop()
@@ -1786,8 +1786,7 @@ class PlayButton(discord.ui.Button):
                 if vc is None:
                     return await interaction.response.send_message("There is nothing to shuffle")
                 random.shuffle(vc.queue._queue)
-                await interaction.response.send_message(f"Shuffled the {len(vc.queue)} queued tracks.")
-
+                await interaction.response.send_message(f"Shuffled the {len(vc.queue)} queued tracks.", ephemeral=True)
 
         ### Previous
 
@@ -1819,7 +1818,7 @@ class PlayButton(discord.ui.Button):
 
         
         await asyncio.sleep(0.6) # wait for the sync up to occur from playnewtrack listener.
-        embed = discord.Embed(title="Now playing", description=f"[{vc.source.title}]({vc.source.uri})")
+        embed = discord.Embed(title="Playing new track", description=f"[{vc.source.title}]({vc.source.uri})")
         try:
             embed.set_image(url=vc.source.thumbnail)
         except:
@@ -1829,15 +1828,7 @@ class PlayButton(discord.ui.Button):
         embed.add_field(name="Queue Length", value=vc.queue.count)
         view=view
 
-        if not embed:
-            await interaction.response.edit_message(view=view)
-        elif embed:
-            await interaction.response.edit_message(embed=embed, view=view)
-
-        #if not embed:
-        #    await interaction.followup.edit_message(message_id = interaction.message.webhook_id, view=view)
-        #else:
-        #    await interaction.followup.edit_message(embed=embed, message_id = interaction.response._parent.message.id, view=view)
+        await interaction.response.edit_message(embed=embed, view=view)
 
 
 @client.tree.command(name="play", description="Test wavelink command series.")
@@ -1921,7 +1912,8 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             #DisabledComponents(view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple)))
-            return await interaction.followup.send(embed=embed, view=view)
+            x = await interaction.followup.send(embed=embed, view=view)
+            vc.play_controls_message = x
 
         else: # Or, if there is something playing, we can put it into the queue.
             total_duration = 0
@@ -1932,7 +1924,7 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             await vc.queue.put_wait(search_video)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration))}**.')
 
     # end of func
 
