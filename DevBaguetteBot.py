@@ -1,4 +1,4 @@
-DRAGGIEBOT_VERSION = "v1.3.4"
+DRAGGIEBOT_VERSION = "v1.3.5"
 BUILD = "dev"
 BETA_BOT = True
 
@@ -13,7 +13,7 @@ from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
 from        youtube_search import YoutubeSearch#                                PIP:                python -m ensurepip
-from        datetime import datetime#                                           UPDATE PIP:         python -m pip install --upgrade pip
+from        datetime import datetime, timedelta#                                UPDATE PIP:         python -m pip install --upgrade pip
 from        json import loads
 from        pathlib import Path
 from        discord import app_commands
@@ -305,11 +305,158 @@ async def snowflake(interaction: discord.Interaction, flake: str) -> None:
 async def get_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
     await interaction.response.send_message(f'An error occured: {error}')
 
+
+class CoinsButtons2(discord.ui.Button):  
+    def __init__(self, label: str, style: discord.ButtonStyle):
+        super().__init__(label=label, style=style)
+
+    async def callback(self, interaction):
+        view=discord.ui.View()
+        view.timeout = None
+
+        ### Coin balance
+
+        coinBal = await get_coins(interaction.guild_id, interaction.user.id)
+        nolwennium_bal = await get_nolwennium(interaction)
+        view = discord.ui.View()
+
+        if self.label == "View Page 2":
+            embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
+
+            base_json = {
+                'currentBoosts': [],
+                'used_boosts': 0,
+            }
+
+            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
+            if os.path.isfile(current_boosts_path):
+                with open(current_boosts_path, 'r') as boosts_file:
+                    boosts_json = json.load(boosts_file)
+                    boosts_file.close()
+
+                    # Remove expired boosts
+                    current_time = datetime.now()
+                    current_boosts = []
+                    for boost in boosts_json['currentBoosts']:
+                        expiration_time = datetime.strptime(boost['expirationTime'], '%Y-%m-%d %H:%M:%S.%f')
+                        if expiration_time > current_time:
+                            current_boosts.append(boost)
+                    boosts_json['currentBoosts'] = current_boosts
+
+                    # Display currently active boosts
+                    if len(current_boosts) > 0:
+                        active_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) until {boost['expirationTime']}" for boost in current_boosts])
+                        embed.add_field(
+                            name="Currently active Boosts",
+                            value=active_boosts_string,
+                            inline=False
+                        )
+
+            # Define the available boosts
+            boosts = [
+                {
+                    'name': '2x Coins for 1 hour',
+                    'multiplier': 3,
+                    'duration': 1,
+                    'unit': 'hours',
+                    'price': 50
+                },
+                {
+                    'name': '2x Coins for 1 day',
+                    'multiplier': 2,
+                    'duration': 1,
+                    'unit': 'days',
+                    'price': 100
+                },
+                {
+                    'name': '3x Coins for 7 days',
+                    'multiplier': 5,
+                    'duration': 7,
+                    'unit': 'days',
+                    'price': 1500
+                },
+                # Add more boosts here
+            ]
+
+            # Display available boosts
+            available_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) for {boost['duration']} {boost['unit']} - {boost['price']} coins" for boost in boosts])
+
+            for i in boosts:
+                embed.add_field(
+                    name=i["name"],
+                    value=f"Multiplier: {i['multiplier']}x\nDuration: {i['duration']} {i['unit']}\n**Price: {i['price']} Coins**",
+                    inline=False
+                )
+
+            # Add buttons for each available boost
+            for boost in boosts:
+                button_label = f"{boost['name']}"
+                view.add_item(CoinsButtons2(style=discord.ButtonStyle.blurple, label=button_label))
+
+            embed.set_footer(text=(f'Use the buttons below to buy what you want.'))
+                    
+            await interaction.response.edit_message(embed=embed, view=view)
+
+        if self.label == "2x Coins for 1 day":
+            data = {
+                    'name': '2x Coins for 1 day',
+                    'multiplier': 2,
+                    'duration': 1,
+                    'unit': 'days',
+                    'price': 100
+                }
+    
+            # Load the current boosts from the JSON file
+            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
+            boosts_json = {'currentBoosts': []}
+            if os.path.isfile(current_boosts_path):
+                with open(current_boosts_path, 'r') as boosts_file:
+                    boosts_json = json.load(boosts_file)
+                    boosts_file.close()
+    
+            # Check if the user has enough coins to purchase the boost
+            if coinBal < data['price']:
+                await interaction.response.send_message(f"You don't have enough coins to purchase this boost. You need {data['price'] - coinBal} more.", ephemeral=True)
+                return
+
+            # Calculate the expiration time for the boost
+            current_time = datetime.now()
+            if data['unit'] == 'seconds':
+                expiration_time = current_time + timedelta(seconds=data['duration'])
+            elif data['unit'] == 'minutes':
+                expiration_time = current_time + timedelta(minutes=data['duration'])
+            elif data['unit'] == 'hours':
+                expiration_time = current_time + timedelta(hours=data['duration'])
+            elif data['unit'] == 'days':
+                expiration_time = current_time + timedelta(days=data['duration'])
+            else:
+                # Handle unknown boost unit
+                expiration_time = current_time
+
+            # Add the boost to the currentBoosts list in the JSON file
+            boosts_json['currentBoosts'].append({
+                'name': data['name'],
+                'multiplier': data['multiplier'],
+                'expirationTime': expiration_time.strftime('%Y-%m-%d %H:%M:%S.%f')
+            })
+
+            # Deduct the price of the boost from the user's coins
+            coinBal -= data['price']
+
+            # Save the updated JSON file and update the embed and view
+            with open(current_boosts_path, 'w') as boosts_file:
+                json.dump(boosts_json, boosts_file)
+                boosts_file.close()
+
+            update_coins(interaction.guild_id, interaction.user.id, data['price'])
+
+            await interaction.response.send_message(f"You have purchased the **{data['name']}** boost! You will now earn {data['multiplier']}x multiplier!")
+
 @client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!", )
 @app_commands.describe(operation="[Admin Only] set/add/lookup.", target_id="[Admin Only] Enter the user id for the operation to target", mod_value="[Admin Only] Use this as the value for the operation")
 async def coins(interaction: discord.Interaction, operation: Optional[str], target_id: Optional[str], mod_value: Optional[str]) -> None:
     await slash_log(interaction)
-    if interaction.guild_id == 759861456300015657:
+    if interaction.guild_id in TESTER_GUILD_IDS:
         print(operation,target_id,mod_value)
         member_role = discord.utils.get(interaction.guild.roles, id=806481292392267796)
         staff_role = discord.utils.get(interaction.guild.roles, id=963738031863525436)
@@ -329,7 +476,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
             my_file = Path(nolwenniumUserDir)
 
             if not my_file.is_file():
-                with open(nolwenniumUserDir, 'a') as f:
+                with open(nolwenniumUserDir, 'w+') as f:
                     print (f"\nSet {NAME_NOLWENNIUM} value to 0, {authorID} is a new user.")
                     try:
                         f.write('0')
@@ -487,11 +634,12 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {EMOJI_COINS} Coins are needed until the next role.")
 
                         embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (saved across all servers).'))
-                         
+
                         x = await get_user_settings(interaction.user.id)
+
                         view = discord.ui.View()
                         if x['can_use_shop_section_2'] == 'true':
-                            view.add_item(discord.ui.Button(label="View Page 2", style=discord.ButtonStyle.blurple))
+                            view.add_item(CoinsButtons2(label="View Page 2", style=discord.ButtonStyle.blurple))
 
                         await interaction.response.send_message(embed=embed, view=view)
                 else:
@@ -510,16 +658,6 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
         else:
             await error_code(interaction, 1)
 
-#   extended shop for buy command below
-
-async def extended_shop(interaction):
-    coinBal = await get_coins(interaction.guild_id, interaction.user.id)
-
-    embed = discord.Embed(title="User Balance", description=(f"Welcome to the extended shop.\n You have {coinBal} {EMOJI_COINS} Coins available to spend."), colour=0x00ACFF)
-
-                            
-    await interaction.response.edit_message(embed=embed)
-
 #   buy
 
 @client.tree.command(name="buy", description="Shows your balance, and available to buy items.")
@@ -531,7 +669,6 @@ async def buy(interaction:discord.Interaction, item: str):
         owner = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
         staff = discord.utils.find(lambda r: r.name == 'Staff', interaction.guild.roles)
         can_access_shop_ui = False
-        """
         if owner in interaction.user.roles:
             print("Owner is in the roles list")
             await interaction.response.send_message("You already have owner permissions, this overrides the shop's items")
@@ -539,7 +676,7 @@ async def buy(interaction:discord.Interaction, item: str):
         if staff in interaction.user.roles:
             print("Staff is in the roles list")
             await interaction.response.send_message("You already have staff permissions, this overrides the shop's items")
-            can_access_shop_ui = True"""
+            can_access_shop_ui = True
         if canRunCommand in interaction.user.roles:
             print("Member is in the list")
             can_access_shop_ui = True
@@ -551,9 +688,6 @@ async def buy(interaction:discord.Interaction, item: str):
 
             filedir = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Coins{S_SLASH}{authorID}.txt")
             coinBal = await get_coins(interaction.guild_id, interaction.user.id)
-
-            if determiner == "2":
-                await shop_page_2(interaction)
 
             if determiner == 'citizen':
                 cost = 1
@@ -2242,9 +2376,15 @@ class Roles:
 PYTHONIOENCODING = "utf-8"
 
 def nolwenniumUserDirectory(ctx):
-    global nolwenniumUserDir
     nolwenniumUserDir = f"{BASE_DIR}Nolwennium{S_SLASH}{ctx.user.id}.txt"
+    return nolwenniumUserDir
 
+async def get_nolwennium(ctx):
+    nolwenniumUserDir = nolwenniumUserDirectory(ctx)
+    with open (nolwenniumUserDir, 'r') as f:
+        nolwennium_balance = f.read()
+        f.close()
+    return nolwennium_balance
 
 async def get_coins(server_id: int, user_id: int) -> int:
     """Gets a user's coins. The `server_id` and `user_id` as integers must be provided."""
@@ -2262,11 +2402,25 @@ def update_coins(server_id: int, user_id: int, coins_calc: int) -> int:
     coin_dir = f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}.txt"
     if not os.path.exists(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins"):
         os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins")
+    multiplication_amount = 1
+    if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}_boosted.json"):
+        with open(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}_boosted.json", 'r') as f:
+            info = json.load(f)
+            expiration_time = info['currentBoosts'][0]['expirationTime']
+            expiration_datetime = datetime.strptime(expiration_time, '%Y-%m-%d %H:%M:%S.%f')
+            # Compare the expiration time to the current time
+            if expiration_datetime > datetime.now():
+                # The boost is still active
+                multiplication_amount = info['currentBoosts'][0]['multiplier']
+            else:
+                os.remove(f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}_boosted.json")
+                print(f"[CoinsUpdate]       Removed User Bonus File for user {user_id}")
     mode = 'r+' if os.path.exists(coin_dir) else 'w+'
+
     with open(coin_dir, mode) as file:
         balance = int(file.read()) if mode == "r+" else 0
         print(f"[CoinsUpdate]       Balance queried for {user_id} in {server_id}. (Balance: {balance})")
-        new_balance = balance + coins_calc
+        new_balance = balance + (coins_calc*multiplication_amount)
         print(f"[CoinsUpdate]       The new balance for {user_id} is {new_balance}.")
         file.seek(0)
         file.write(str(new_balance))
