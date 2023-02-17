@@ -1,5 +1,5 @@
-DRAGGIEBOT_VERSION = "v1.3.3"
-BUILD = "b"
+DRAGGIEBOT_VERSION = "v1.3.4"
+BUILD = ""
 BETA_BOT = False
 
 """
@@ -8,7 +8,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, re
+import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, schedule
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -19,6 +19,7 @@ from        pathlib import Path
 from        discord import app_commands
 from        typing import Optional
 from        wavelink.ext import spotify
+import      matplotlib.pyplot as plt
 
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
@@ -40,7 +41,7 @@ ID_DRAGGIE = 382784106984898560
 DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
-AUDIO_SUBSYSTEM = "wavelink"
+AUDIO_SUBSYSTEM = "ffmpeg/wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -91,7 +92,7 @@ with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
 
 if running_locally:
     if BETA_BOT:
-        subprocess.Popen(['java', '-jar', f'D:\\Draggie Programs\\BetaBaguetteBot\\BaguetteBot\\Lavalink_Stable.jar'])
+        subprocess.Popen(['java', '-jar', f'C:\\test\\Lavalink_Stable.jar'])
     else:
         subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
 
@@ -113,6 +114,80 @@ print("Done!\nSlash commands initialising...")
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
+
+
+@client.tree.command(name="devtest", description="Developer testing commands.")
+async def devtest(interaction:discord.Interaction):
+    # Read data from JSON file
+    with open('Z:\\testfile.txt') as json_file:
+        data = json.load(json_file)
+
+    # Extract the data for each category
+    dates = [d['date'] for d in data]
+    messages_sent = [d['messages_sent'] for d in data]
+    messages_received = [d['messages_received'] for d in data]
+    time_spent_voice = [d['time_spent_voice'] for d in data]
+
+    # Create the bar chart
+    fig, ax = plt.subplots()
+    bar_width = 0.2
+    bar_x = range(len(data))
+
+    ax.bar(bar_x, messages_sent, bar_width, label='Messages Sent')
+    ax.bar([x + bar_width for x in bar_x], messages_received, bar_width, label='Messages Received')
+    ax.bar([x + 2 * bar_width for x in bar_x], time_spent_voice, bar_width, label='Time Spent in Voice Chat')
+
+    # Add labels and title
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Count')
+    ax.set_title('Discord Chat Stats')
+    ax.set_xticks([x + bar_width for x in bar_x], dates)
+    ax.legend()
+
+    # Show plot
+    plt.savefig("Z:\\discord_chart.png")
+    #plt.show()
+    await interaction.response.send_message(file=discord.File("Z:\\discord_chart.png"))
+
+async def wip_command():
+    messages_sent = 0
+    messages_received = 0
+
+    def save_to_json():
+        global messages_sent, messages_received
+        current_day = datetime.now().day
+        try:
+            with open("data.json", "r") as json_file:
+                data = json.load(json_file)
+                last_day = data["day"]
+                if last_day != current_day:
+                    data = {
+                        "messages_sent": messages_sent,
+                        "messages_received": messages_received,
+                        "time_spent_voice": time_spent_voice(),
+                        "day": current_day
+                    }
+                    messages_sent = 0
+                    messages_received = 0
+                    with open("data.json", "w") as json_file:
+                        json.dump(data, json_file)
+        except:
+            data = {
+                "messages_sent": messages_sent,
+                "messages_received": messages_received,
+                "time_spent_voice": time_spent_voice(),
+                "day": current_day
+            }
+            messages_sent = 0
+            messages_received = 0
+            with open("data.json", "w") as json_file:
+                json.dump(data, json_file)
+
+    schedule.every(1).minutes.do(save_to_json)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 @client.tree.command(name="command-2")
 @app_commands.guilds(discord.Object(id=384403250172133387))
@@ -978,9 +1053,8 @@ async def volume(interaction:discord.Interaction, percentage: int, lock: bool=Fa
 
         return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Locked the voice chat volume to {volume_float}% for this server.")
     else:
-        if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
-            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
-            str_to_send = f"{str_to_send}Removed the lock on voice volume."
+        os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
+        str_to_send = f"{str_to_send}Removed the lock on voice volume."
     
     if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt"):
         if interaction.user.guild_permissions.manage_guild:
@@ -1156,7 +1230,8 @@ async def stop(interaction:discord.Interaction):
     vc: wavelink.Player = interaction.guild.voice_client
     if vc.is_playing():
         await vc.stop()
-        return await interaction.response.send_message("Stopped playing wavelink player audio.")
+        vc.queue.clear()
+        return await interaction.response.send_message("Stopped playing audio and stopped the queue.\n*Using `/pause` or `/skip` will not clear the queue.*")
     if voice_client is not None:
         voice_client.stop()
         return await interaction.response.send_message("Stopped playing audio.")
@@ -1490,7 +1565,6 @@ async def settings(interaction:discord.Interaction):
 
         style=discord.ButtonStyle.green if value == "true" else discord.ButtonStyle.red
         view.add_item(OptionButton(label=key, style=style))
-        #OptionButton(label=key, style=style)
 
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
@@ -1551,23 +1625,211 @@ async def on_wavelink_node_ready(node: wavelink.Node):
     print(f"Node: <{node.identifier}> is ready!")
 
 async def on_wavelink_track_end(player: wavelink.Player, track, reason):
+    if reason == 'REPLACED':
+        return
     try:
         if not player.queue.is_empty:
             new = await player.queue.get_wait()
             volume = await get_server_voice_volume(player.guild.id)
             print("Playing new song.")
-            embed = discord.Embed(title="Playing new song", description=f"[{new.title}]({new.uri})")
+            if hasattr(player, 'isPlayingFromQueue') and hasattr(player, 'isPlayingFromQueue'):
+                player.isPlayingFromQueueLength = player.isPlayingFromQueueLength - 1
+            embed = discord.Embed(title="Playing new track", description=f"[{new.title}]({new.uri})")
             embed.set_image(url=new.thumbnail)
-            embed.add_field(name="Author", value=track.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(track.duration)))
-            embed.add_field(name="Link", value=track.uri)
-            await player.channel.send(embed=embed)
+            embed.add_field(name="Creator", value=new.author)
+            embed.add_field(name="Duration", value=await duration_to_time(int(new.duration)))
+            embed.add_field(name="Queue Length", value=player.queue.count)
+            await player.play_controls_message.edit(embed=embed)
             await player.play(new, volume=int(volume))
         else:
             await player.stop()
             await player.channel.send("No more stuff in the queue.")
     except Exception as e:
         await player.channel.send(e)
+
+class PlayButton(discord.ui.Button):  
+    def __init__(self, label:str, style:discord.ButtonStyle):
+        super().__init__(label=label, style = style)
+
+    async def callback(self, interaction):
+        view=discord.ui.View()
+        view.timeout = None
+        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+        embed = None
+
+        ### Pause/Play alternating.
+
+        if self.label == "Pause":
+            if not vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.pause()
+                #await interaction.response.edit_message(view=view)
+            else:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.resume()
+        elif self.label == "Resume":
+            if vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))    
+                await vc.resume()
+                #await interaction.response.edit_message(view=view)
+        
+        ### Skipping
+
+        elif self.label == "Skip ▶️":
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            if hasattr(vc, 'isPlayingFromQueue') and hasattr(vc, 'isPlayingFromQueue'):
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength - 1
+                if vc.isPlayingFromQueue:
+                    try:
+                        await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue))-vc.isPlayingFromQueueLength])
+                    except IndexError:
+                        await vc.stop()
+                        vc.isPlayingFromQueue = False
+                else:
+                    await vc.stop()
+                    await interaction.channel.send(f"Skipped audio.", delete_after=10)
+
+            else:
+                await vc.stop()
+                await interaction.channel.send(f"Skipped audio.", delete_after=10)
+
+        ### Restart
+
+        elif self.label == "Restart":
+            if vc.is_playing:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))   
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple)) 
+                await vc.seek(0)
+            else:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek(0)
+
+        ### Skip 10 seconds
+
+        elif self.label == "+10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek((currentPos+10)*1000)
+
+        ### Minus 10 seconds
+
+        elif self.label == "-10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                if currentPos-10 <= 0:
+                    await vc.seek(0)
+                else:
+                    await vc.seek((currentPos-10)*1000)
+
+        ### Shuffling
+
+        elif self.label == "Shuffle":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                vc: wavelink.Player = interaction.guild.voice_client
+                if vc is None:
+                    return await interaction.response.send_message("There is nothing to shuffle")
+                random.shuffle(vc.queue._queue)
+                await interaction.response.send_message(f"Shuffled the {len(vc.queue)} queued tracks.", ephemeral=True)
+
+        ### Previous
+
+        elif self.label == "◀️ Previous": # !!! Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
+            vc.isPlayingFromQueue = True
+            if hasattr(vc, 'isPlayingFromQueueLength'):
+                if vc.isPlayingFromQueueLength <= 0:
+                    vc.isPlayingFromQueueLength = 1
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength + 1
+            else:
+                vc.isPlayingFromQueueLength = 1
+            try:
+                await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue))-vc.isPlayingFromQueueLength])
+            except Exception as e:
+                await interaction.channel.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+                vc.isPlayingFromQueueLength = 0
+                vc.isPlayingFromQueue = False
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.green))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            x = vc.queue.history._queue
+            print(len(x))
+            for i in x:
+                print (i)
+
+        
+        await asyncio.sleep(0.6) # wait for the sync up to occur from playnewtrack listener.
+        embed = discord.Embed(title="Playing new track", description=f"[{vc.source.title}]({vc.source.uri})")
+        try:
+            embed.set_image(url=vc.source.thumbnail)
+        except:
+            embed.add_field(name="Thumbnail", value="<unable to get.>")
+        embed.add_field(name="Creator", value=vc.source.author)
+        embed.add_field(name="Duration", value=await duration_to_time(int(vc.source.duration-vc.last_position)))
+        embed.add_field(name="Queue Length", value=vc.queue.count)
+        view=view
+
+        await interaction.response.edit_message(embed=embed, view=view)
+
 
 @client.tree.command(name="play", description="Test wavelink command series.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
@@ -1593,14 +1855,39 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         print(search_video)
         if offset:
             print(f"Offset: {offset}s")
+        total_duration = 0
         if type == "spotify_playlist": # Spotify playlists need special handling as there are multiple songs.
             #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
             for track in search_video:
                 await play_track(track, type="processed_playlist")
+                total_duration = total_duration + track.duration
             tracklen = len(tracks)
             remaining_tracks = len(vc.queue)
-            return await interaction.followup.send(content=f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue.')
-    
+            string_to_send = (f'Added {tracklen} Spotify tracks to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))})')
+
+            embed=discord.Embed(title="Added Tracks!", description=string_to_send)
+            view=discord.ui.View()
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            return await interaction.followup.send(embed=embed)
+
+
+        if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
+            for track in search_video.tracks:
+                await play_track(track, type="processed_playlist")
+                total_duration = total_duration + track.duration
+            tracklen = len(search_video.tracks)
+            remaining_tracks = len(vc.queue)
+
+            string_to_send = (f'Added {tracklen} YouTube videos to the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration))})')
+            embed=discord.Embed(title="Added Tracks!", description=string_to_send)
+            return await interaction.followup.send(embed=embed)
+            
         if vc.queue.is_empty and not vc.is_playing(): # If there is noting play, we can go ahead and play it.
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
@@ -1608,15 +1895,25 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             if offset:
                 offset = ((int(offset)) * 1000)
                 await vc.seek(offset)
-            embed = discord.Embed(title="Playing new song", description=f"[{search_video.title}]({search_video.uri})")
+            embed = discord.Embed(title="Now playing", description=f"[{search_video.title}]({search_video.uri})")
             try:
                 embed.set_image(url=search_video.thumbnail)
             except:
                 embed.add_field(name="Thumbnail", value="<unable to get.>")
-            embed.add_field(name="Author", value=search_video.author)
+            embed.add_field(name="Creator", value=search_video.author)
             embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration)))
             embed.add_field(name="Queue Length", value=vc.queue.count)
-            await interaction.followup.send(embed=embed)
+            view=discord.ui.View()
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            #DisabledComponents(view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple)))
+            x = await interaction.followup.send(embed=embed, view=view)
+            vc.play_controls_message = x
 
         else: # Or, if there is something playing, we can put it into the queue.
             total_duration = 0
@@ -1627,7 +1924,7 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
             await vc.queue.put_wait(search_video)
             #await interaction.followup.send(f"debug: Queue:```{vc.queue}```")
             if not type == "processed_playlist":
-                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be ~{await duration_to_time(round(total_duration))}.')
+                return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration))}**.')
 
     # end of func
 
@@ -1636,12 +1933,14 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         #await interaction.followup.send(f"{EMOJI_LOADING} Processing...")
         tracks = await spotify.SpotifyTrack.search(query=search)
         print("Processed Spotify playlist.")
+        return await play_track(tracks, "spotify_playlist")
+        #await interaction.followup.send("Adding playlist to the queue.")
 
     elif "open.spotify.com/track" in search:
         #await interaction.response.send_message("Searching spotify individual track")
         print("Searching spotify individual track")
         search = await spotify.SpotifyTrack.search(query=search, return_first=True)
-        await play_track(search)
+        return await play_track(search)
 
     elif "youtu" in search:
         node = wavelink.NodePool.get_node()
@@ -1649,44 +1948,54 @@ async def play(interaction: discord.Interaction, search:str, seek:Optional[int],
         #    print("splitting...")
         #    seek = search.split('=')[1]
         #    search = search.split('?')[0]
+        if "playlist" in search:
+            tracks = await wavelink.YouTubePlaylist.search(search)
+            print(tracks)
+            return await play_track(tracks, "yt_playlist")
+
         try:
+            if "&" in search:
+                search = search.split("&")[0]
+
             search_video = await node.get_tracks(wavelink.Track, search) # do some cool fancy stuff to get the url
 
         except Exception as e:
             print(f"An error occurred: {e}")
             #print(traceback.extract_stack())
             return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
-        print("Playing track youtu")
-        return await play_track((search_video[0]), None, seek)
+        
+        try:
+            print("Playing youtube track")
+            return await play_track((search_video[0]), None, seek)
+        except IndexError:
+            return await interaction.followup.send(f"No valid video was found with the search term: {search}")
+        except Exception as e:
+            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
     else:
         try:
             search_video: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search, return_first=True)
         except IndexError:
             return await interaction.followup.send("There was no valid YouTube track for this search term. Please make sure the video is public.")
-   
 
-    if tracks:
-        await play_track(tracks, "spotify_playlist")
-        #await interaction.followup.send("Adding playlist to the queue.")
-
-    else:
-        try:
-            await play_track(search_video, None, seek)
-        except Exception as e:
-            print(f"[Error]     An error occurred: {e}")
-            print(traceback.format_exc())
-            return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+    try:
+        await play_track(search_video, None, seek)
+    except Exception as e:
+        print(f"[Error]     An error occurred: {e}")
+        print(traceback.format_exc())
+        return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position:int):
+    start_time = time.perf_counter()
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.is_playing():
         return await interaction.response.send_message("Noting is playing.")
     await vc.seek((position*1000))
-    return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
+    return await generic_operation_complete_message(interaction, start_time, f"Seeked to {position*1000}ms.")
+    #return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 @client.tree.command(name="shuffle", description="Shuffles the music queue")
 async def shuffle(interaction: discord.Interaction):
@@ -2384,7 +2693,7 @@ async def on_voice_state_update(member, before, after):
             #   Finally, send sum to me as a test.
             if before.channel.guild.id == 759861456300015657:
                 await test__bb_voice_channel.send(total_guild_time_spent)
-            await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
+                await draggie.send(f"The guild, {before.channel.guild.name}, now has {total_guild_time_spent} seconds total spent, thanks to {member.name}.")
 
 @client.event
 async def on_member_join(member):
@@ -2861,6 +3170,7 @@ async def on_message(message):
     if "382784106984898560" in message.content and "help" in message.content.lower():
         await message.reply("Here's a simple way to fix your problem:", file=discord.File("D:\\Draggie Programs\\valorant-uninstall-launcher-fuck-valorant-valorass-gif.gif"))
 
+
     async def DLstuff():
         if len(message.attachments) < 1: # Checks if there is an attachment on the message
             return
@@ -3199,6 +3509,12 @@ async def currency(ctx):
     await ctx.send(f"Multiplier: 1.{number}x ({number}0%) bonus {nolwennium_bal}")
     await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
                 
+async def generic_operation_complete_message(interaction, timer, message:Optional[str] = None):
+    """Pass in the interaction and the current time using something like `timer = time.perf_counter()`"""
+    execution_time = time.perf_counter() - timer
+    embed = discord.Embed(title=message, description=f"Operation completed successfully ({round((execution_time), 6)}s)\n")
+    await interaction.response.send_message(embed=embed)
+
 
 #   offline status for replit
 
