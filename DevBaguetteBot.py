@@ -1,4 +1,4 @@
-DRAGGIEBOT_VERSION = "v1.3.5"
+DRAGGIEBOT_VERSION = "v1.3.6"
 BUILD = "dev"
 BETA_BOT = True
 
@@ -9,6 +9,7 @@ Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy mult
 
 print("Importing all modules...\n")
 import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, schedule
+import      yt_dlp as youtube_dl
 from        discord.ext import commands
 from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
 from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
@@ -3444,7 +3445,7 @@ async def on_message(message):
         await message.add_reaction(downvote)
 
     if message.reference:
-        if "ratio" in message.content.lower():
+        if "ratio" == message.content.lower():
             await message.add_reaction(upvote)
             await message.add_reaction(downvote)
         
@@ -3983,36 +3984,51 @@ async def addroles(ctx):
             
 #   Get links
 
-@client.command(help="Gets YouTube video raw links.", brief="Gets YouTube video's and raw audio URL", pass_context=True, hidden=True)
-async def links(ctx, url:str):
-    async with ctx.typing():
-        with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-            try:
-                video_info = ydl.extract_info(url, download=False)
-                print(f"video_info: {video_info}")
-            except youtube_dl.DownloadError as error:
-                print(f"ERROR: {error}")
-                return await ctx(f"A download error occured: {error}")
+@client.tree.command(name="links", description="Gets YouTube video and raw audio URL")
+async def links(interaction:discord.Interaction, url:str):
+    with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+        try:
+            video_info = ydl.extract_info(url, download=False)
+            print(f"video_info: {video_info}")
+        except youtube_dl.DownloadError as error:
+            print(f"ERROR: {error}")
+            return await interaction.response.send_message(f"A download error occured: {error}")
+        
+        embed = discord.Embed(title="Links")
 
-            url = video_info['formats'][0]['url']
-            with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
-                f.write(f"{video_info}")
-            if "manifest.googlevideo.com" in url:
-                url = video_info['url']#[0]['fragment_base_url']
-                #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
-                
-            # Find the element in the `formats` list with the highest value of `abr`
-            print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
-            best_format = max([f for f in video_info['formats'] if 'abr' in f], key=lambda x: x['abr'])
-            print(f"\nbest_format: {best_format}")
 
-            # Extract the `url` attribute of the element
-            url = best_format['url']
-            print(f"\nbest_format - url: {url}")
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        }
 
-            audio_bitrate = best_format['abr']
-            print(f"\nbest_format - abr level: {audio_bitrate}")
-            embed = discord.Embed(title="Audio Links", description=f"[audio url]({url}), abr: {audio_bitrate}")
+        # Create a YoutubeDL object with the options
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            # Get the video info
+            info_dict = ydl.extract_info(url, download=False)
+            # Print the download link of the highest resolution video with audio
+            #x = (info_dict['url'])
+            #embed = embed.add_field(name="video and audio Links", value=f"[here]({x})")
+
+        url = video_info['formats'][0]['url']
+        with open ("Z:\\beans.txt", 'w+', encoding="UTF-8") as f:
+            f.write(f"{video_info}")
+        if "manifest.googlevideo.com" in url:
+            url = video_info['url']#[0]['fragment_base_url']
+            #await interaction.followup.send(f"[debug] using fragment_base_url instead of url due to googlevideo manifest")
+            
+        # Find the element in the `formats` list with the highest value of `abr`
+        print(f"/ [PlayCommand]      ({datetime.now()}) - Finding the best value...")
+        best_format = max([f for f in video_info['formats'] if 'abr' in f], key=lambda x: x['abr'])
+        print(f"\nbest_format: {best_format}")
+
+        # Extract the `url` attribute of the element
+        url = best_format['url']
+        print(f"\nbest_format - url: {url}")
+
+        audio_bitrate = best_format['abr']
+        print(f"\nbest_format - abr level: {audio_bitrate}")
+        embed = embed.add_field(name="Audio Links", value=f"[audio url]({url}), abr: {audio_bitrate}")
+        await interaction.response.send_message(embed=embed)
             await ctx.send(embed=embed)
 
 @client.command(hidden=True)
