@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.5"
-BUILD = ""
+BUILD = "a"
 BETA_BOT = False
 
 """
@@ -1084,8 +1084,8 @@ async def volume(interaction:discord.Interaction, percentage: int, lock: bool=Fa
 
 
 @client.tree.command(name="gpt", description="Get GPT-3 to respond to your prompt.")
-@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", code="Should GPT generate code instead?", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
-async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, code: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
+@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
+async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
     #await ctx.send("Generating response... <a:loading:935623554215591936>")
     await slash_log(interaction)
     print(f"/ [GPT-3]     Prompt '{prompt}' entered by {interaction.user.id} ({interaction.user.name}) in {interaction.guild_id}. Model: {model} // Limit: {limit}")
@@ -1118,20 +1118,14 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
     if prompt is None:
         return await interaction.response.send_message("No prompt!")
 
-    if not code:
-        if model == 1:
-            model_type = "text-ada-001"
-        if model == 2:
-            model_type = "text-babbage-001"
-        if model == 4:
-            model_type = "text-davinci-002"
-        else:#  Default.
-            model_type = "text-curie-001"
-    else:
-        if model == 2:
-            model_type = "code-davinci-002"
-        else:
-            model_type = "code-cushman-001"
+    if model == 1:
+        model_type = "text-ada-001"
+    if model == 2:
+        model_type = "text-babbage-001"
+    if model == 4:
+        model_type = "text-davinci-002"
+    else:#  Default.
+        model_type = "text-curie-001"
         
 
         #   Now defer as it may take a long time lmao
@@ -1183,9 +1177,6 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
         view = discord.ui.View()
         view.add_item(SusButton(label="See Sussiness", style=discord.ButtonStyle.red))
         return await interaction.followup.send("The output of the request was a little too suspicious. If you *really* want to see it, then click the button.", view=view)
-    
-    if code:
-        x = f"```{response_content}```"
     
     if len(response_content) > 1900:
         chunks = [response_content[i:i+1900 ] for i in range(0, len(response_content), 1900 )]
