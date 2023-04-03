@@ -36,13 +36,15 @@ EMOJI_RANDOM_LMAO = ["😂", "<a:RotatingSkull:966452197787332698>", "💀", "�
 EMOJI_LOADING = "<a:loading:935623554215591936>"
 EMOJI_TICK_ANIMATED = "<a:AnimatedTick:956621591108804652>"
 EMOJI_CROSS_ANIMATED = "<a:AnimatedCross:956621593113665536>"
+EMOJI_UPVOTE = "<:upvote:803578918488768552>"
+EMOJI_DOWNVOTE = "<:downvote:803578918464258068>"
 VALUE_PLACEHOLDER = "TBD/tbd"
 NAME_NOLWENNIUM = "Nolwennium"
 ID_DRAGGIE = 382784106984898560
 DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
-AUDIO_SUBSYSTEM = "ffmpeg/wavelink"
+AUDIO_SUBSYSTEM = "Wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 
 #   Check directories
@@ -306,13 +308,110 @@ async def snowflake(interaction: discord.Interaction, flake: str) -> None:
 async def get_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
     await interaction.response.send_message(f'An error occured: {error}')
 
+@client.tree.command(name="meme-stats", description="Get some detailed analytics about the Baguette Brigaders Epic Memes Channel")
+async def meme_analysis(interaction: discord.Interaction):
+    await interaction.response.send_message(f"*FETCHing Discord API Data. Please wait...* {EMOJI_LOADING}")
+    try:
+        start_time = time.time()
+        channel = client.get_channel(809112184902778890)
+        messages = []
+        total_messages = 0
+        meme_messages = 0
+
+        async for message in channel.history(limit=None):
+            total_messages = total_messages + 1
+            if message.reactions:
+                print("Adding message to messages")
+                messages.append(message)
+                meme_messages = meme_messages + 1
+            else:
+                print("Skipping message as no reactions")
+
+        async def most_posts():
+            author_scores = {}
+            for message in messages:
+                upvote_count = 0
+                downvote_count = 0
+                for reaction in message.reactions:
+                    if hasattr(reaction.emoji, 'name'):
+                        if reaction.emoji.name == 'upvote':
+                            upvote_count = reaction.count
+                        elif reaction.emoji.name == 'downvote':
+                            downvote_count = reaction.count
+
+                total_score = upvote_count - downvote_count
+
+                author_id = message.author.id
+                author_scores.setdefault(author_id, []).append(total_score)
+
+            organised_user_scores = []
+            for author_id, score_list in author_scores.items():
+                average_score = sum(score_list) / len(score_list)
+                organised_user_scores.append({'author_id': author_id, 'avg_score': average_score, 'posts': len(score_list)})
+
+            organised_user_scores = sorted(organised_user_scores, key=lambda x: x['posts'], reverse=True)
+            return organised_user_scores
+
+        async def most_upvoted() -> str:
+            calculated_messages = []
+
+            for message in messages:
+                upvote_count = 0
+                downvote_count = 0
+                for reaction in message.reactions:
+                    print(f"For message reaction in reactions: {reaction}")
+                    if hasattr(reaction.emoji, 'name'):
+                        if reaction.emoji.name == 'upvote':
+                            upvote_count = reaction.count
+                        elif reaction.emoji.name == 'downvote':
+                            downvote_count = reaction.count
+
+                calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
+
+            most_upvoted = sorted(calculated_messages, key=lambda x: x['upvotes'], reverse=True)
+            print(most_upvoted)
+            return most_upvoted
+
+        async def most_downvoted() -> str:
+            calculated_messages = []
+
+            for message in messages:
+                upvote_count = 0
+                downvote_count = 0
+                for reaction in message.reactions:
+                    print(f"For message reaction in reactions: {reaction}")
+                    if hasattr(reaction.emoji, 'name'):
+                        if reaction.emoji.name == 'upvote':
+                            upvote_count = reaction.count
+                        elif reaction.emoji.name == 'downvote':
+                            downvote_count = reaction.count
+
+                calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
+
+            downvote_count = sorted(calculated_messages, key=lambda x: x['downvotes'], reverse=True)
+            print(downvote_count)
+            return downvote_count
+
+        downvote_count = await most_downvoted()
+        most_post = await most_posts()
+        most_upvote = await most_upvoted()
+
+        embed = discord.Embed(title="Meme Stats")
+        embed.add_field(name=f"{EMOJI_UPVOTE} Most Upvoted Posts {EMOJI_UPVOTE}", value=f"**<:NumberOne:1092556140556066837> [{most_upvote[0]['upvotes']} upvotes by {most_upvote[0]['data'].author.mention}]({most_upvote[0]['jump_url']}).\n[{most_upvote[1]['upvotes']} upvotes by {most_upvote[1]['data'].author.mention}]({most_upvote[1]['jump_url']})\n[{most_upvote[2]['upvotes']} upvotes by {most_upvote[2]['data'].author.mention}]({most_upvote[2]['jump_url']})", inline=False)
+        embed.add_field(name=F"{EMOJI_DOWNVOTE} Most Downvoted Posts {EMOJI_DOWNVOTE}", value=f"**<:NumberOne:1092556140556066837> [{downvote_count[0]['downvotes']} downvotes by {downvote_count[0]['data'].author.mention}]({downvote_count[0]['jump_url']}).**\n[{downvote_count[1]['downvotes']} downvotes by {downvote_count[1]['data'].author.mention}]({downvote_count[1]['jump_url']})\n[{downvote_count[2]['downvotes']} downvotes by {downvote_count[2]['data'].author.mention}]({downvote_count[2]['jump_url']})", inline=False)
+        embed.add_field(name="📈 Most Posts", value=f"**{most_post[0]['posts']} posts, by <@{most_post[0]['author_id']}>. (Avg. upvotes/post: {round(most_post[0]['avg_score'], 2) })**\n{most_post[1]['posts']}, by <@{most_post[1]['author_id']}>\n{most_post[2]['posts']}, by <@{most_post[2]['author_id']}>", inline=False)
+
+        await interaction.edit_original_response(content="", embed=embed)
+    except Exception as e:
+        await interaction.edit_original_response(content=f"Error **{e}**: ```python\n{traceback.format_exc()}```")
+
 
 class CoinsButtons2(discord.ui.Button):  
     def __init__(self, label: str, style: discord.ButtonStyle):
         super().__init__(label=label, style=style)
 
     async def callback(self, interaction):
-        view=discord.ui.View()
+        view = discord.ui.View()
         view.timeout = None
 
         ### Coin balance
@@ -1218,8 +1317,8 @@ async def volume(interaction:discord.Interaction, percentage: int, lock: bool=Fa
 
 
 @client.tree.command(name="gpt", description="Get GPT-3 to respond to your prompt.")
-@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", code="Should GPT generate code instead?", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
-async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, code: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
+@app_commands.describe(prompt=f"What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
+async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool]=False, temperature: Optional[int]=None, top_p: Optional[int]=None, frequency_penalty: Optional[int]=None, presence_penalty: Optional[int]=None):
     #await ctx.send("Generating response... <a:loading:935623554215591936>")
     await slash_log(interaction)
     print(f"/ [GPT-3]     Prompt '{prompt}' entered by {interaction.user.id} ({interaction.user.name}) in {interaction.guild_id}. Model: {model} // Limit: {limit}")
@@ -1252,20 +1351,14 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
     if prompt is None:
         return await interaction.response.send_message("No prompt!")
 
-    if not code:
-        if model == 1:
-            model_type = "text-ada-001"
-        if model == 2:
-            model_type = "text-babbage-001"
-        if model == 4:
-            model_type = "text-davinci-002"
-        else:#  Default.
-            model_type = "text-curie-001"
-    else:
-        if model == 2:
-            model_type = "code-davinci-002"
-        else:
-            model_type = "code-cushman-001"
+    if model == 1:
+        model_type = "text-ada-001"
+    if model == 2:
+        model_type = "text-babbage-001"
+    if model == 4:
+        model_type = "text-davinci-002"
+    else:#  Default.
+        model_type = "text-curie-001"
         
 
         #   Now defer as it may take a long time lmao
@@ -1318,9 +1411,6 @@ async def gpt(interaction:discord.Interaction, prompt: str, model: int, limit: i
         view.add_item(SusButton(label="See Sussiness", style=discord.ButtonStyle.red))
         return await interaction.followup.send("The output of the request was a little too suspicious. If you *really* want to see it, then click the button.", view=view)
     
-    if code:
-        x = f"```{response_content}```"
-    
     if len(response_content) > 1900:
         chunks = [response_content[i:i+1900 ] for i in range(0, len(response_content), 1900 )]
         print(len(chunks))
@@ -1356,13 +1446,15 @@ async def get_server_voice_volume(guild_id: int) -> int:
     return int(volume)
 
 
-@client.tree.command(name="stop", description="Stops whatever is going on in voice chat")
+@client.tree.command(name="stop", description="Stops everything in Voice Chat, while keeping the bot inside.")
 async def stop(interaction:discord.Interaction):
     await slash_log(interaction)
     if not interaction.user.guild_permissions.stream:
         return await interaction.response.send_message("You are missing the required guild persmission: `stream`.")
     voice_client = interaction.guild.voice_client
     vc: wavelink.Player = interaction.guild.voice_client
+    if not vc:
+        return await interaction.response.send_message("Currently not in a voice chat channel. Please disconnect and reconnect me if you believe this is an error.")
     if vc.is_playing():
         await vc.stop()
         vc.queue.clear()
@@ -1372,6 +1464,16 @@ async def stop(interaction:discord.Interaction):
         return await interaction.response.send_message("Stopped playing audio.")
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
+
+@client.tree.command(name="leave", description="Leaves the voice channel")
+async def leave(interaction:discord.Interaction):
+    await slash_log(interaction)
+    if not interaction.user.guild_permissions.moderate_members:
+        return await interaction.response.send_message("You are missing the required guild persmission: `moderate_members`.")
+    voice_client = interaction.guild.voice_client
+    vc: wavelink.Player = interaction.guild.voice_client
+    await vc.disconnect()
+    await interaction.response.send_message(f"Left the voice channel {vc.channel}")
 
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
@@ -1772,7 +1874,7 @@ async def on_wavelink_track_end(player: wavelink.Player, track, reason):
             embed = discord.Embed(title="Playing new track", description=f"[{new.title}]({new.uri})")
             embed.set_image(url=new.thumbnail)
             embed.add_field(name="Creator", value=new.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(new.duration)))
+            embed.add_field(name="Duration remaining", value=await duration_to_time(int(new.duration)))
             embed.add_field(name="Queue Length", value=player.queue.count)
             await player.play_controls_message.edit(embed=embed)
             await player.play(new, volume=int(volume))
@@ -1789,7 +1891,11 @@ class PlayButton(discord.ui.Button):
     async def callback(self, interaction):
         view=discord.ui.View()
         view.timeout = None
+        if not interaction.user.voice:
+            return await interaction.response.send_message(content="You must be in the voice chat in order to use the music buttons!", ephemeral=True)
         vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+        if not vc:
+            return await interaction.response.send_message("There is no active player in this guild", ephemeral=True)
         embed = None
 
         ### Pause/Play alternating.
@@ -1966,7 +2072,7 @@ class PlayButton(discord.ui.Button):
         await interaction.response.edit_message(embed=embed, view=view)
 
 
-@client.tree.command(name="play", description="Test wavelink command series.")
+@client.tree.command(name="play", description="Plays/queues audio that you want in the current Voice Chat.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Quickly load a playing track, queue and seek for testing")
 async def play(interaction: discord.Interaction, search:str, seek:Optional[int], dev_stuff:Optional[bool] = False):
     await slash_log(interaction)
@@ -2142,15 +2248,22 @@ async def shuffle(interaction: discord.Interaction):
     await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
     print(vc.queue._queue)
 
-@client.tree.command(name="queue", description="Displays Wavelink queue as an array") # migrated
+@client.tree.command(name="queue", description="Get details about the queue") # migrated
 async def queue(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
-    if not vc.queue.is_empty:
-        print(f"Here is the current queue: {vc.queue}")
-        await interaction.response.send_message(f"Here is the current queue: {vc.queue}")
+    if not vc:
+        return await interaction.response.send_message("There is no current voice chat activity in this guild.", ephemeral=True)
+    embed=discord.Embed(title=f"Queue for {interaction.guild.name} ({len(vc.queue)} songs)")
+    embed.add_field(name="• Currently Playing", value=f"**{vc._source.title}** ({await duration_to_time(vc._source.length)})", inline=False)
+    if vc.queue._queue[0] is not None:
+        embed.add_field(name="• Next up", value=f"{vc.queue._queue[0]}", inline=False)
+    else:
+        embed.add_field(name="• Next up", value="Nothing yet.")
+    embed.add_field(name="• Settings", value=f"Volume: {vc.volume}% | Playing from: <@{client._BotBase__tree.client.application_id}> | Latency: {round(client.latency * 1000, 4)}ms", inline=False)
+    await interaction.response.send_message(embed=embed)
         
-@client.tree.command(name="skip", description="Wavelink skip audio.")
+@client.tree.command(name="skip", description="Skips the current track playing to the next in the queue.")
 async def skip(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -2492,7 +2605,7 @@ async def get_current_seconds_bandwidth() -> list:
     return [f"{megabytes_sent}", f"{megabytes_recv}"]
 
 
-async def duration_to_time(duration: int) -> str:
+async def duration_to_time(duration: int, format:Optional[int] = None) -> str:
     """
     Enter the duration in seconds as the argument and the function
     will return a prettified string based on the time :)\n
@@ -2500,29 +2613,30 @@ async def duration_to_time(duration: int) -> str:
     """
     print(f"[FunctionUsed]  'duration_to_time(duration:{duration})' used.")
     # Convert duration to seconds
-    seconds = duration
+    seconds = int(duration)
 
     # If the duration is greater than or equal to an hour, print the duration in hours and minutes
     if seconds >= 3600:
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
+        hours = seconds / 3600
+        minutes = (seconds % 3600) / 60
         if hours == 0:
-            return f"{minutes} minutes"
+            return f"{int(minutes)} minutes"
         elif minutes == 0:
-            return f"{hours} hours"
+            return f"{int(hours)} hours"
         else:
-            return f"{hours} hours {minutes} minutes"
+            return f"{int(hours)} hours {int(minutes)} minutes"
 
     # If the duration is greater than or equal to a minute, print the duration in minutes and seconds
     elif seconds >= 60:
-        minutes = seconds // 60
+        minutes = seconds / 60
         seconds = seconds % 60
         if minutes == 0:
-            return f"{seconds} seconds"
+            return f"{int(seconds)} seconds"
         elif seconds == 0:
-            return f"{minutes} minutes"
+            return f"{int(minutes)} minutes"
         else:
-            return f"{minutes} minutes {seconds} seconds"
+            return f"{int(minutes)} minutes {int(seconds)} seconds"
+
 
     # Otherwise, print the duration in seconds
     else:
@@ -4029,7 +4143,6 @@ async def links(interaction:discord.Interaction, url:str):
         print(f"\nbest_format - abr level: {audio_bitrate}")
         embed = embed.add_field(name="Audio Links", value=f"[audio url]({url}), abr: {audio_bitrate}")
         await interaction.response.send_message(embed=embed)
-            await ctx.send(embed=embed)
 
 @client.command(hidden=True)
 async def create_voice_chat(ctx):
