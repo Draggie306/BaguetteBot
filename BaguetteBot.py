@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.5"
-BUILD = "a"
+BUILD = "b"
 BETA_BOT = False
 
 """
@@ -93,9 +93,13 @@ with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
 
 if running_locally:
     if BETA_BOT:
-        subprocess.Popen(['java', '-jar', f'C:\\test\\Lavalink_Stable.jar'])
-    else:
         subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink.jar'])
+    else:
+        subprocess.Popen(['java', '-jar', 'C:\\test\\Lavalink-3.7.5.jar'])
+
+process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
+git_head_hash = process.communicate()[0].strip()
+print(f"Git version: {git_head_hash}")
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
