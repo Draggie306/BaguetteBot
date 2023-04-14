@@ -2126,7 +2126,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             embed.set_footer(text=random_hint)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url)
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
             return await interaction.followup.send(embed=embed)
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -2153,7 +2153,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
 
         # If the bot isn't doing anything.
 
-        if vc.queue.is_empty and not vc.is_playing(): # If there is nothing playing, we can go ahead and play it.
+        if vc.queue.is_empty and not vc.is_playing(): # This is the most commonly used embed!
             volume = await get_server_voice_volume(interaction.guild_id)
             await vc.set_volume(volume)
             await vc.play(search_video)
@@ -2177,7 +2177,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             embed.set_footer(text=random_hint)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url)
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
             x = await interaction.followup.send(embed=embed, view=view)
             vc.play_controls_message = x
 
@@ -2188,15 +2188,14 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
-            if not vc.current:
+            if not vc.current: # Check if not playing with queue
                 ph = 0
             else:
                 ph = vc.current.length
             total_duration = total_duration + ph - vc.last_position # Add the current track length
             print(total_duration)
             await vc.queue.put_wait(search_video)
-            return await interaction.followup.send(f'Added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration))}**.')
-
+            return await interaction.followup.send(f'Successfully added **{search_video.title}** to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration))}**.')
 
     # end of func play_track
 
