@@ -1,26 +1,40 @@
-﻿# BaguetteBot
+Invite the bot to your server! 
+- [admin link](https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=8&scope=bot%20applications.commands)
+- [choose permissions](https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=1618585447491&scope=bot%20applications.commands)
 
-BaguetteBot/DraggieBot is a Discord bot.
+# BaguetteBot
 
-Features:
+BaguetteBot/DraggieBot is a Discord.py bot, specialising in audio playing, fast & custom utilities, as well as enhanced logging and intelligent spam prevention.
+The bot's support server along with all my other projects is (Baguette Brigaders)[https://discord.gg/F5Vu9PhXMr]. Join to get notified of updates, capabilities and chat with a ton of cool people in our community.
 
-- Logs member activity, role changes and more
-- Moderation commands
-- Currency systems
-- Music playing
-- Slash Commands
+## Details
 
-Read what else the bot can do [here](https://ibaguette.com/b)
-
-Read v1's patch notes [here](https://www.ibaguette.com/p/baguettebot-v1-patch-notes.html)!
-
-In the future, there will be many more controls on a server-level basis.
+Check out how to use the bot, video instructions and some explanations [on my website](https://ibaguette.com/b).
+You can also check out [my large blog](https://discord.gg/F5Vu9PhXMr) for technical developments and a live feed for any major updates.
 
 If there's an issue with it in Discord or a blindingly obvious issue in the code, please add it as an issue, or ping me on Discord via @Draggie#3060! This will help so much :)
 
 Invite the bot to your server [here](https://discord.com/oauth2/authorize?client_id=792850689533542420&permissions=8&scope=bot%20applications.commands). Make sure the bot has sufficient permissions!
 
-# How to use: commands, server monitoring and more
+## Features
+
+- Logs
+- - Member activities checker (auto roles)
+- - Role modifications
+- - Server events, e.g channel changes and deletions
+- Moderation commands
+- Social activities
+- Audio playing
+- - YouTube videos & playlists
+- - Spotify tracks & playlists
+- - automatic seeking, queuing, volume changes and locks
+- - custom URLs
+- Currency systems, both in a server and globally
+- Fully supported, easy-to-use Slash Commands
+
+# How to use
+
+Read below for commands, server monitoring, griefing prevention and more
 
 ### **Slash Commands:**
 
