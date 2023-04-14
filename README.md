@@ -9,8 +9,8 @@ The bot's support server along with all my other projects is [Baguette Brigaders
 
 ## Details
 
-Check out how to use the bot, video instructions and some explanations [on my website](https://ibaguette.com/b).
-You can also check out [my large blog](https://discord.gg/F5Vu9PhXMr) for technical developments and a live feed for any major updates.
+Check out how to use the bot, video instructions and some explanations [on my website](https://ibaguette.com).
+You can also check out [my large blog](https://www.ibaguette.com/search/label/DraggieBot) for technical developments and a live feed for any major updates.
 
 If there's an issue with it in Discord or a blindingly obvious issue/error/typo in the code, please add it as an issue, create a merge request, or ping me on Discord - I'm [Draggie#3060](discord:///users/382784106984898560)! This will help so much :)
 
