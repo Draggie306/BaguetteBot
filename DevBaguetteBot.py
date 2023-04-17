@@ -2314,7 +2314,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
 @app_commands.describe(all_queue="Want to loop the entire queue?")
 async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
     vc: wavelink.Player = interaction.guild.voice_client
-    if not vc.is_playing():
+    if not vc or not vc.is_playing():
         return await interaction.response.send_message("Nothing is playing.")
 
     if not all_queue:
