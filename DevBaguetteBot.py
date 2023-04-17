@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev/b"
+BUILD = "dev.c"
 BETA_BOT = True
 
 """
@@ -1478,6 +1478,7 @@ async def stop(interaction: discord.Interaction):
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
 
+
 @client.tree.command(name="leave", description="Leaves the voice channel")
 async def leave(interaction: discord.Interaction):
     await slash_log(interaction)
@@ -1488,13 +1489,14 @@ async def leave(interaction: discord.Interaction):
     await vc.disconnect()
     await interaction.response.send_message(f"Left the voice channel {vc.channel}")
 
+
 @client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
 async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
     await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_channels:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
-    
+
     if bitrate is not None:
         try:
             specific_bitrate = int(bitrate)
@@ -1514,12 +1516,12 @@ async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
                 try:
                     await channel.edit(bitrate=specific_bitrate, reason=f"Command ran by {interaction.user.name} at {datetime.now()}")
                     x = f"Set the bitrate of **<#{channel.id}>** to **{specific_bitrate/1000}** kbps.\n{x}"
-                except:
+                except Exception:
                     x = f"Error changing the bitrate of **<#{channel.id}>** to **{specific_bitrate}** bps. (The server limit is between 8000 and {interaction.guild.bitrate_limit}, maybe that's why?)\n{x}"
 
         except Exception:
             x = f"Could not edit the information of <#{channel.id}>. Maybe the bot doesn't have good permissions?\n{x}"
-            await interaction.response.send_message(f"")
+            await interaction.response.send_message(x)
     await interaction.response.send_message(x)
     if x == "":
         await interaction.response.send_message("Nothing happened.")
@@ -1532,19 +1534,20 @@ async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
 async def pause(interaction: discord.Interaction):
     await slash_log(interaction)
     vc = interaction.guild.voice_client
-    if vc:
-        if not vc._paused:
-            await vc.pause()
-            await interaction.response.send_message("*✅ Paused the current audio playing!*")
-        elif vc._paused:
-            await vc.resume()
-            await interaction.response.send_message("*✅ Resumed playing the audio!*")
-        else:
-            await interaction.response.send_message("Audio is unable to be paused")
+    if not vc:
+        return await interaction.response.send_message("Audio is unable to be paused because there is no audio to pause")
+    if not vc._paused:
+        await vc.pause()
+        await interaction.response.send_message("*✅ Paused the current audio playing!*")
+    elif vc._paused:
+        await vc.resume()
+        await interaction.response.send_message("*✅ Resumed playing the audio!*")
     else:
-        await interaction.response.send_message("Audio is unable to be paused because there is no audio to pause")
+        await interaction.response.send_message("Audio is unable to be paused")
+        
 
 #   Nolwennium mine
+
 
 @client.tree.command(name="mine", description=f"Mines some globalCurrency which can be used to do cool stuff!")
 @app_commands.checks.cooldown(1, 29, key=lambda i: (i.user.id))
@@ -1660,7 +1663,7 @@ async def mine(interaction: discord.Interaction):
     try:
         with open(randomcroissant, 'r') as e:
             balance = float(e.read())
-    except:
+    except Exception:
         with open(randomcroissant, 'w+') as e:
             e.write("0")
             e.close()
@@ -1678,19 +1681,21 @@ async def mine(interaction: discord.Interaction):
 
 #   yn
 
+
 @client.tree.command(name="yes-no", description="Randomly answers yes or no.")
 async def yn(interaction: discord.Interaction):
     await slash_log(interaction)
-    list_test = ["No!", "Of course not!", "Certainly not.", "Definitely not!", "Obviously not.", "Nah!", "Nope.", "Hell nah...", 
-                "Yes!", "Obviously!",   "Of course!",       "Certainly!",       "Definitely!",  "Without a shadow of a doubt!", "Yessir!"]
+    list_test = ["No!", "Of course not!", "Certainly not.", "Definitely not!", "Obviously not.", "Nah!", "Nope.", "Hell nah...",
+                 "Yes!", "Obviously!", "Of course!", "Certainly!", "Definitely!", "Without a shadow of a doubt!", "Yessir!"]
     await interaction.response.send_message(random.choice(list_test))
 
-    print (f"\nCOMMAND RAN -> '.yn' ran by {interaction.user}")
+    print(f"\nCOMMAND RAN -> '.yn' ran by {interaction.user}")
     f = open(GlobalLogDir, "a")
     f.write(f"\nCOMMAND RAN -> '.yn' ran by {interaction.user} at {datetime.now()}")
     f.close()
 
 #   brawlstars
+
 
 @client.tree.command(name="brawlstars", description="?")
 async def BrawlStars(interaction: discord.Interaction):
@@ -1704,38 +1709,39 @@ async def BrawlStars(interaction: discord.Interaction):
 
 #   vbuck calc
 
+
 @client.tree.command(name="vbucks", description="Calculates GBP -> V-Bucks")
 @app_commands.describe(amount="Enter the amount of £££ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
-async def vbucks(interaction: discord.Interaction, amount:str, tier:Optional[int]):
+async def vbucks(interaction: discord.Interaction, amount: str, tier: Optional[int]):
     await slash_log(interaction)
     tier = 0 if tier is None else tier
     try:
-        vAmount = (float (amount))
+        vAmount = (float(amount))
         gbp = amount
     except ValueError:
         return await interaction.response.send_message(f"Inappropriate integer: {amount}/{tier}")
 
-    vTier1 = (float (154.083205))
-    vTier2 = (float (175.109443))
-    vTier3 = (float (192.381685))
-    vTier4 = (float (210.970464))
+    vTier1 = (float(154.083205))
+    vTier2 = (float(175.109443))
+    vTier3 = (float(192.381685))
+    vTier4 = (float(210.970464))
 
     if tier == 1:
         vAmount = round(vTier1 * vAmount)
         await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 1 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 2:
         vAmount = round(vTier2 * vAmount)
         await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 2 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 3:
         vAmount = round(vTier3 * vAmount)
         await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 3 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 4:
         vAmount = round(vTier4 * vAmount)
         await interaction.response.send_message(f"£{gbp} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 4 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     else:
         vAmount_LowerBounds = int(vTier1 * vAmount)
         vAmount_UpperBounds = int(vTier4 * vAmount)
@@ -1743,13 +1749,14 @@ async def vbucks(interaction: discord.Interaction, amount:str, tier:Optional[int
 
 #   Vbucks USD
 
+
 @client.tree.command(name="vbucks-usd", description="Calculates USD -> V-Bucks")
 @app_commands.describe(amount="Enter the amount of $$$ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
-async def vbucks_usd(interaction: discord.Interaction, amount:str, tier:Optional[int]):
+async def vbucks_usd(interaction: discord.Interaction, amount: str, tier: Optional[int]):
     await slash_log(interaction)
     tier = 0 if tier is None else tier
     try:
-        vAmount = (float (amount))
+        vAmount = (float(amount))
         usd = amount
     except ValueError:
         return await interaction.response.send_message(f"Inappropriate integer: {amount}/{tier}")
@@ -1762,23 +1769,24 @@ async def vbucks_usd(interaction: discord.Interaction, amount:str, tier:Optional
     if tier == 1:
         vAmount = round(vTier1usd * vAmount)
         await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 1 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 2:
         vAmount = round(vTier2usd * vAmount)
         await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 2 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 3:
         vAmount = round(vTier3usd * vAmount)
         await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 3 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     if tier == 4:
         vAmount = round(vTier4usd * vAmount)
         await interaction.response.send_message(f"${usd} is equal to **{format(vAmount, ',')}** V-Bucks (using tier 4 of vbuck purchase)")
-        print (vAmount)
+        print(vAmount)
     else:
         vAmount_LowerBounds = int(vTier1usd * vAmount)
         vAmount_UpperBounds = int(vTier4usd * vAmount)
         await interaction.response.send_message(f"${usd} may be between **{format(vAmount_LowerBounds, ',')}** and **{format(vAmount_UpperBounds, ',')}** V-Bucks depending on which V-Bucks package(s) you choose to buy")
+
 
 @client.tree.command(name="settings", description="Edit a ton of the bot's settings here. [Ephemeral]")
 async def settings(interaction: discord.Interaction):
@@ -1788,7 +1796,7 @@ async def settings(interaction: discord.Interaction):
     if not os.path.isfile(user_settings_json_path):
         with open(user_settings_json_path, 'w') as f:
             json.dump(default_configfile, f)
-    
+
     # Read the JSON file
     with open(user_settings_json_path, 'r') as f:
         settings = json.load(f)
@@ -2307,22 +2315,23 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
 async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.is_playing():
-        return await interaction.response.send_message("Noting is playing.")
+        return await interaction.response.send_message("Nothing is playing.")
 
     if not all_queue:
-        vc.queue.loop = True
-        return await interaction.response.send_message("The current track has been set to loop.")
+        if vc.queue.loop:
+            vc.queue.loop = False
+            return await interaction.response.send_message("Looping disabled.")
+        else:
+            vc.queue.loop = True
+            return await interaction.response.send_message("The current track has been set to loop.")
+
     if all_queue:
-        vc.queue.loop_all = True
-        return await interaction.response.send_message("All tracks in the history queue have been set to loop.")
-
-    if vc.queue.loop:
-        vc.queue.loop = False
-        return await interaction.response.send_message("Looping disabled.")
-
-    if vc.queue.loop_all:
-        vc.queue.loop_all = False
-        return await interaction.response.send_message("Looping all disabled.")
+        if vc.queue.loop_all:
+            vc.queue.loop_all = False
+            return await interaction.response.send_message("Looping all disabled.")
+        else:
+            vc.queue.loop_all = True
+            return await interaction.response.send_message("All tracks in the history queue have been set to loop.")
 
 
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
@@ -2331,8 +2340,8 @@ async def seek(interaction: discord.Interaction, position: int):
     start_time = time.perf_counter()
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
-    if not vc.is_playing():
-        return await interaction.response.send_message("Noting is playing.")
+    if not vc or not vc.is_playing():
+        return await interaction.response.send_message("Nothing is playing.")
     await vc.seek(position * 1000)
     print(f"[SeekCommand]   Seeking to {position * 1000}ms")
     return await generic_operation_complete_message(interaction, start_time, f"Seeked to {position*1000}ms.")
