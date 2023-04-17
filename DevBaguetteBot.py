@@ -1,10 +1,12 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev.c"
+BUILD = "dev.d" # use / in commit message
 BETA_BOT = True
 
 """
-To complete:
-Shop page 2 with buttons (Convert nolwennium, custom name (1000 coins), buy multipliers???)
+Naming scheme:
+DRAGGIEBOT_VERSION: current version with features: <alpha/release>.<major>.<minor>
+BUILD: hotfixes descending alphabetically. Always 'dev' if in branch 'dev', followed by '/<comitted_revision>'
+BETA_BOT: True if bot is in beta mode else False
 """
 
 print("Importing all modules...\n")
@@ -1458,7 +1460,7 @@ async def get_server_voice_volume(guild_id: int) -> int:
     return int(volume)
 
 
-@client.tree.command(name="stop", description="Stops everything in Voice Chat, while keeping the bot inside.")
+@client.tree.command(name="stop", description="Stops everything in Voice Chat, clears the queue, disconnects.")
 async def stop(interaction: discord.Interaction):
     await slash_log(interaction)
     if not interaction.user.guild_permissions.stream:
@@ -1468,24 +1470,27 @@ async def stop(interaction: discord.Interaction):
     if not vc:
         return await interaction.response.send_message("Currently not in a voice chat channel. Please disconnect and reconnect me if you believe this is an error.")
     if vc.is_playing():
+        vc.autoplay = False
         await vc.stop()
         vc.queue.clear()
         await vc.disconnect()
         return await interaction.response.send_message("Stopped playing audio, stopped the queue and disconnected.\n*Using `/pause` or `/skip` will not clear the queue.*")
     if voice_client is not None:
+        vc.autoplay = False
         voice_client.stop()
         return await interaction.response.send_message("Stopped playing audio.")
     else:
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
 
 
-@client.tree.command(name="leave", description="Leaves the voice channel")
+@client.tree.command(name="leave", description="Leaves the voice channel.")
 async def leave(interaction: discord.Interaction):
     await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc:
+        return await interaction.response.send_message("I'm not in a Voice Channel.")
     if not interaction.user.guild_permissions.moderate_members:
         return await interaction.response.send_message("You are missing the required guild persmission: `moderate_members`.")
-    voice_client = interaction.guild.voice_client
-    vc: wavelink.Player = interaction.guild.voice_client
     await vc.disconnect()
     await interaction.response.send_message(f"Left the voice channel {vc.channel}")
 
@@ -1886,17 +1891,91 @@ async def on_wavelink_node_ready(node: wavelink.Node):
 async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = None, reason: Optional[str] = None) -> discord.Embed:
     if reason == 'REPLACED':
         return
-    if player.reason == "LOAD_FAILED":
+    if player.reason and player.reason == "LOAD_FAILED":
         print("Load failed")
-    """try:
-        if hasattr(player.player, "queue"):
-            x = player.queue.get_wait()
-            player.play(x)
+
+    interaction = player.player.guild_interaction
+    try:
+        next_track = player.player.queue._queue[0]
+    except IndexError:
+        return await interaction.edit_original_response(content="Finished playing all audio!")
+    embed = discord.Embed(title="[on_wavelink_track_end] Edited Playing track", description=f"[{next_track.title}]({next_track.uri})")
+
+    try:
+        if hasattr(next_track, "images"):
+            embed.set_image(url=next_track.images[0]) # Spotify images
         else:
-            await player.stop()
-            await player.channel.send("No more stuff in the queue.")
+            embed.set_image(url=next_track.thumbnail)
     except Exception as e:
-        await player.channel.send(e)"""
+        print(e)
+        embed.add_field(name="Thumbnail", value="<unable to get.>")
+
+    previous_item = await get_wavelink_queue_previous_item(player)
+    if hasattr(next_track, "artists"):
+        artists_str = ', '.join(previous_item.artists)
+    else:
+        artists_str = next_track.author
+
+    embed.add_field(name="Creator", value=artists_str)
+    embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + int(previous_item.duration / 1000)}:R>")
+    # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
+    embed.add_field(name="Queue Length", value=await get_wavelink_queue_length(player))
+    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+
+    view = discord.ui.View()
+    view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.green))
+    view.timeout = None
+
+    await player.player.guild_interaction.edit_original_response(embed=embed, view=view)
+
+
+async def get_wavelink_queue_previous_item(player):
+    """
+    Returns the last track in the queue for simplicity\n
+    Returns `None` if nothing there.
+    """
+    try:
+        if len(player.queue._queue) == 0:
+            return None
+        else:
+            return player.queue._queue[0]
+    except Exception:
+        if len(player.player.queue._queue) == 0:
+            return None
+        else:
+            return player.player.queue._queue[0]
+
+
+async def get_wavelink_queue_length(player):
+    """
+    Returns the length of the queue for simplicity\n
+    """
+    try:
+        if len(player.queue._queue) == 0:
+            return None
+        else:
+            return len(player.queue._queue)
+    except Exception as e:
+        if len(player.player.queue._queue) == 0:
+            return None
+        else:
+            return len(player.player.queue._queue)
+
+async def get_wavelink_queue_next_item(player):
+    """
+    Returns the last track in the queue for simplicity\n
+    Returns `None` if nothing there.
+    """
+    if len(player.queue._queue) == 0:
+        return None
+    else:
+        return player.queue._queue[0]
 
 
 class PlayButton(discord.ui.Button):
@@ -1912,6 +1991,10 @@ class PlayButton(discord.ui.Button):
         if not vc:
             return await interaction.response.send_message("There is no active player in this guild", ephemeral=True)
         embed = None
+
+        await interaction.response.defer() # do this to fix button not working - as seen in discord.py server: https://canary.discord.com/channels/336642139381301249/1094719114473381979/1095232120978411652
+
+        vc.just_skipped = False # this is used to precent the embed message being edited multiple times if a skip has occurred due to it stopping, which triggers on_wavelink_track_end and also occurs at the end of this function
 
         # Button: Pause/Play alternating.
 
@@ -1966,12 +2049,14 @@ class PlayButton(discord.ui.Button):
                         await vc.stop()
                         vc.isPlayingFromQueue = False
                 else:
+                    vc.just_skipped = True
                     await vc.stop()
-                    await interaction.followup.send("Skipped audio.")
+                    await interaction.channel.send("Skipped audio.", delete_after=5)
 
             else:
+                vc.just_skipped = True
                 await vc.stop()
-                await interaction.channel.send("Skipped audio.")
+                await interaction.channel.send("Skipped audio.", delete_after=5)
 
         # Button: Restart
 
@@ -2075,21 +2160,25 @@ class PlayButton(discord.ui.Button):
             for i in x:
                 print(i)
 
-        # await asyncio.sleep(1) # wait for the sync up to occur from playnewtrack listener.
-        if not vc.current:
-            return await interaction.response.edit_message(content="Finished playing.")
-        embed = discord.Embed(title="Playing track", description=f"[{vc.current.title}]({vc.current.uri})")
-        try:
-            embed.set_image(url=vc.current.thumbnail)
-        except Exception:
-            embed.add_field(name="Thumbnail", value="<unable to get.>")
+        if not vc.just_skipped:
+            if not vc.current:
+                return await interaction.response.edit_message(content="Finished playing.")
+            embed = discord.Embed(title="Playing track", description=f"[{vc.current.title}]({vc.current.uri})")
+            try:
+                embed.set_image(url=vc._current.thumbnail)
+                print("...")
+            except Exception:
+                embed.add_field(name="Thumbnail", value="<unable to get from current interaction url>")
 
-        embed.add_field(name="Creator", value=vc.current.author)
-        embed.add_field(name="Duration", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
-        embed.add_field(name="Queue Length", value=vc.queue.count)
-        view = view
-
-        await interaction.response.edit_message(embed=embed, view=view)
+            embed.add_field(name="Creator", value=vc.current.author)
+            embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + (int(vc.current.duration / 1000) - int(vc.last_position / 1000))}:R>")
+            # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
+            embed.add_field(name="Queue Length", value=vc.queue.count)
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+            # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
+            await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
+        else:
+            print("Not doing anything - just skipped!")
 
 
 @client.tree.command(name="play", description="Plays/queues audio that you want in the current Voice Chat.")
@@ -2110,12 +2199,16 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
     try:
         vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
         vc.autoplay = True
-    except Exception:
+    except IndexError:
         return await interaction.response.send_message("Nodes are still being connected, please wait a minute...")
+    except Exception:
+        return await interaction.response.send_message("Can't get the nodes! Please wait a minute...")
 
     await interaction.response.defer()
 
     tracks = False
+
+    vc.guild_interaction = interaction
 
     async def play_track(search_video, type: Optional[str] = None, offset: Optional[int] = False) -> None:
         print(f"[PlayCommand] [PlayTrack] Video title: {search_video}")
@@ -2181,7 +2274,8 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             except Exception:
                 embed.add_field(name="Thumbnail", value="<unable to get.>")
             embed.add_field(name="Creator", value=search_video.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(search_video.duration / 1000)))
+            embed.add_field(name="Time Left", value=f"<t:{int(time.time()) + int(search_video.duration / 1000)}:R>")
+            # embed.add_field(name="Time left", value=await duration_to_time(int(search_video.duration / 1000)))
             embed.add_field(name="Queue Length", value=vc.queue.count)
             view = discord.ui.View()
             view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
@@ -2203,9 +2297,13 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             total_duration = 0
             for track in vc.queue:
                 try:
-                    total_duration += track.client['info']['length']
-                except Exception:
-                    total_duration += track.length
+                    if hasattr(track, "duration"): # Spotify tracks only
+                        total_duration += track.length
+                    else:
+                        total_duration += track.client['info']['length']
+                except Exception as e:
+                    print(f"[ERROR] [PlayCommand]   Unable to get a good duration for {track}! {e}")
+                    pass
             if not vc.current: # Check if not playing with queue
                 ph = 0
             else:
@@ -2214,7 +2312,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             print(total_duration)
             await vc.queue.put_wait(search_video)
             if not type == 'processed_playlist':
-                return await interaction.followup.send(f'Successfully added ``{search_video.title}`` to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration/1000))}**.') # wavelink >v2 time now millis
+                return await interaction.followup.send(f'Successfully added ``{search_video.title}`` to the queue. This will play after **{len(vc.queue)}** more tracks have finished, which will be in **~{await duration_to_time(round(total_duration/1000))}**.', ephemeral=True) # wavelink >v2 time now millis
 
     # end of function play_track()
 
@@ -2253,9 +2351,8 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
 
     if "open.spotify.com/playlist" in search:
         print("[PlayCommand] Processing: Spotify Playlist")
-        tracks = await spotify.SpotifyTrack.search(query=search)
-        print("[PlayCommand] Spotify Playlist process successful.")
-        return await play_track(tracks, "spotify_playlist")
+        async for track in spotify.SpotifyTrack.iterator(query=search): # Needs some work still
+            await play_track(track)
     elif "open.spotify.com/track" in search:
         print("[PlayCommand] Processing: Spotify Track")
         search = await spotify.SpotifyTrack.search(query=search, return_first=True)
@@ -2310,9 +2407,19 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
         return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 
+@client.tree.command(name="filter", description="[Beta] Select and use special Voice Chat Sound Filters!")
+@app_commands.describe(filter="Enter the string of the filter to add", dev_mode="enable dev mode?")
+async def filter(interaction: discord.Interaction, filter: Optional[str] = None, dev_mode: Optional[bool] = False):
+    await slash_log(interaction)
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc or not vc.is_playing():
+        return await interaction.response.send_message("Nothing is playing.")
+
+
 @client.tree.command(name="loop", description="Loop the current audio, or all the queue.")
 @app_commands.describe(all_queue="Want to loop the entire queue?")
 async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
+    await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc or not vc.is_playing():
         return await interaction.response.send_message("Nothing is playing.")
@@ -2337,6 +2444,7 @@ async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = Fal
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position: int):
+    await slash_log(interaction)
     start_time = time.perf_counter()
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -2386,7 +2494,7 @@ async def skip(interaction: discord.Interaction):
             embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
             embed.set_image(url=search.thumbnail)
             embed.add_field(name="Author", value=search.author)
-            embed.add_field(name="Duration", value=await duration_to_time(int(search.duration)))
+            embed.add_field(name="Time left", value=await duration_to_time(int(search.duration)))
             embed.add_field(name="Link", value=search.uri)
             await interaction.response.send_message(embed=embed)"""
             total_duration = 0
@@ -2710,7 +2818,6 @@ async def get_current_seconds_bandwidth() -> list:
     Gets network bandwidth used in the last second. Useful for seeing if the network is being throttled.\n
     Returns a list, index `0` is Uploaded Megabytes, index `1` is Downloaded Megabytes.
     """
-    import psutil
 
     # Store the previous values for comparison
     prev_net_data = psutil.net_io_counters(pernic=False, nowrap=True)
