@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev/a"
+BUILD = "dev/b"
 BETA_BOT = True
 
 """
@@ -2302,6 +2302,29 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
         return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 
+@client.tree.command(name="loop", description="Loop the current audio, or all the queue.")
+@app_commands.describe(all_queue="Want to loop the entire queue?")
+async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.is_playing():
+        return await interaction.response.send_message("Noting is playing.")
+
+    if not all_queue:
+        vc.queue.loop = True
+        return await interaction.response.send_message("The current track has been set to loop.")
+    if all_queue:
+        vc.queue.loop_all = True
+        return await interaction.response.send_message("All tracks in the history queue have been set to loop.")
+
+    if vc.queue.loop:
+        vc.queue.loop = False
+        return await interaction.response.send_message("Looping disabled.")
+
+    if vc.queue.loop_all:
+        vc.queue.loop_all = False
+        return await interaction.response.send_message("Looping all disabled.")
+
+
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position: int):
@@ -3937,18 +3960,18 @@ async def tts(ctx):
 
 #   playdir
 
-      
+
 @client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
 async def playdir(ctx):
     async with ctx.typing():
         channel = ctx.author.voice.channel
         text = ctx.message.content
-        #await ctx.send("IDE detected! Unable to run command. Aborting.\nFeature enabled in v1.1")
-        #return
+        # await ctx.send("IDE detected! Unable to run command. Aborting.\nFeature enabled in v1.1")
+        # return
         sp1 = text.split(' ', 1)[-1]
 
         try:
-            my_file = Path((str (sp1)))
+            my_file = Path((str(sp1)))
             if my_file.is_file():
                 voice_client = ctx.guild.voice_client
                 voice_client.stop()
