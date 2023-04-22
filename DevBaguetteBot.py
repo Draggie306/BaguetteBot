@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev.e" # use / in commit message
+BUILD = "dev.f" # use / in commit message
 BETA_BOT = True
 
 """
@@ -24,6 +24,7 @@ from        typing import Optional
 from        wavelink.ext import spotify
 import      matplotlib.pyplot as plt
 
+print("Defining main variables...")
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
 VOICE_VOLUME = 30
@@ -48,6 +49,63 @@ YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
 AUDIO_SUBSYSTEM = "Wavelink"
 IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
+YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist': 'True', 'youtube-skip-dash-manifest': 'True'}
+YTDL_OPTIONS = {
+    'format': 'bestaudio/best',
+    'extractaudio': True,
+    'audioformat': 'mp3',
+    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': True,
+    'logtostderr': False,
+    'quiet': False,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0',
+}
+FFMPEG_OPTIONS = {
+    'before_options': '-reconnect True -reconnect_streamed True -reconnect_delay_max 5',
+    'options': '-vn -report -loglevel debug',
+}
+youtube_dl.utils.bug_reports_message = lambda: ''
+
+sys.setrecursionlimit(99999999)
+
+PYTHONIOENCODING = "utf-8"
+
+
+class Roles:
+    ROLES_LIST = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
+    ROLES_LIST_ID = [795738020967743491, 796360098108538901, 943259355619418163, 943259337185435699, 943259319821021194, 943259291484295218, 943259217123496028, 796362374827343923, 796362553541656576, 943974413810933802]
+    ROLES_COSTS = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
+
+    Citizen_Tier = 0
+
+    Knight_Tier = 1
+
+    Baron_Tier = 2
+
+    Viscount_Tier = 3
+
+    Earl_Tier = 4
+
+    Marquess_Tier = 5
+
+    Duke_Tier = 6
+
+    Prince_Tier = 7
+
+    King_Tier = 8
+
+    Admin: 1000000
+
+
+global start_time
+start_time = time.time()
+
+print("Checking directories...")
 
 #   Check directories
 NOLWENNIUM_CHECK_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Nolwennium\\.rootnolwenniumdirectory"
@@ -73,6 +131,7 @@ if NOLWENNIUM_DIR_CHECKER.is_file():
     handler = logging.FileHandler(filename=f'{MINIFIED_BASE_DIR}Logs\\{DRAGGIEBOT_VERSION}{BUILD}-{time.time()}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
+    GlobalLogDir = (f"{BASE_DIR}GlobalLog.txt")
 else:
     running_locally = False
     print(f"Not running locally, coins and {NAME_NOLWENNIUM} values may not be up to date and some features may be disabled")
@@ -87,8 +146,10 @@ else:
     handler = logging.FileHandler(filename=f'.useful{S_SLASH}{DRAGGIEBOT_VERSION}{BUILD}-{time.time()}.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
+    GlobalLogDir = ("GlobalLog.txt")
     import keep_alive       # This is only in BaguetteBot's Replit page to run 24/7.
     keep_alive.keep_alive()
+
 
 with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_api_key.txt", 'r') as spapi:
     spotify_id = spapi.read()
@@ -105,6 +166,8 @@ process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=sub
 git_head_hash = process.communicate()[0].strip()
 print(git_head_hash)
 
+print("Creating bot instance...")
+
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
@@ -116,13 +179,13 @@ client = commands.Bot(
     intents=intents,
     description=f"BaguetteBot - version {DRAGGIEBOT_VERSION}{BUILD} - d.py {discord.__version__}",
     help_command=commands.DefaultHelpCommand(no_category='Dot Commands')
-    )
-
-print("Done!\nSlash commands initialising...")
+)
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
 ###########################################################################################################################################################
+
+print("Done! Slash commands initialising...")
 
 
 @client.tree.command(name="devtest", description="Developer testing commands.")
@@ -157,47 +220,6 @@ async def devtest(interaction: discord.Interaction):
     plt.savefig("Z:\\discord_chart.png")
     # plt.show()
     await interaction.response.send_message(file=discord.File("Z:\\discord_chart.png"))
-
-
-async def wip_command():
-    messages_sent = 0
-    messages_received = 0
-
-    def save_to_json():
-        global messages_sent, messages_received
-        current_day = datetime.now().day
-        try:
-            with open("data.json", "r") as json_file:
-                data = json.load(json_file)
-                last_day = data["day"]
-                if last_day != current_day:
-                    data = {
-                        "messages_sent": messages_sent,
-                        "messages_received": messages_received,
-                        "time_spent_voice": time_spent_voice(),
-                        "day": current_day
-                    }
-                    messages_sent = 0
-                    messages_received = 0
-                    with open("data.json", "w") as json_file:
-                        json.dump(data, json_file)
-        except Exception:
-            data = {
-                "messages_sent": messages_sent,
-                "messages_received": messages_received,
-                "time_spent_voice": time_spent_voice(),
-                "day": current_day
-            }
-            messages_sent = 0
-            messages_received = 0
-            with open("data.json", "w") as json_file:
-                json.dump(data, json_file)
-
-    schedule.every(1).minutes.do(save_to_json)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
 
 
 @client.tree.command(name="command-2")
@@ -315,255 +337,107 @@ async def snowflake(interaction: discord.Interaction, flake: str) -> None:
         await interaction.response.send_message("That isn't a valid integer to convert into a date.")
 
 
-@commands.Cog.listener("on_app_command_error")
-async def get_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
-    await interaction.response.send_message(f'An error occured: {error}')
-
-
 @client.tree.command(name="meme-stats", description="Get some detailed analytics about the Baguette Brigaders Epic Memes Channel")
 async def meme_analysis(interaction: discord.Interaction):
     await interaction.response.send_message(f"*FETCHing Discord API Data. Please wait...* {EMOJI_LOADING}")
     try:
         start_time = time.time()
         channel = client.get_channel(809112184902778890)
-        messages = []
-        total_messages = 0
-        meme_messages = 0
+        if channel.type == discord.ChannelType.private:
+            return 
+        if channel is not None and channel.type == discord.ChannelType.text:
+            messages = []
+            total_messages = 0
+            meme_messages = 0
 
-        async for message in channel.history(limit=None):
-            total_messages = total_messages + 1
-            if message.reactions:
-                print("Adding message to messages")
-                messages.append(message)
-                meme_messages = meme_messages + 1
-            else:
-                print("Skipping message as no reactions")
+            async for message in channel.history(limit=None):
+                total_messages = total_messages + 1
+                if message.reactions:
+                    print("Adding message to messages")
+                    messages.append(message)
+                    meme_messages = meme_messages + 1
+                else:
+                    print("Skipping message as no reactions")
 
-        async def most_posts():
-            author_scores = {}
-            for message in messages:
-                upvote_count = 0
-                downvote_count = 0
-                for reaction in message.reactions:
-                    if hasattr(reaction.emoji, 'name'):
-                        if reaction.emoji.name == 'upvote':
-                            upvote_count = reaction.count
-                        elif reaction.emoji.name == 'downvote':
-                            downvote_count = reaction.count
+            async def most_posts():
+                author_scores = {}
+                for message in messages:
+                    upvote_count = 0
+                    downvote_count = 0
+                    for reaction in message.reactions:
+                        if hasattr(reaction.emoji, 'name'):
+                            if reaction.emoji.name == 'upvote':
+                                upvote_count = reaction.count
+                            elif reaction.emoji.name == 'downvote':
+                                downvote_count = reaction.count
 
-                total_score = upvote_count - downvote_count
+                    total_score = upvote_count - downvote_count
 
-                author_id = message.author.id
-                author_scores.setdefault(author_id, []).append(total_score)
+                    author_id = message.author.id
+                    author_scores.setdefault(author_id, []).append(total_score)
 
-            organised_user_scores = []
-            for author_id, score_list in author_scores.items():
-                average_score = sum(score_list) / len(score_list)
-                organised_user_scores.append({'author_id': author_id, 'avg_score': average_score, 'posts': len(score_list)})
+                organised_user_scores = []
+                for author_id, score_list in author_scores.items():
+                    average_score = sum(score_list) / len(score_list)
+                    organised_user_scores.append({'author_id': author_id, 'avg_score': average_score, 'posts': len(score_list)})
 
-            organised_user_scores = sorted(organised_user_scores, key=lambda x: x['posts'], reverse=True)
-            return organised_user_scores
+                organised_user_scores = sorted(organised_user_scores, key=lambda x: x['posts'], reverse=True)
+                return organised_user_scores
 
-        async def most_upvoted() -> str:
-            calculated_messages = []
+            async def most_upvoted() -> str:
+                calculated_messages = []
 
-            for message in messages:
-                upvote_count = 0
-                downvote_count = 0
-                for reaction in message.reactions:
-                    print(f"For message reaction in reactions: {reaction}")
-                    if hasattr(reaction.emoji, 'name'):
-                        if reaction.emoji.name == 'upvote':
-                            upvote_count = reaction.count
-                        elif reaction.emoji.name == 'downvote':
-                            downvote_count = reaction.count
+                for message in messages:
+                    upvote_count = 0
+                    downvote_count = 0
+                    for reaction in message.reactions:
+                        print(f"For message reaction in reactions: {reaction}")
+                        if hasattr(reaction.emoji, 'name'):
+                            if reaction.emoji.name == 'upvote':
+                                upvote_count = reaction.count
+                            elif reaction.emoji.name == 'downvote':
+                                downvote_count = reaction.count
 
-                calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
+                    calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
 
-            most_upvoted = sorted(calculated_messages, key=lambda x: x['upvotes'], reverse=True)
-            print(most_upvoted)
-            return most_upvoted
+                most_upvoted = sorted(calculated_messages, key=lambda x: x['upvotes'], reverse=True)
+                print(most_upvoted)
+                return most_upvoted
 
-        async def most_downvoted() -> list:
-            calculated_messages = []
+            async def most_downvoted() -> list:
+                calculated_messages = []
 
-            for message in messages:
-                upvote_count = 0
-                downvote_count = 0
-                for reaction in message.reactions:
-                    print(f"For message reaction in reactions: {reaction}")
-                    if hasattr(reaction.emoji, 'name'):
-                        if reaction.emoji.name == 'upvote':
-                            upvote_count = reaction.count
-                        elif reaction.emoji.name == 'downvote':
-                            downvote_count = reaction.count
+                for message in messages:
+                    upvote_count = 0
+                    downvote_count = 0
+                    for reaction in message.reactions:
+                        print(f"For message reaction in reactions: {reaction}")
+                        if hasattr(reaction.emoji, 'name'):
+                            if reaction.emoji.name == 'upvote':
+                                upvote_count = reaction.count
+                            elif reaction.emoji.name == 'downvote':
+                                downvote_count = reaction.count
 
-                calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
+                    calculated_messages.append({"data": message, "id": message.id, "jump_url": message.jump_url, "upvotes": upvote_count, "downvotes": downvote_count, "total_score": upvote_count - downvote_count})
 
-            downvote_count = sorted(calculated_messages, key=lambda x: x['downvotes'], reverse=True)
-            print(downvote_count)
-            return downvote_count
+                downvote_count = sorted(calculated_messages, key=lambda x: x['downvotes'], reverse=True)
+                print(downvote_count)
+                return downvote_count
 
-        downvote_count = await most_downvoted()
-        most_post = await most_posts()
-        most_upvote = await most_upvoted()
+            downvote_count = await most_downvoted()
+            most_post = await most_posts()
+            most_upvote = await most_upvoted()
 
-        embed = discord.Embed(title="Meme Stats")
-        embed.add_field(name=f"{EMOJI_UPVOTE} Most Upvoted Posts {EMOJI_UPVOTE}", value=f"**<:NumberOne:1092556140556066837> [{most_upvote[0]['upvotes']} upvotes by {most_upvote[0]['data'].author.mention}]({most_upvote[0]['jump_url']}).**\n[{most_upvote[1]['upvotes']} upvotes by {most_upvote[1]['data'].author.mention}]({most_upvote[1]['jump_url']})\n[{most_upvote[2]['upvotes']} upvotes by {most_upvote[2]['data'].author.mention}]({most_upvote[2]['jump_url']})", inline=False)
-        embed.add_field(name=F"{EMOJI_DOWNVOTE} Most Downvoted Posts {EMOJI_DOWNVOTE}", value=f"**<:NumberOne:1092556140556066837> [{downvote_count[0]['downvotes']} downvotes by {downvote_count[0]['data'].author.mention}]({downvote_count[0]['jump_url']}).**\n[{downvote_count[1]['downvotes']} downvotes by {downvote_count[1]['data'].author.mention}]({downvote_count[1]['jump_url']})\n[{downvote_count[2]['downvotes']} downvotes by {downvote_count[2]['data'].author.mention}]({downvote_count[2]['jump_url']})", inline=False)
-        embed.add_field(name="📈 Most Posts", value=f"**<:NumberOne:1092556140556066837> {most_post[0]['posts']} posts, by <@{most_post[0]['author_id']}>. (Avg. upvotes/post: {round(most_post[0]['avg_score'], 2) })**\n{most_post[1]['posts']}, by <@{most_post[1]['author_id']}>\n{most_post[2]['posts']}, by <@{most_post[2]['author_id']}>", inline=False)
-        embed.set_footer(text=('⚠️ This feature is currently in beta and is currently being worked on, please say your suggestions!'))
+            embed = discord.Embed(title="Meme Stats")
+            embed.add_field(name=f"{EMOJI_UPVOTE} Most Upvoted Posts {EMOJI_UPVOTE}", value=f"**<:NumberOne:1092556140556066837> [{most_upvote[0]['upvotes']} upvotes by {most_upvote[0]['data'].author.mention}]({most_upvote[0]['jump_url']}).**\n[{most_upvote[1]['upvotes']} upvotes by {most_upvote[1]['data'].author.mention}]({most_upvote[1]['jump_url']})\n[{most_upvote[2]['upvotes']} upvotes by {most_upvote[2]['data'].author.mention}]({most_upvote[2]['jump_url']})", inline=False)
+            embed.add_field(name=F"{EMOJI_DOWNVOTE} Most Downvoted Posts {EMOJI_DOWNVOTE}", value=f"**<:NumberOne:1092556140556066837> [{downvote_count[0]['downvotes']} downvotes by {downvote_count[0]['data'].author.mention}]({downvote_count[0]['jump_url']}).**\n[{downvote_count[1]['downvotes']} downvotes by {downvote_count[1]['data'].author.mention}]({downvote_count[1]['jump_url']})\n[{downvote_count[2]['downvotes']} downvotes by {downvote_count[2]['data'].author.mention}]({downvote_count[2]['jump_url']})", inline=False)
+            embed.add_field(name="📈 Most Posts", value=f"**<:NumberOne:1092556140556066837> {most_post[0]['posts']} posts, by <@{most_post[0]['author_id']}>. (Avg. upvotes/post: {round(most_post[0]['avg_score'], 2) })**\n{most_post[1]['posts']}, by <@{most_post[1]['author_id']}>\n{most_post[2]['posts']}, by <@{most_post[2]['author_id']}>", inline=False)
+            embed.set_footer(text=('⚠️ This feature is currently in beta and is currently being worked on, please say your suggestions!'))
 
-        await interaction.edit_original_response(content="", embed=embed)
+            await interaction.edit_original_response(content="", embed=embed)
     except Exception as e:
         await interaction.edit_original_response(content=f"Error **{e}**: ```python\n{traceback.format_exc()}```")
 
-
-class CoinsButtons2(discord.ui.Button):  
-    def __init__(self, label: str, style: discord.ButtonStyle):
-        super().__init__(label=label, style=style)
-
-    async def callback(self, interaction):
-        view = discord.ui.View()
-        view.timeout = None
-
-        ### Coin balance
-
-        coinBal = await get_coins(interaction.guild_id, interaction.user.id)
-        nolwennium_bal = await get_nolwennium(interaction)
-        view = discord.ui.View()
-
-        if self.label == "View Page 2":
-            embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
-
-            base_json = {
-                'currentBoosts': [],
-                'used_boosts': 0,
-            }
-
-            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
-            if os.path.isfile(current_boosts_path):
-                with open(current_boosts_path, 'r') as boosts_file:
-                    boosts_json = json.load(boosts_file)
-                    boosts_file.close()
-
-                    # Remove expired boosts
-                    current_time = datetime.now()
-                    current_boosts = []
-                    for boost in boosts_json['currentBoosts']:
-                        expiration_time = datetime.strptime(boost['expirationTime'], '%Y-%m-%d %H:%M:%S.%f')
-                        if expiration_time > current_time:
-                            current_boosts.append(boost)
-                    boosts_json['currentBoosts'] = current_boosts
-
-                    # Display currently active boosts
-                    if len(current_boosts) > 0:
-                        active_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) until {boost['expirationTime']}" for boost in current_boosts])
-                        embed.add_field(
-                            name="Currently active Boosts",
-                            value=active_boosts_string,
-                            inline=False
-                        )
-
-            # Define the available boosts
-            boosts = [
-                {
-                    'name': '2x Coins for 1 hour',
-                    'multiplier': 3,
-                    'duration': 1,
-                    'unit': 'hours',
-                    'price': 50
-                },
-                {
-                    'name': '2x Coins for 1 day',
-                    'multiplier': 2,
-                    'duration': 1,
-                    'unit': 'days',
-                    'price': 100
-                },
-                {
-                    'name': '3x Coins for 7 days',
-                    'multiplier': 5,
-                    'duration': 7,
-                    'unit': 'days',
-                    'price': 1500
-                },
-                # Add more boosts here
-            ]
-
-            # Display available boosts
-            available_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) for {boost['duration']} {boost['unit']} - {boost['price']} coins" for boost in boosts])
-
-            for i in boosts:
-                embed.add_field(
-                    name=i["name"],
-                    value=f"Multiplier: {i['multiplier']}x\nDuration: {i['duration']} {i['unit']}\n**Price: {i['price']} Coins**",
-                    inline=False
-                )
-
-            # Add buttons for each available boost
-            for boost in boosts:
-                button_label = f"{boost['name']}"
-                view.add_item(CoinsButtons2(style=discord.ButtonStyle.blurple, label=button_label))
-
-            embed.set_footer(text=('Use the buttons below to buy what you want.'))
-
-            await interaction.response.edit_message(embed=embed, view=view)
-
-        if self.label == "2x Coins for 1 day":
-            data = {
-                    'name': '2x Coins for 1 day',
-                    'multiplier': 2,
-                    'duration': 1,
-                    'unit': 'days',
-                    'price': 100
-                }
-
-            # Load the current boosts from the JSON file
-            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
-            boosts_json = {'currentBoosts': []}
-            if os.path.isfile(current_boosts_path):
-                with open(current_boosts_path, 'r') as boosts_file:
-                    boosts_json = json.load(boosts_file)
-                    boosts_file.close()
-
-            # Check if the user has enough coins to purchase the boost
-            if coinBal < data['price']:
-                await interaction.response.send_message(f"You don't have enough coins to purchase this boost. You need {data['price'] - coinBal} more.", ephemeral=True)
-                return
-
-            # Calculate the expiration time for the boost
-            current_time = datetime.now()
-            if data['unit'] == 'seconds':
-                expiration_time = current_time + timedelta(seconds=data['duration'])
-            elif data['unit'] == 'minutes':
-                expiration_time = current_time + timedelta(minutes=data['duration'])
-            elif data['unit'] == 'hours':
-                expiration_time = current_time + timedelta(hours=data['duration'])
-            elif data['unit'] == 'days':
-                expiration_time = current_time + timedelta(days=data['duration'])
-            else:
-                # Handle unknown boost unit
-                expiration_time = current_time
-
-            # Add the boost to the currentBoosts list in the JSON file
-            boosts_json['currentBoosts'].append({
-                'name': data['name'],
-                'multiplier': data['multiplier'],
-                'expirationTime': expiration_time.strftime('%Y-%m-%d %H:%M:%S.%f')
-            })
-
-            # Deduct the price of the boost from the user's coins
-            coinBal -= data['price']
-
-            # Save the updated JSON file and update the embed and view
-            with open(current_boosts_path, 'w') as boosts_file:
-                json.dump(boosts_json, boosts_file)
-                boosts_file.close()
-
-            update_coins(interaction.guild_id, interaction.user.id, data['price'])
-
-            await interaction.response.send_message(f"You have purchased the **{data['name']}** boost! You will now earn {data['multiplier']}x multiplier!")
 
 @client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!", )
 @app_commands.describe(operation="[Admin Only] set/add/lookup.", target_id="[Admin Only] Enter the user id for the operation to target", mod_value="[Admin Only] Use this as the value for the operation")
@@ -608,11 +482,13 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                 if canRunCommand or canRunCommand2 in user.roles:
                     try:
                         # List of stuff BEFORE showing the user their balance
+                        if not operation or not target_id or not mod_value:
+                            return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                         word1 = operation
                         userID = int(target_id)
                         amount = int(mod_value)
 
-                        if interaction.user.guild_permissions.administrator == True:
+                        if interaction.user.guild_permissions.administrator is True:
                             if word1.lower() == 'set':
                                 if not amount or not userID:
                                     return await interaction.response.send_message(IDK_WHAT_U_MEAN)
@@ -671,7 +547,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 
                         if serverID != 759861456300015657:
                             await interaction.response.send_message("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
-                        
+
                         next_available_role_cost = 0
                         roles_tier = -1
 
@@ -696,8 +572,6 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         if hasKing in user.roles:
                             roles_tier = Roles.King_Tier
 
-                        topRole_name = Roles.ROLES_LIST[roles_tier]
-                        # await interaction.response.send_message(f"The user's top role is {topRole_name}")
                         nextRole = Roles.ROLES_LIST[(roles_tier + 1)]
                         next_available_role_cost = Roles.ROLES_COSTS[(roles_tier + 1)]
 
@@ -719,7 +593,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 
                             if "🔓" not in finalSum:
                                 if f"{EMOJI_COINS}" not in finalSum:
-                                    finalSum = f"***You have bought all possible roles! Maybe some more will come out in the future...***"
+                                    finalSum = "***You have bought all possible roles! Maybe some more will come out in the future...***"
                         else:
                             embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
                             embed.add_field(
@@ -777,6 +651,8 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 @app_commands.describe(item="Enter the item to buy here")
 async def buy(interaction: discord.Interaction, item: str):
     await slash_log(interaction)
+    if not interaction.guild:
+        return await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
     if interaction.guild_id in TESTER_GUILD_IDS:
         canRunCommand = rolePrivate
         owner = discord.utils.find(lambda r: r.name == 'Owner', interaction.guild.roles)
@@ -794,12 +670,9 @@ async def buy(interaction: discord.Interaction, item: str):
             print("Member is in the list")
             can_access_shop_ui = True
         if can_access_shop_ui:
-            member = interaction.user
-            authorID = interaction.user.id
-            serverID = interaction.guild_id
+            member = await interaction.guild.fetch_member(interaction.user.id)
             determiner = item.lower()
 
-            filedir = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Coins{S_SLASH}{authorID}.txt")
             coinBal = await get_coins(interaction.guild_id, interaction.user.id)
 
             if determiner == 'citizen':
@@ -831,7 +704,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasKnight in member.roles:
                     await interaction.response.send_message(f"You can't buy {roleName}, you already have it!")
                     return
-                        
+
                 hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', interaction.guild.roles)
                 if hasCitizen in member.roles:
                     coinBalTest = int(coinBal) - cost
@@ -884,9 +757,9 @@ async def buy(interaction: discord.Interaction, item: str):
                     await member.add_roles(role)
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                            value=f"Everything in Citizen, and:\n• Use external stickers\n• Increased Coins earning\n• Bonus {NAME_NOLWENNIUM}", 
-                            inline=False)   
+                    embed.add_field(name="Perks",
+                                    value=f"Everything in Citizen, and:\n• Use external stickers\n• Increased Coins earning\n• Bonus {NAME_NOLWENNIUM}",
+                                    inline=False)   
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message(f"You must buy Knight before {roleName}.")
@@ -903,7 +776,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasBaron in member.roles:
                     await interaction.response.send_message("You can't buy Viscount, you already have it!")
                     return
-                
+
                 #   Check if the person has the previous role. If not, can't buy.
                 hasBaron = discord.utils.find(lambda r: r.name == 'Baron', interaction.guild.roles)
                 if hasBaron in member.roles:
@@ -921,9 +794,9 @@ async def buy(interaction: discord.Interaction, item: str):
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Baron"))
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Baron, and:\n• Use TTS messages\n• Use server activities", 
-                        inline=False)   
+                    embed.add_field(name="Perks",
+                                    value="Everything in Baron, and:\n• Use TTS messages\n• Use server activities",
+                                    inline=False)
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message(f"You must buy Baron before {roleName}.")
@@ -940,7 +813,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasBaron in member.roles:
                     await interaction.response.send_message("You can't buy Earl, you already have it!")
                     return
-                
+
                 #   Check if the person has the previous role. If not, can't buy.
                 hasViscount = discord.utils.find(lambda r: r.name == "Viscount", interaction.guild.roles)
                 if hasViscount in member.roles:
@@ -953,15 +826,18 @@ async def buy(interaction: discord.Interaction, item: str):
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
-                    
+
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
-                    await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Viscount"))
-                    await member.add_roles(role)
+                    if role is not None:
+                        await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Viscount")) # Remove previous role
+                        await member.add_roles(role)
+                    else:
+                        print(f"Role '{roleName}' not found")
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Viscount, and:\n• Add and edit server events", 
-                        inline=False)   
+                    embed.add_field(name="Perks",
+                                    value="Everything in Viscount, and:\n• Add and edit server events",
+                                    inline=False)
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message(f"You must buy Viscount before {roleName}.")
@@ -978,7 +854,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasBaron in member.roles:
                     await interaction.response.send_message("You can't buy Earl, you already have it!")
                     return
-                
+
                 #   Check if the person has the previous role. If not, can't buy.
                 hasEarl = discord.utils.find(lambda r: r.name == 'Earl', interaction.guild.roles)
                 if hasEarl in member.roles:
@@ -991,14 +867,14 @@ async def buy(interaction: discord.Interaction, item: str):
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
-                    
+
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Baron"))
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Earl, and:\n• View detailed server statistics\n• Access to some more stuff, you'll figure it out", 
-                        inline=False)   
+                    embed.add_field(name="Perks",
+                                    value="Everything in Earl, and:\n• View detailed server statistics\n• Access to some more stuff, you'll figure it out",
+                                    inline=False)   
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message(f"You must buy Earl before {roleName}.")
@@ -1027,21 +903,21 @@ async def buy(interaction: discord.Interaction, item: str):
                     #   If the balance is adequate, allow the purchase.
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
-                    
+
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Marquess"))
 
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Marquess, and:\n• Mute members\n• Manage threads\n• View private threads\n• Access to history of <#1035684553546809456>", 
-                        inline=False)   
+                    embed.add_field(name="Perks",
+                                    value="Everything in Marquess, and:\n• Mute members\n• Manage threads\n• View private threads\n• Access to history of <#1035684553546809456>",
+                                    inline=False)
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message(f"You must buy Marquess before {roleName}.")
                     return
                 return
-        
+
 #           PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE 
 
             if determiner == 'prince':
@@ -1051,7 +927,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasPrince in member.roles:
                     await interaction.response.send_message("You can't buy Prince, you already have it!")
                     return
-                
+
                 hasDuke = discord.utils.find(lambda r: r.name == 'Duke', interaction.guild.roles)
                 if hasDuke in member.roles:
                     coinBalTest = int(coinBal) - cost
@@ -1060,14 +936,14 @@ async def buy(interaction: discord.Interaction, item: str):
                         return
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
-                    
+
                     role = discord.utils.get(interaction.guild.roles, name=roleName)
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Duke"))
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought {roleName} for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Duke, and:\n• Move members in voice channels\n• Use Priority speaker in voice chat\n• Change others' nicknames\n• Time out members if they are being annoying\n• Add emojis and stickers\n• Add custom channels", 
-                        inline=False)   
+                    embed.add_field(name="Perks",
+                                    value="Everything in Duke, and:\n• Move members in voice channels\n• Use Priority speaker in voice chat\n• Change others' nicknames\n• Time out members if they are being annoying\n• Add emojis and stickers\n• Add custom channels",
+                                    inline=False)
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message("You must buy Knight before Prince.")
@@ -1082,7 +958,7 @@ async def buy(interaction: discord.Interaction, item: str):
                 if hasKing in member.roles:
                     await interaction.response.send_message("You can't buy King, you already have it!")
                     return
-                
+
                 hasPrince = discord.utils.find(lambda r: r.name == 'Prince', interaction.guild.roles)
                 if hasPrince in member.roles:
                     coinBalTest = int(coinBal) - cost
@@ -1091,14 +967,14 @@ async def buy(interaction: discord.Interaction, item: str):
                         return
                     coinBal = int(coinBal) - cost
                     update_coins(interaction.guild_id, interaction.user.id, -cost)
-                    
+
                     role = discord.utils.get(interaction.guild.roles, name="King")
                     await member.add_roles(role)
                     await member.remove_roles(discord.utils.get(interaction.guild.roles, name="Prince"))
                     embed = discord.Embed(title="Baguette Brigaders Shop", description=(f"You've just bought King for {cost} {EMOJI_COINS}! Remaining balance: {coinBal} {EMOJI_COINS}"), colour=0xFFD700)
-                    embed.add_field(name="Perks", 
-                        value=f"Everything in Prince, and:\n• Deafen members\n• Pin and manage messages\n• Add custom webhooks\n• Add custom bots\n• Add into Other Channels and define permissions", 
-                        inline=False)
+                    embed.add_field(name="Perks",
+                                    value=f"Everything in Prince, and:\n• Deafen members\n• Pin and manage messages\n• Add custom webhooks\n• Add custom bots\n• Add into Other Channels and define permissions",
+                                    inline=False)
                     await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message("You must buy Prince before King.")
@@ -1152,6 +1028,7 @@ async def setdelay(interaction: discord.Interaction, seconds: int):
 
 # EmojiArchiver
 
+
 @client.tree.command(name="emoji-backup", description="Backs up all your server emojis. This will be retrievable soon.")
 @app_commands.describe(guild_id="Enter server ID to grab emojis from")
 async def emojis(interaction: discord.Interaction, guild_id: str):
@@ -1193,6 +1070,8 @@ async def emojis(interaction: discord.Interaction, guild_id: str):
         for guild in client.guilds:
             guilds += 1
             newGuild = client.get_guild(guild.id)
+            if not newGuild:
+                return await interaction.response.send_message("Unable to get that guild's data.")
             await interaction.followup.send(f"Getting emojis for {newGuild.id} // {newGuild.name}")
             emoji_list = []
             for emoji in newGuild.emojis:
@@ -1271,9 +1150,12 @@ async def log(interaction: discord.Interaction, term: str):
 @client.tree.command(name="volume", description="[Audio] Change the audio player's volume or lock it.")
 @app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME}%. Values above 1000 don't work.", lock="[Manage Server] Would you this volume to be locked? ('True' be specified each time.)")
 async def volume(interaction: discord.Interaction, percentage: int, lock: bool = False):
+    await slash_log(interaction)
+    if not interaction.guild:
+        return await interaction.response.send_message("This cannot be used in DMs.")
     try:
         volume_float = int(percentage)
-    except Exception as e:
+    except Exception:
         return await interaction.response.send_message(f"Unable to convert {volume_float} into a valid percentage.")
 
     str_to_send = ""
@@ -1286,6 +1168,10 @@ async def volume(interaction: discord.Interaction, percentage: int, lock: bool =
             f.write(str(VOICE_VOLUME))
             print(f"[VOICE_VOLUME]       Created a directory for guild_id {interaction.guild_id}")
 
+    vc: wavelink.Player = interaction.guild.voice_client
+    if vc is None:
+        return await interaction.response.send_message("Not currently in a voice channel.")
+
     if lock:
         if not interaction.user.guild_permissions.manage_guild:
             return await interaction.response.send_message("You are trying to lock a voice channel without having the right priviliges: `manage_guild`.")
@@ -1294,7 +1180,6 @@ async def volume(interaction: discord.Interaction, percentage: int, lock: bool =
         with open(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt", 'w') as file:
             file.close()
 
-        vc: wavelink.Player = interaction.guild.voice_client
         if vc.is_playing():
             await vc.set_volume(volume_float)
 
@@ -1305,9 +1190,6 @@ async def volume(interaction: discord.Interaction, percentage: int, lock: bool =
             return await interaction.response.send_message("You can't modify the volume as it has been locked. Change the value of `lock` to `True` when using `/volume` to toggle it off again.")
         else:
             return await interaction.response.send_message("You can't modify the volume as it has been locked by a guild manager.")
-        if lock:
-            os.remove(f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_IsLocked.txt")
-            str_to_send = f"{str_to_send}Removed the lock on voice volume."
 
     voice_client = interaction.guild.voice_client
 
@@ -1373,16 +1255,14 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
         model_type = "text-davinci-002"
     else:#  Default.
         model_type = "text-curie-001"
-        
 
         #   Now defer as it may take a long time lmao
     await interaction.response.defer()
-    
+
     with open(f"{BASE_DIR}openai_api_key.txt", 'r') as f:
         openai_key = f.read()
     openai.api_key = openai_key
-    
-    
+
     response = openai.Moderation.create(
         input=prompt,
     )
@@ -1410,7 +1290,6 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
     response_content = (response.choices[0].text)
     print(response_content)
 
-
     mod_response = openai.Moderation.create(
         input=response_content,
     )
@@ -1424,11 +1303,11 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
         view = discord.ui.View()
         view.add_item(SusButton(label="See Sussiness", style=discord.ButtonStyle.red))
         return await interaction.followup.send("The output of the request was a little too suspicious. If you *really* want to see it, then click the button.", view=view)
-    
+
     if len(response_content) > 1900:
         chunks = [response_content[i:i+1900] for i in range(0, len(response_content), 1900)]
         print(len(chunks))
-        
+
         if dm:
             for chunk in chunks:
                 await interaction.user.send(chunk)
@@ -1445,19 +1324,6 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
         await draggie.send(x)
     else:
         await interaction.followup.send(response_content)
-
-
-async def get_server_voice_volume(guild_id: int) -> int:
-    """Returns the volume of a guild chosen by its members.\n
-    Must include parameter of the guild id\n
-    Returns an percentage as an integer. You can divide this by 100 if you want a float."""
-    if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
-        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
-            f.write(str(VOICE_VOLUME))
-    with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
-        volume = file.read()
-    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}%")
-    return int(volume)
 
 
 @client.tree.command(name="stop", description="Stops everything in Voice Chat, clears the queue, disconnects.")
@@ -1499,6 +1365,8 @@ async def leave(interaction: discord.Interaction):
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
 async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
     await slash_log(interaction)
+    if not interaction.guild:
+        return await interaction.response.send_message("This command can only be used in a server.")
     if not interaction.user.guild_permissions.manage_channels:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
 
@@ -1531,13 +1399,14 @@ async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
     if x == "":
         await interaction.response.send_message("Nothing happened.")
 
-
 #   Pause/resume audio
 
 
 @client.tree.command(name="pause", description="[Audio] Pauses or resumes audio being played")
 async def pause(interaction: discord.Interaction):
     await slash_log(interaction)
+    if not interaction.guild:
+        return await interaction.response.send_message("This command can only be used in a server.")
     vc = interaction.guild.voice_client
     if not vc:
         return await interaction.response.send_message("Audio is unable to be paused because there is no audio to pause")
@@ -1549,12 +1418,11 @@ async def pause(interaction: discord.Interaction):
         await interaction.response.send_message("*✅ Resumed playing the audio!*")
     else:
         await interaction.response.send_message("Audio is unable to be paused")
-        
 
 #   Nolwennium mine
 
 
-@client.tree.command(name="mine", description=f"Mines some globalCurrency which can be used to do cool stuff!")
+@client.tree.command(name="mine", description="Mines some globalCurrency which can be used to do cool stuff!")
 @app_commands.checks.cooldown(1, 29, key=lambda i: (i.user.id))
 async def mine(interaction: discord.Interaction):
     await slash_log(interaction)
@@ -1706,7 +1574,7 @@ async def yn(interaction: discord.Interaction):
 async def BrawlStars(interaction: discord.Interaction):
     await slash_log(interaction)
     if interaction.guild_id == 759861456300015657:
-        num_lines = sum(1 for line in open (f"C:{S_SLASH}Users{S_SLASH}Draggie{S_SLASH}iCloudDrive{S_SLASH}iCloud~is~workflow~my~workflows{S_SLASH}Brawl Stars Counter.txt"))
+        num_lines = sum(1 for line in open(f"C:{S_SLASH}Users{S_SLASH}Draggie{S_SLASH}iCloudDrive{S_SLASH}iCloud~is~workflow~my~workflows{S_SLASH}Brawl Stars Counter.txt"))
         await interaction.response.send_message(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
         f = open(GlobalLogDir, "a")
         f.write(f"\nCOMMAND RAN -> '.lines' ran by {interaction.user} at {datetime.now()}")
@@ -1808,8 +1676,8 @@ async def settings(interaction: discord.Interaction):
 
     string = "This message has buttons!"
 
-    embed=discord.Embed(title="BaguetteBot Settings", description="Use the buttons to interact and change these settings. These apply to all servers.")
-    view=discord.ui.View()
+    embed = discord.Embed(title="BaguetteBot Settings", description="Use the buttons to interact and change these settings. These apply to all servers.")
+    view = discord.ui.View()
 
     for key, value in settings['user_settings'].items():
         string = (f"{string}\n{key}: {value}")
@@ -1831,27 +1699,28 @@ async def settings(interaction: discord.Interaction):
             key = "User Analytics"
         embed.add_field(name=key, value="🔴 Disabled" if value == "false" else "🟢 Enabled")
 
-        style=discord.ButtonStyle.green if value == "true" else discord.ButtonStyle.red
+        style = discord.ButtonStyle.green if value == "true" else discord.ButtonStyle.red
         view.add_item(OptionButton(label=key, style=style))
 
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 #   vbuck calc
 
+
 @client.tree.command(name="terms", description="Views the iBaguette Terms of Service which governs this bot.")
 async def terms(interaction: discord.Interaction):
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
-    view.add_item(discord.ui.Button(label="iBaguette Terms", style=discord.ButtonStyle.link,url="https://ibaguette.com/terms"))
-    await interaction.response.send_message("Press the button below to see iBaguette Terms of Service and Privacy Policy.",view=view, ephemeral=True)
+    view.add_item(discord.ui.Button(label="iBaguette Terms of Service", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com"))
+    view.add_item(discord.ui.Button(label="iBaguette Privacy Policy", style=discord.ButtonStyle.link, url="https://privacy.ibaguette.com"))
+    await interaction.response.send_message("Press the button below to see iBaguette Terms of Service and Privacy Policy.", view=view, ephemeral=True)
 
-"""@client.tree.error
-async def on_app_command_error(error: app_commands.AppCommandError, interaction: discord.Interaction):
+@client.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CommandOnCooldown):
         await interaction.response.send_message(error, ephemeral=True)
     else:
         raise error
-    print(f"[Tree/ERROR]      {error}")"""
+    print(f"[Tree/ERROR]      {error}")
 
 
 @client.tree.command(name="dev_settings", description="Dev settings panel")
@@ -1862,323 +1731,15 @@ async def dev_settings(interaction: discord.Interaction):
 
 @client.tree.command(name="join", description="Makes the bot join your voice channel")
 async def join(interaction: discord.Interaction):
-    if interaction.user.voice is None:
+    if not interaction.guild:
+        return await interaction.response.send_message("You can't use this command in DMs.")
+    if interaction.user.voice is None or interaction.user.voice.channel is None:
         return await interaction.response.send_message("You aren't in a Voice Channel.")
 
     else:
         channel = interaction.user.voice.channel
         await channel.connect(cls=wavelink.Player)
         await interaction.response.send_message(f"Joined <#{channel.id}>")
-
-
-###########################################################################################################################################################
-#   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
-###########################################################################################################################################################
-
-async def connect_nodes():
-    """Connect to our Lavalink nodes."""
-    await client.wait_until_ready()
-    node: wavelink.Node = wavelink.Node(uri='http://localhost:2333', password='youshallnotpass')
-    print("[Wavelink] Connecting nodes")
-    await wavelink.NodePool.connect(client=client, nodes=[node], spotify=spotify.SpotifyClient(client_id=spotify_client_id, client_secret=spotify_id))
-
-
-async def on_wavelink_node_ready(node: wavelink.Node):
-    """Event fired when a node has finished connecting."""
-    print(f"Node: <{node}> is ready!")
-
-
-async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = None, reason: Optional[str] = None) -> discord.Embed:
-    if reason == 'REPLACED':
-        return
-    if player.reason and player.reason == "LOAD_FAILED":
-        print("Load failed")
-
-    interaction = player.player.guild_interaction
-    try:
-        next_track = player.player.queue._queue[0]
-    except IndexError:
-        return await interaction.edit_original_response(content="Finished playing all audio!")
-    embed = discord.Embed(title="[on_wavelink_track_end] Edited Playing track", description=f"[{next_track.title}]({next_track.uri})")
-
-    try:
-        if hasattr(next_track, "images"):
-            embed.set_image(url=next_track.images[0]) # Spotify images
-        else:
-            embed.set_image(url=next_track.thumbnail)
-    except Exception as e:
-        print(e)
-        embed.add_field(name="Thumbnail", value="<unable to get.>")
-
-    previous_item = await get_wavelink_queue_previous_item(player)
-    if hasattr(next_track, "artists"):
-        artists_str = ', '.join(previous_item.artists)
-    else:
-        artists_str = next_track.author
-
-    embed.add_field(name="Creator", value=artists_str)
-    embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + int(previous_item.duration / 1000)}:R>")
-    # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
-    embed.add_field(name="Queue Length", value=await get_wavelink_queue_length(player))
-    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
-
-    view = discord.ui.View()
-    view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-    view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.green))
-    view.timeout = None
-
-    await player.player.guild_interaction.edit_original_response(embed=embed, view=view)
-
-
-async def get_wavelink_queue_previous_item(player):
-    """
-    Returns the last track in the queue for simplicity\n
-    Returns `None` if nothing there.
-    """
-    try:
-        if len(player.queue._queue) == 0:
-            return None
-        else:
-            return player.queue._queue[0]
-    except Exception:
-        if len(player.player.queue._queue) == 0:
-            return None
-        else:
-            return player.player.queue._queue[0]
-
-
-async def get_wavelink_queue_length(player):
-    """
-    Returns the length of the queue for simplicity\n
-    """
-    try:
-        if len(player.queue._queue) == 0:
-            return None
-        else:
-            return len(player.queue._queue)
-    except Exception as e:
-        if len(player.player.queue._queue) == 0:
-            return None
-        else:
-            return len(player.player.queue._queue)
-
-async def get_wavelink_queue_next_item(player):
-    """
-    Returns the last track in the queue for simplicity\n
-    Returns `None` if nothing there.
-    """
-    if len(player.queue._queue) == 0:
-        return None
-    else:
-        return player.queue._queue[0]
-
-
-class PlayButton(discord.ui.Button):
-    def __init__(self, label: str, style: discord.ButtonStyle, disabled: Optional[bool] = False):
-        super().__init__(label=label, style=style, disabled=disabled)
-
-    async def callback(self, interaction):
-        view = discord.ui.View()
-        view.timeout = None
-        if not interaction.user.voice:
-            return await interaction.response.send_message(content="You must be in the voice chat in order to use the music buttons!", ephemeral=True)
-        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
-        if not vc:
-            return await interaction.response.send_message("There is no active player in this guild", ephemeral=True)
-        embed = None
-
-        await interaction.response.defer() # do this to fix button not working - as seen in discord.py server: https://canary.discord.com/channels/336642139381301249/1094719114473381979/1095232120978411652
-
-        vc.just_skipped = False # this is used to precent the embed message being edited multiple times if a skip has occurred due to it stopping, which triggers on_wavelink_track_end and also occurs at the end of this function
-
-        # Button: Pause/Play alternating.
-
-        if self.label == "Pause":
-            if not vc._paused:
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple, disabled=True))
-                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple, disabled=True))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple, disabled=True))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple, disabled=True))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple, disabled=True))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple, disabled=True))
-                await vc.pause()
-                # await interaction.response.edit_message(view=view)
-            else:
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                await vc.resume()
-        elif self.label == "Resume":
-            if vc._paused:
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))    
-                await vc.resume()
-                # await interaction.response.edit_message(view=view)
-
-        # Button: Skipping
-
-        elif self.label == "Skip ▶️":
-            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-            if hasattr(vc, 'isPlayingFromQueue') and hasattr(vc, 'isPlayingFromQueue'):
-                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength - 1
-                if vc.isPlayingFromQueue:
-                    try:
-                        await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue)) - vc.isPlayingFromQueueLength])
-                    except IndexError:
-                        await vc.stop()
-                        vc.isPlayingFromQueue = False
-                else:
-                    vc.just_skipped = True
-                    await vc.stop()
-                    await interaction.channel.send("Skipped audio.", delete_after=5)
-
-            else:
-                vc.just_skipped = True
-                await vc.stop()
-                await interaction.channel.send("Skipped audio.", delete_after=5)
-
-        # Button: Restart
-
-        elif self.label == "Restart":
-            if vc.is_playing:
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))   
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple)) 
-                await vc.seek(0)
-            else:
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                await vc.seek(0)
-
-        # Button: Skip 10 seconds
-
-        elif self.label == "+10s":
-            if vc.is_playing():
-                currentPos = vc.position
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                # print(f"[dev] currentPos: {await duration_to_time(currentPos)}")
-                await vc.seek((currentPos + 10000)) # Wavelink v2: Positions are now in millis.
-
-        # Button: Minus 10 seconds
-
-        elif self.label == "-10s":
-            if vc.is_playing():
-                currentPos = vc.position
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                if currentPos - 10 <= 0:
-                    await vc.seek(0)
-                else:
-                    await vc.seek((currentPos - 10000)) # Wavelink v2: Positions are now in millis.
-
-        # Button: Shuffling
-
-        elif self.label == "Shuffle":
-            if vc.is_playing():
-                currentPos = vc.position
-                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.green))
-                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-                vc: wavelink.Player = interaction.guild.voice_client
-                if vc is None:
-                    return await interaction.response.send_message("There is nothing to shuffle")
-                random.shuffle(vc.queue._queue)
-                return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Shuffled the **{len(vc.queue)}** queued tracks.", delete_after=10)
-
-        # Button: Previous
-
-        elif self.label == "◀️ Previous": # !!! Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
-            vc.isPlayingFromQueue = True
-            if hasattr(vc, 'isPlayingFromQueueLength'):
-                if vc.isPlayingFromQueueLength <= 0:
-                    vc.isPlayingFromQueueLength = 1
-                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength + 1
-            else:
-                vc.isPlayingFromQueueLength = 1
-            try:
-                await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue)) - vc.isPlayingFromQueueLength])
-            except IndexError: # catch dequeue index out of range!
-                return await interaction.response.send_message(content="There is nothing behind this item in the queue.", ephemeral=True)
-            except Exception as e:
-                await interaction.channel.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
-                vc.isPlayingFromQueueLength = 0
-                vc.isPlayingFromQueue = False
-            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.green))
-            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
-            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-            x = vc.queue.history._queue
-            print(len(x))
-            for i in x:
-                print(i)
-
-        if not vc.just_skipped:
-            if not vc.current:
-                return await interaction.response.edit_message(content="Finished playing.")
-            embed = discord.Embed(title="Playing track", description=f"[{vc.current.title}]({vc.current.uri})")
-            try:
-                embed.set_image(url=vc._current.thumbnail)
-                print("...")
-            except Exception:
-                embed.add_field(name="Thumbnail", value="<unable to get from current interaction url>")
-
-            embed.add_field(name="Creator", value=vc.current.author)
-            embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + (int(vc.current.duration / 1000) - int(vc.last_position / 1000))}:R>")
-            # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
-            embed.add_field(name="Queue Length", value=vc.queue.count)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
-            # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
-            await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
-        else:
-            print("Not doing anything - just skipped!")
 
 
 @client.tree.command(name="play", description="Plays/queues audio that you want in the current Voice Chat.")
@@ -2516,12 +2077,542 @@ async def skip(interaction: discord.Interaction):
         await interaction.response.send_message("I'm not in a Voice Channel.")
 
 
-print("Done!\nDefining function and constants...")
+@client.command(hidden=True)
+async def create_voice_chat(ctx):
+    text = ctx.message.content
+    x = text.split()
+    category_id = int(x[1])
+    chat_name = text.split(' ', 2)[-1]
+    category = discord.utils.get(ctx.guild.categories, id=category_id)
+    await ctx.guild.create_voice_channel(name=chat_name, category=category, bitrate=ctx.guild.bitrate_limit, reason=f"Command ran by {interaction.user.name} at {datetime.now()} - the command was {ctx.message.content}.")
+    await ctx.reply(f"Ok! I created the voice chat **{chat_name}** in category **{category.name}**. The bitrate was set to the server's max, at {round(ctx.guild.bitrate_limit/1000)}kbps.")
 
-YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist': 'True', 'youtube-skip-dash-manifest': 'True'}
 
-# discord.ui.Button classes
-# these are for various interactions
+@client.tree.command(name="purge", description="Purges a specified amount of messages")
+async def purge(interaction: discord.Interaction, amount: int):
+    if interaction.user.id == 382784106984898560:
+        current_time_for_deletes = time.time()
+        async for message in interaction.message.channel.history(limit=amount):
+            if len(message.attachments) < 1: # Checks if there is an attachment on the message
+                with open((f"Z:\\{message.channel.id}_log{current_time_for_deletes}.txt"), "a", encoding='utf-8') as logAllMessages:
+                    logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}", encoding="UTF-8")
+                    print(f"\n'{message.content}' sent by {message.author}")
+                    logAllMessages.close()
+            else: # If there is it gets the filename from message.attachments
+                attachmentsDir = (f"Z:\\{message.channel.id}\\Attachments\\")
+                if not os.path.exists(attachmentsDir):
+                    os.makedirs(f"Z:\\{message.channel.id}\\Attachments\\")
+                    print("Made directory" + (attachmentsDir))
+                nameOfFile = str(message.attachments).split("filename='")[1]
+                filename = str(nameOfFile).split("' ")[0]
+                beans = (f"{attachmentsDir}{filename}")
+                if os.path.isfile(beans):
+                    filename = str(nameOfFile).split("' ")[0]
+                    beans = (f"{attachmentsDir}{uuid.uuid4()}-name={filename}")
+                    await message.attachments[0].save(fp=beans)
+        await interaction.channel.purge(limit=amount, oldest_first=True)
+        await interaction.response.send_message(f"Deleted {amount} message!")
+
+        f = open(GlobalLogDir, "a")
+        f.write(f"\nCOMMAND RAN -> '.purge' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
+        f.close()
+        print(f"\nCOMMAND RAN -> '.purge' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
+        return
+    else:
+        await interaction.response.send_message("You don't have permissions for that u sussy boi")
+
+
+@client.tree.command(name="uwu", description="UwU")
+@commands.has_any_role('Admin', 'Mod')
+async def uwu(interaction: discord.Interaction):
+    uwuwu = random.randint(1, 2)
+    if uwuwu == 1:
+        await interaction.response.send_message(file=discord.File(f"{BASE_DIR}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
+    if uwuwu == 2:
+        await interaction.response.send_message(file=discord.File(f"{BASE_DIR}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
+    f = open(GlobalLogDir, "a")
+    f.write(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
+    f.close()
+    print(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
+
+
+###########################################################################################################################################################
+#   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
+###########################################################################################################################################################
+
+print("All Slash Commands initialised.")
+
+print("Initialising Lavalink and music functions...")
+
+
+async def get_server_voice_volume(guild_id: int) -> int:
+    """Returns the volume of a guild chosen by its members.\n
+    Must include parameter of the guild id\n
+    Returns an percentage as an integer. You can divide this by 100 if you want a float."""
+    if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
+        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
+            f.write(str(VOICE_VOLUME))
+    with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
+        volume = file.read()
+    print(f"[VoiceVolQuery]      Server {guild_id} has a volume of {volume}%")
+    return int(volume)
+
+
+async def connect_nodes():
+    """Connect to our Lavalink nodes."""
+    await client.wait_until_ready()
+    node: wavelink.Node = wavelink.Node(uri='http://localhost:2333', password='youshallnotpass')
+    print("[Wavelink] Connecting nodes")
+    await wavelink.NodePool.connect(client=client, nodes=[node], spotify=spotify.SpotifyClient(client_id=spotify_client_id, client_secret=spotify_id))
+
+
+async def on_wavelink_node_ready(node: wavelink.Node):
+    """Event fired when a node has finished connecting."""
+    print(f"Node: <{node}> is ready!")
+
+
+async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = None, reason: Optional[str] = None) -> discord.Embed:
+    if reason == "REPLACED":
+        return
+    if reason == "LOAD_FAILED":
+        print("Load failed")
+
+    interaction = player.player.guild_interaction
+    try:
+        next_track = player.player.queue._queue[0]
+    except IndexError:
+        return await interaction.edit_original_response(content="Finished playing all audio!")
+    embed = discord.Embed(title="[on_wavelink_track_end] Edited Playing track", description=f"[{next_track.title}]({next_track.uri})")
+
+    try:
+        if hasattr(next_track, "images"):
+            embed.set_image(url=next_track.images[0]) # Spotify images
+        else:
+            embed.set_image(url=next_track.thumbnail)
+    except Exception as e:
+        print(e)
+        embed.add_field(name="Thumbnail", value="<unable to get.>")
+
+    previous_item = await get_wavelink_queue_previous_item(player)
+    if hasattr(next_track, "artists"):
+        artists_str = ', '.join(previous_item.artists)
+    else:
+        artists_str = next_track.author
+
+    embed.add_field(name="Creator", value=artists_str)
+    embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + int(previous_item.duration / 1000)}:R>")
+    # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
+    embed.add_field(name="Queue Length", value=await get_wavelink_queue_length(player))
+    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+
+    view = discord.ui.View()
+    view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+    view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.green))
+    view.timeout = None
+
+    await player.player.guild_interaction.edit_original_response(embed=embed, view=view)
+
+
+async def get_wavelink_queue_previous_item(player):
+    """
+    Returns the last track in the queue for simplicity\n
+    Returns `None` if nothing there.
+    """
+    try:
+        if len(player.queue._queue) == 0:
+            return None
+        else:
+            return player.queue._queue[0]
+    except Exception:
+        if len(player.player.queue._queue) == 0:
+            return None
+        else:
+            return player.player.queue._queue[0]
+
+
+async def get_wavelink_queue_length(player):
+    """
+    Returns the length of the queue for simplicity\n
+    """
+    try:
+        if len(player.queue._queue) == 0:
+            return None
+        else:
+            return len(player.queue._queue)
+    except Exception as e:
+        if len(player.player.queue._queue) == 0:
+            return None
+        else:
+            return len(player.player.queue._queue)
+
+
+async def get_wavelink_queue_next_item(player):
+    """
+    Returns the last track in the queue for simplicity\n
+    Returns `None` if nothing there.
+    """
+    if len(player.queue._queue) == 0:
+        return None
+    else:
+        return player.queue._queue[0]
+
+
+print("Initialising Discord.py v2 Button classes...")
+
+
+class CoinsButtons2(discord.ui.Button):  
+    def __init__(self, label: str, style: discord.ButtonStyle):
+        super().__init__(label=label, style=style)
+
+    async def callback(self, interaction):
+        view = discord.ui.View()
+        view.timeout = None
+
+        # Coin balance
+
+        coinBal = await get_coins(interaction.guild_id, interaction.user.id)
+        nolwennium_bal = await get_nolwennium(interaction)
+        view = discord.ui.View()
+
+        if self.label == "View Page 2":
+            embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
+
+            base_json = {
+                'currentBoosts': [],
+                'used_boosts': 0,
+            }
+
+            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
+            if os.path.isfile(current_boosts_path):
+                with open(current_boosts_path, 'r') as boosts_file:
+                    boosts_json = json.load(boosts_file)
+                    boosts_file.close()
+
+                    # Remove expired boosts
+                    current_time = datetime.now()
+                    current_boosts = []
+                    for boost in boosts_json['currentBoosts']:
+                        expiration_time = datetime.strptime(boost['expirationTime'], '%Y-%m-%d %H:%M:%S.%f')
+                        if expiration_time > current_time:
+                            current_boosts.append(boost)
+                    boosts_json['currentBoosts'] = current_boosts
+
+                    # Display currently active boosts
+                    if len(current_boosts) > 0:
+                        active_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) until {boost['expirationTime']}" for boost in current_boosts])
+                        embed.add_field(
+                            name="Currently active Boosts",
+                            value=active_boosts_string,
+                            inline=False
+                        )
+
+            # Define the available boosts
+            boosts = [
+                {
+                    'name': '2x Coins for 1 hour',
+                    'multiplier': 3,
+                    'duration': 1,
+                    'unit': 'hours',
+                    'price': 50
+                },
+                {
+                    'name': '2x Coins for 1 day',
+                    'multiplier': 2,
+                    'duration': 1,
+                    'unit': 'days',
+                    'price': 100
+                },
+                {
+                    'name': '3x Coins for 7 days',
+                    'multiplier': 5,
+                    'duration': 7,
+                    'unit': 'days',
+                    'price': 1500
+                },
+                # Add more boosts here
+            ]
+
+            # Display available boosts
+            available_boosts_string = '\n'.join([f"{boost['name']} ({boost['multiplier']}x) for {boost['duration']} {boost['unit']} - {boost['price']} coins" for boost in boosts])
+
+            for i in boosts:
+                embed.add_field(
+                    name=i["name"],
+                    value=f"Multiplier: {i['multiplier']}x\nDuration: {i['duration']} {i['unit']}\n**Price: {i['price']} Coins**",
+                    inline=False
+                )
+
+            # Add buttons for each available boost
+            for boost in boosts:
+                button_label = f"{boost['name']}"
+                view.add_item(CoinsButtons2(style=discord.ButtonStyle.blurple, label=button_label))
+
+            embed.set_footer(text=('Use the buttons below to buy what you want.'))
+
+            await interaction.response.edit_message(embed=embed, view=view)
+
+        if self.label == "2x Coins for 1 day":
+            data = {
+                'name': '2x Coins for 1 day',
+                'multiplier': 2,
+                'duration': 1,
+                'unit': 'days',
+                'price': 100
+            }
+
+            # Load the current boosts from the JSON file
+            current_boosts_path = f"{BASE_DIR}Servers{S_SLASH}{interaction.guild_id}{S_SLASH}Coins{S_SLASH}{interaction.user.id}_boosted.json"
+            boosts_json = {'currentBoosts': []}
+            if os.path.isfile(current_boosts_path):
+                with open(current_boosts_path, 'r') as boosts_file:
+                    boosts_json = json.load(boosts_file)
+                    boosts_file.close()
+
+            # Check if the user has enough coins to purchase the boost
+            if coinBal < data['price']:
+                await interaction.response.send_message(f"You don't have enough coins to purchase this boost. You need {data['price'] - coinBal} more.", ephemeral=True)
+                return
+
+            # Calculate the expiration time for the boost
+            current_time = datetime.now()
+            if data['unit'] == 'seconds':
+                expiration_time = current_time + timedelta(seconds=data['duration'])
+            elif data['unit'] == 'minutes':
+                expiration_time = current_time + timedelta(minutes=data['duration'])
+            elif data['unit'] == 'hours':
+                expiration_time = current_time + timedelta(hours=data['duration'])
+            elif data['unit'] == 'days':
+                expiration_time = current_time + timedelta(days=data['duration'])
+            else:
+                # Handle unknown boost unit
+                expiration_time = current_time
+
+            # Add the boost to the currentBoosts list in the JSON file
+            boosts_json['currentBoosts'].append({
+                'name': data['name'],
+                'multiplier': data['multiplier'],
+                'expirationTime': expiration_time.strftime('%Y-%m-%d %H:%M:%S.%f')
+            })
+
+            # Deduct the price of the boost from the user's coins
+            coinBal -= data['price']
+
+            # Save the updated JSON file and update the embed and view
+            with open(current_boosts_path, 'w') as boosts_file:
+                json.dump(boosts_json, boosts_file)
+                boosts_file.close()
+
+            update_coins(interaction.guild_id, interaction.user.id, data['price'])
+
+            await interaction.response.send_message(f"You have purchased the **{data['name']}** boost! You will now earn {data['multiplier']}x multiplier!")
+
+
+class PlayButton(discord.ui.Button):
+    def __init__(self, label: str, style: discord.ButtonStyle, disabled: Optional[bool] = False):
+        super().__init__(label=label, style=style, disabled=disabled)
+
+    async def callback(self, interaction):
+        view = discord.ui.View()
+        view.timeout = None
+        if not interaction.user.voice:
+            return await interaction.response.send_message(content="You must be in the voice chat in order to use the music buttons!", ephemeral=True)
+        vc = interaction.guild.voice_client or await interaction.user.voice.channel.connect(cls=wavelink.Player)
+        if not vc:
+            return await interaction.response.send_message("There is no active player in this guild", ephemeral=True)
+        embed = None
+
+        await interaction.response.defer() # do this to fix button not working - as seen in discord.py server: https://canary.discord.com/channels/336642139381301249/1094719114473381979/1095232120978411652
+
+        vc.just_skipped = False # this is used to precent the embed message being edited multiple times if a skip has occurred due to it stopping, which triggers on_wavelink_track_end and also occurs at the end of this function
+
+        # Button: Pause/Play alternating.
+
+        if self.label == "Pause":
+            if not vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple, disabled=True))
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple, disabled=True))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple, disabled=True))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple, disabled=True))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple, disabled=True))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple, disabled=True))
+                await vc.pause()
+                # await interaction.response.edit_message(view=view)
+            else:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Resume", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.resume()
+        elif self.label == "Resume":
+            if vc._paused:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))  
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))    
+                await vc.resume()
+                # await interaction.response.edit_message(view=view)
+
+        # Button: Skipping
+
+        elif self.label == "Skip ▶️":
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            if hasattr(vc, 'isPlayingFromQueue') and hasattr(vc, 'isPlayingFromQueue'):
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength - 1
+                if vc.isPlayingFromQueue:
+                    try:
+                        await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue)) - vc.isPlayingFromQueueLength])
+                    except IndexError:
+                        await vc.stop()
+                        vc.isPlayingFromQueue = False
+                else:
+                    vc.just_skipped = True
+                    await vc.stop()
+                    await interaction.channel.send("Skipped audio.", delete_after=5)
+
+            else:
+                vc.just_skipped = True
+                await vc.stop()
+                await interaction.channel.send("Skipped audio.", delete_after=5)
+
+        # Button: Restart
+
+        elif self.label == "Restart":
+            if vc.is_playing:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))   
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple)) 
+                await vc.seek(0)
+            else:
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.red))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                await vc.seek(0)
+
+        # Button: Skip 10 seconds
+
+        elif self.label == "+10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                # print(f"[dev] currentPos: {await duration_to_time(currentPos)}")
+                await vc.seek((currentPos + 10000)) # Wavelink v2: Positions are now in millis.
+
+        # Button: Minus 10 seconds
+
+        elif self.label == "-10s":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                if currentPos - 10 <= 0:
+                    await vc.seek(0)
+                else:
+                    await vc.seek((currentPos - 10000)) # Wavelink v2: Positions are now in millis.
+
+        # Button: Shuffling
+
+        elif self.label == "Shuffle":
+            if vc.is_playing():
+                currentPos = vc.position
+                view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+                view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.green))
+                view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+                vc: wavelink.Player = interaction.guild.voice_client
+                if vc is None:
+                    return await interaction.response.send_message("There is nothing to shuffle")
+                random.shuffle(vc.queue._queue)
+                return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Shuffled the **{len(vc.queue)}** queued tracks.", delete_after=10)
+
+        # Button: Previous
+
+        elif self.label == "◀️ Previous": # !!! Sometimes this will replay the existing track. Need stack trace to fix it. I don't know why.
+            vc.isPlayingFromQueue = True
+            if hasattr(vc, 'isPlayingFromQueueLength'):
+                if vc.isPlayingFromQueueLength <= 0:
+                    vc.isPlayingFromQueueLength = 1
+                vc.isPlayingFromQueueLength = vc.isPlayingFromQueueLength + 1
+            else:
+                vc.isPlayingFromQueueLength = 1
+            try:
+                await vc.play(vc.queue.history._queue[(len(vc.queue.history._queue)) - vc.isPlayingFromQueueLength])
+            except IndexError: # catch dequeue index out of range!
+                return await interaction.response.send_message(content="There is nothing behind this item in the queue.", ephemeral=True)
+            except Exception as e:
+                await interaction.channel.send(f"An error occurred! Sorry about that. Resetting queue. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
+                vc.isPlayingFromQueueLength = 0
+                vc.isPlayingFromQueue = False
+            view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.green))
+            view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Restart", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="-10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
+            view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            x = vc.queue.history._queue
+            print(len(x))
+            for i in x:
+                print(i)
+
+        if not vc.just_skipped:
+            if not vc.current:
+                return await interaction.response.edit_message(content="Finished playing.")
+            embed = discord.Embed(title="Playing track", description=f"[{vc.current.title}]({vc.current.uri})")
+            try:
+                embed.set_image(url=vc._current.thumbnail)
+                print("...")
+            except Exception:
+                embed.add_field(name="Thumbnail", value="<unable to get from current interaction url>")
+
+            embed.add_field(name="Creator", value=vc.current.author)
+            embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + (int(vc.current.duration / 1000) - int(vc.last_position / 1000))}:R>")
+            # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
+            embed.add_field(name="Queue Length", value=vc.queue.count)
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+            # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
+            await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
+        else:
+            print("Not doing anything - just skipped!")
 
 
 class AcceptToSButtons(discord.ui.Button):  
@@ -2626,6 +2717,65 @@ class OptionButton(discord.ui.Button): # For the settings interaction
         await interaction.response.edit_message(embed=embed, view=view)
 
 
+print("Done! Defining functions")
+
+
+async def StatusAutoUpdator():
+    servers = len(client.guilds)
+    members = 0
+    for guild in client.guilds:
+        members += guild.member_count - 1
+    cpuPercentage = psutil.cpu_percent()
+    memoryUsage = psutil.virtual_memory().percent
+    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
+    print(f"[SelfStatus]        /help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")
+    # await asyncio.sleep(random.randint(100,500))
+    await bot_runtime_events(1)
+    await asyncio.sleep(60)
+    await StatusAutoUpdator()
+
+
+async def wip_command():
+    messages_sent = 0
+    messages_received = 0
+
+    def save_to_json():
+        global messages_sent, messages_received
+        current_day = datetime.now().day
+        try:
+            with open("data.json", "r") as json_file:
+                data = json.load(json_file)
+                last_day = data["day"]
+                if last_day != current_day:
+                    data = {
+                        "messages_sent": messages_sent,
+                        "messages_received": messages_received,
+                        "time_spent_voice": time_spent_voice(),
+                        "day": current_day
+                    }
+                    messages_sent = 0
+                    messages_received = 0
+                    with open("data.json", "w") as json_file:
+                        json.dump(data, json_file)
+        except Exception:
+            data = {
+                "messages_sent": messages_sent,
+                "messages_received": messages_received,
+                "time_spent_voice": time_spent_voice(),
+                "day": current_day
+            }
+            messages_sent = 0
+            messages_received = 0
+            with open("data.json", "w") as json_file:
+                json.dump(data, json_file)
+
+    schedule.every(1).minutes.do(save_to_json)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
 async def slash_log(interaction):
     print(f"/ [SlashCommand]   {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})")
     if not os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{interaction.user.id}.json"):
@@ -2647,7 +2797,7 @@ async def slash_log(interaction):
         file.write(f"/ [SlashCommand]      {interaction.data['name']} ran by {interaction.user.id} ({interaction.user.name} at {datetime.now()})\n")
 
 
-async def get_user_settings(user_id):
+async def get_user_settings(user_id) -> dict:
     """Returns a JSON dict with the user's settings."""
     if os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json"):
         with open(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{user_id}.json", "r") as file:
@@ -2699,39 +2849,6 @@ async def handleLeaveVoiceChat(ctx):
     voice_client = ctx.guild.voice_client
     if not voice_client:
         await ctx.send("Nothing to leave.")
-
-youtube_dl.utils.bug_reports_message = lambda: ''
-
-sys.setrecursionlimit(99999999)
-
-
-class Roles:
-    ROLES_LIST = ["Citizen", "Knight", "Baron", "Viscount", "Earl", "Marquess", "Duke", "Prince", "King", "Admin"]
-    ROLES_LIST_ID = [795738020967743491, 796360098108538901, 943259355619418163, 943259337185435699, 943259319821021194, 943259291484295218, 943259217123496028, 796362374827343923, 796362553541656576, 943974413810933802]
-    ROLES_COSTS = [0, 25, 50, 100, 250, 500, 1000, 2500, 10000, 1000000]
-
-    Citizen_Tier = 0
-
-    Knight_Tier = 1
-
-    Baron_Tier = 2
-
-    Viscount_Tier = 3
-
-    Earl_Tier = 4
-
-    Marquess_Tier = 5
-
-    Duke_Tier = 6
-
-    Prince_Tier = 7
-
-    King_Tier = 8
-
-    Admin: 1000000
-
-
-PYTHONIOENCODING = "utf-8"
 
 
 def nolwenniumUserDirectory(ctx):
@@ -2801,7 +2918,7 @@ class error_messages:
     ]
 
 
-async def error_code(interaction, code: int, *note: str, **raw_error:Exception):
+async def error_code(interaction, code: int, *note: str, **raw_error: Exception):
     if note:
         print(f"A manual error was encountered and here is the information: {note}")
     embed = discord.Embed()
@@ -2888,41 +3005,18 @@ async def duration_to_time(duration: int, format: Optional[int] = None) -> str:
         return f"{seconds} seconds"
 
 
-YTDL_OPTIONS = {
-    'format': 'bestaudio/best',
-    'extractaudio': True,
-    'audioformat': 'mp3',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': True,
-    'logtostderr': False,
-    'quiet': False,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0',
-}
-FFMPEG_OPTIONS = {
-    'before_options': '-reconnect True -reconnect_streamed True -reconnect_delay_max 5',
-    'options': '-vn -report -loglevel debug',
-}
+async def generic_operation_complete_message(interaction, timer, message: Optional[str] = None):
+    """Pass in the interaction and the current time using something like `timer = time.perf_counter()`"""
+    execution_time = time.perf_counter() - timer
+    embed = discord.Embed(title=message, description=f"Operation completed successfully ({round((execution_time), 6)}s)\n")
+    await interaction.response.send_message(embed=embed)
 
 
-DisabledComponents = "Unknown"
-EnabledComponents = "Unknown"
-
-if running_locally:
-  GlobalLogDir = (f"{BASE_DIR}GlobalLog.txt")
-else:
-  GlobalLogDir = ("GlobalLog.txt")
 
 """ BULK READ JSONS so it doesn't have to read the file every time a message is sent
     people = nolTighe (p1, g, b, T), oliver, sam (g), jack (r, g), joe (g), charlie (g), haydn, maisy, flo (a), ish, maya, boris (gl), josephTighe (p13, g, c, T)
     "g = grouped", "r = remade", "a = affiliated", "gl = global" 
 """
-
-# Modified in repl.it
 
 with open(f"{JSON_DIR}NollyMention.json", "r", encoding="utf8") as file:
     nollyWords = loads(file.read())
@@ -2953,13 +3047,15 @@ with open(f"{JSON_DIR}JosephTigheMention.json", "r", encoding="utf8") as file:
 with open(f"{JSON_DIR}CharlieMention.json", "r", encoding="utf8") as file:
     charlieSewards = loads(file.read())
 
-print("Done!\nInitialising Bot...")
-global start_time
-start_time = time.time()
+
+#   Client events
+
+print("Initialising client events...")
 
 
 @client.event
 async def on_ready():
+    print("Bot started!")
     print(f'\n\n\n\n[ReadyUp]       Logged in as {client.user} - {(datetime.now())}')
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
@@ -3063,21 +3159,6 @@ async def on_ready():
     print(f"[ReadyUp]       Calibrated Voice Chat time to {voice_time} seconds")
 
     await bot_runtime_events(1)
-    await StatusAutoUpdator()
-
-
-async def StatusAutoUpdator():
-    servers = len(client.guilds)
-    members = 0
-    for guild in client.guilds:
-        members += guild.member_count - 1
-    cpuPercentage = psutil.cpu_percent()
-    memoryUsage = psutil.virtual_memory().percent
-    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
-    print(f"[SelfStatus]        /help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")
-    # await asyncio.sleep(random.randint(100,500))
-    await bot_runtime_events(1)
-    await asyncio.sleep(60)
     await StatusAutoUpdator()
 
 
@@ -3343,8 +3424,6 @@ async def on_guild_remove(guild):
     print(f"[GuildRemove]   Removed from guild {guild}")
     await draggie.send(f"DEV MODE: removed from guild {guild} ({guild.id})")
 
-#   Client events
-
 
 @client.event
 async def on_message_delete(message):
@@ -3607,6 +3686,39 @@ async def on_member_update(before, after):
         send = False
         return
 
+
+@client.event
+async def on_slash_command_error(ctx, error):
+    await bot_runtime_events(1)
+    random_cry_list = ['<:AmberCry:828577834146594856>', '<:BibiByeBye:828683852939395072>', '<:ColetteCry:828683829631516732>', '<:JessieCry:828683805861740654>', '<:SpikeCry:828683779206807622>', '<:SurgeCry:828683755694063667>', '<:TaraCry:828683724286853151>']
+    embed = discord.Embed(title=(f"{random.choice(random_cry_list)} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    await ctx.send(embed=embed)
+
+
+@client.event
+async def on_command_error(ctx, error):
+    print("error!")
+    await bot_runtime_events(1)
+    if "is not found" in str(error):
+        print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
+        return
+    if "on cooldown" in str(error):
+        await ctx.send(f"{error}.")
+        return
+    if ctx.message.content.startswith(".."):
+        return
+    random_cry_list = ['<:AmberCry:828577834146594856>', '<:BibiByeBye:828683852939395072>', '<:ColetteCry:828683829631516732>', '<:JessieCry:828683805861740654>', '<:SpikeCry:828683779206807622>', '<:SurgeCry:828683755694063667>', '<:TaraCry:828683724286853151>']
+    embed = discord.Embed(title=(f"{random.choice(random_cry_list)} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
+    await ctx.send(embed=embed)
+    print(str(error))
+    f = open(GlobalLogDir, "a")
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
+    f.close()
+    f = open(f"{BASE_DIR}errors.txt", "a")#	Modified in repl.it
+    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
+    f.close()
+
+
 #   on message
 
 
@@ -3867,6 +3979,9 @@ async def on_message(message):
 #   Cross Server Messaging
 
 
+print("Done! Initialising legacy Dot Commands...")
+
+
 @client.command(pass_context=True, hidden=True)
 async def sa(ctx):
     if ctx.message.author.id == 382784106984898560:
@@ -3910,13 +4025,6 @@ async def currency(ctx):
     await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
 
 
-async def generic_operation_complete_message(interaction, timer, message: Optional[str] = None):
-    """Pass in the interaction and the current time using something like `timer = time.perf_counter()`"""
-    execution_time = time.perf_counter() - timer
-    embed = discord.Embed(title=message, description=f"Operation completed successfully ({round((execution_time), 6)}s)\n")
-    await interaction.response.send_message(embed=embed)
-
-
 #   offline status for replit
 
 @client.command(help="Turns status to offline/invisible", brief="[Status] Turns invisible", hidden=True)
@@ -3939,9 +4047,6 @@ async def variable(ctx):
         word2 = (str(x[2]))
         await ctx.send(f"Set {word1} to value {word2}.")
         word1 = word2
-
-# Brawl Stars Music
-# Update: Removed
 
 
 @client.command(hidden=True)
@@ -4047,8 +4152,6 @@ async def save_messages(ctx):
         if error_details != []:
             await draggie.send(f"Error info: {error_details}")
 
-#   epic
-
 
 @client.command(pass_context=True, brief="[Audio] Plays Text to Speech voice in voice chat.", hidden=True)
 async def tts(ctx):
@@ -4085,8 +4188,6 @@ async def tts(ctx):
 
         voice_client.leave()
 
-#   playdir
-
 
 @client.command(help="Plays audio at specified directory.", brief="[Audio] Plays audio at directory", pass_context=True, hidden=True)
 async def playdir(ctx):
@@ -4122,7 +4223,6 @@ async def playdir(ctx):
             await channel.connect()
             await playdir(ctx)
 
-#   play
 
 @client.command(help="Sends what is written to the message log.", brief="Sends what is written to the message log in the channel.", pass_context=True)
 async def message(ctx):
@@ -4130,11 +4230,13 @@ async def message(ctx):
 
 #   Audio annoyance command
 
+
 @client.command(help="UseSlashCommandsInstead", brief="UseSlashCommandsInstead", aliases=['coins', 'shop', 'buy', 'yts', 'mine'])
 async def UseSlashCommandsInstead(ctx):
     return await ctx.reply("This command has been replaced by the new <a:ShinyDiamond:926981569393086544> *shinier* <a:ShinyDiamond:926981569393086544> Slash Command! To see these, simply type `/` in the message field, and select the command. You can interact with not just BaguetteBot in a new way, but also all your other favourite bots! Slash Commands, buttons, dropdowns and more are all now supported by me!")
 
 #   download
+
 
 @client.command(help="Downloads a youtube video.", brief="Downloads an entire YouTube video", pass_context=True)
 async def download(ctx, url: str):
@@ -4154,8 +4256,9 @@ async def download(ctx, url: str):
             await ctx.channel.purge(limit=1)
             print("Done!")
             await ctx.send("Done!")
-    
+
 #   Invite link
+
 
 @client.command(hidden=True)
 async def create_invite(ctx):
@@ -4168,6 +4271,7 @@ async def create_invite(ctx):
         await ctx.send(f"Channel invite link: {link}")
     else:
         await draggie.send("Error 5: `command reserved for bot developer(s)`")
+
 
 @client.command(hidden=True)
 async def addroles(ctx):
@@ -4184,9 +4288,8 @@ async def addroles(ctx):
 
 
 #   Grave key: `
-#   Bullet point: • 
-            
-#   Get links
+#   Bullet point: •
+
 
 @client.tree.command(name="links", description="Gets YouTube video and raw audio URL")
 async def links(interaction: discord.Interaction, url: str):
@@ -4234,114 +4337,24 @@ async def links(interaction: discord.Interaction, url: str):
         embed = embed.add_field(name="Audio Links", value=f"[audio url]({url}), abr: {audio_bitrate}")
         await interaction.response.send_message(embed=embed)
 
-@client.command(hidden=True)
-async def create_voice_chat(ctx):
-    text = ctx.message.content
-    x = text.split()
-    category_id = int(x[1])
-    chat_name = text.split(' ', 2)[-1]
-    category = discord.utils.get(ctx.guild.categories, id=category_id)
-    await ctx.guild.create_voice_channel(name=chat_name, category=category, bitrate=ctx.guild.bitrate_limit, reason=f"Command ran by {interaction.user.name} at {datetime.now()} - the command was {ctx.message.content}.")
-    await ctx.reply(f"Ok! I created the voice chat **{chat_name}** in category **{category.name}**. The bitrate was set to the server's max, at {round(ctx.guild.bitrate_limit/1000)}kbps.")
-
-#   join/leave voice
-
-#@client.command(help="Joins message author's voice channel", brief="[Audio] Joins voice chat", pass_context=True, hidden=True)
-#async def join(ctx):#    Joins
-#    await ctx.reply("• You need to be in a Voice Chat to play audio.\n• You don't need to make me join - search for any audio and I'll play it automatically.") if not ctx.author.voice else await ctx.reply("You don't need to make me join: search for any audio and I'll play it automatically.")
-    
-#@client.command(help="Leaves message author's voice channel", brief="[Audio] Leaves voice chat", pass_context=True)
-#async def leave(ctx):#  Leaves
-#    try:
-#        channel = ctx.voice_client.channel
-#        await ctx.voice_client.disconnect()
-#        await ctx.send((str("Left voice channel "))+(str(channel)))
-#    except:
-#        await ctx.send("Can't leave a voice channel when I'm not in a voice channel..?")
-#    f = open(GlobalLogDir, "a")
-#    f.write((str ("\nAUDIO COMMAND RAN -> '.leave' ran by ")) + (str (interaction.user)) + (str (" at ") + (str (datetime.now()))))
-#    f.close()
-#    print ((str ("\nAUDIO COMMAND RAN -> '.leave' ran by ")) + (str (interaction.user)))  
-
-#   Purge
-
-@client.command(help="Purges a specified amount of messages", brief="Delets x messages", pass_context=True)
-#@commands.has_any_role('Admin', 'Mod', 'King')
-async def purge(ctx):
-    if interaction.user.id == 382784106984898560:
-        async with ctx.typing():
-            txt = ctx.message.content
-            x = txt.split()
-            print(x[1])
-            y = (int (x[1])) + 1
-            current_time_for_deletes = time.time()
-            async for message in ctx.message.channel.history(limit=y):
-                if len(message.attachments) < 1: # Checks if there is an attachment on the message
-                    with open((f"Z:\\{message.channel.id}_log{current_time_for_deletes}.txt"), "a", encoding='utf-8') as logAllMessages:
-                        logAllMessages.write(f"\n'{message.content}' sent by {message.author} at {(message.created_at)}", encoding="UTF-8")
-                        print(f"\n'{message.content}' sent by {message.author}")
-                        logAllMessages.close()
-                else: # If there is it gets the filename from message.attachments
-                    attachmentsDir = (f"Z:\\{message.channel.id}\\Attachments\\")
-                    if not os.path.exists(attachmentsDir):
-                        os.makedirs(f"Z:\\{message.channel.id}\\Attachments\\")
-                        print("Made directory" + (attachmentsDir))
-                    nameOfFile = str(message.attachments).split("filename='")[1]
-                    filename = str(nameOfFile).split("' ")[0]
-                    beans = (f"{attachmentsDir}{filename}")
-                    if os.path.isfile(beans):
-                        filename = str(nameOfFile).split("' ")[0]
-                        beans = (f"{attachmentsDir}{uuid.uuid4()}-name={filename}")
-                        await message.attachments[0].save(fp=beans)
-            if (x[1]) == 1:
-                await ctx.channel.purge(limit = y)
-                await ctx.send(f"Deleted {x[1]} message!")
-            else:
-                await ctx.channel.purge(limit = y)
-                await ctx.send(f"Deleted {x[1]} messages!")
-                f = open(GlobalLogDir, "a")
-
-            f = open(GlobalLogDir, "a")
-            f.write(f"\nCOMMAND RAN -> '.purge' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
-            f.close()
-            print(f"\nCOMMAND RAN -> '.purge' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
-            return  
-    else:
-        await ctx.send("You don't have permissions for that u sussy boi")
-
-#   i g n o r e
-
-@client.command(help="UwU", brief="UwU", pass_context=True, hidden=True)
-@commands.has_any_role('Admin', 'Mod')
-async def uwu(ctx):
-    uwuwu = random.randint(1,2)
-    if uwuwu == 1:
-        await ctx.send(file=discord.File(f"{BASE_DIR}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
-    if uwuwu == 2:
-        await ctx.send(file=discord.File(f"{BASE_DIR}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
-    f = open(GlobalLogDir, "a")
-    f.write(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
-    f.close()
-    print(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
 
 #   change nickname
 
-@client.command(help = "Changes nickname", brief = "Changes nickname for mentioned user", pass_context=True, hidden=True)
+
+@client.command(name="nickname", description="Changes nickname for mentioned user")
 @commands.has_any_role('Admin', 'Mod')
-async def chnick(ctx):
-    text = ctx.message.content
-    member = interaction.user
-    sp1 = text.split(' ', 1)[-1]
-    await member.edit(nick=sp1, reason=f"Command ran by {interaction.user.name} at {datetime.now()} - the command was {ctx.message.content}.")
+async def chnick(interaction: discord.Interaction, member: discord.Member, name: str):
+    await member.edit(nick=name, reason=f"Command ran by {interaction.user.name} at {datetime.now()} - the command was {interaction.message.content}.")
 
     f = open(GlobalLogDir, "a")
-    f.write(f"\nCOMMAND RAN -> '.chnick' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
+    f.write(f"\nCOMMAND RAN -> '.chnick' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
     f.close()
-    print(f"\nCOMMAND RAN -> '.chnick' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
+    print(f"\nCOMMAND RAN -> '.chnick' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
 
 #   brawl stars API
 
-@client.command(help = "Use: .bs <PLAYER TAG>", brief = "Interacts with the Brawl Stars API. Type '/help bs' for usage", pass_context=True, hidden=True)
+
+@client.command(help="Use: .bs <PLAYER TAG>", brief="Interacts with the Brawl Stars API. Type '/help bs' for usage", pass_context=True, hidden=True)
 async def bs(ctx):
     async with ctx.typing():
         txt = ctx.message.content
@@ -4414,58 +4427,11 @@ async def bs(ctx):
             except:
                 await ctx.send(file=discord.File(path))
 
-#   Birthdays
-
-@client.tree.command(name = "birthday", description="Saves your birthday to a file so other people know when to celebrate! 🎂")
-async def birthday(ctx):
-    async with ctx.typing():
-        try:
-            text = ctx.message.content
-            syntaxErrorChecker = text.split(' ', 1)[-1]
-            birthDate = text.split(' ', 2)[-1]
-            x = text.split()
-            if x[1] == "file":
-                with open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt") as file:
-                    birthdays = file.read()
-                    embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
-                    await ctx.send(embed=embed)
-                    return
-            print(x[2])
-            if '/' in syntaxErrorChecker:
-                await ctx.send("Error! Please ensure your command looks something like this:\n\n**.birthday set 25th June 2006**")
-                return
-            if '.' in syntaxErrorChecker:
-                await ctx.send("Error! Please ensure your command looks something like this:\n\n**.birthday set 25th June 2006**")
-                return
-
-            if x[1] == "file":
-                with open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt") as file:
-                    birthdays = file.read()
-                    embed=discord.Embed(title="All Birthdays", description=(birthdays), colour=0x00acff)
-                    await ctx.send(embed=embed)
-            if (x[1]) == "0":
-                await ctx.send("Error! Please ensure your command looks something like this:\n\n**.birthday set 25th June 2006**")
-
-            if x[1] == "set":
-                author = (str (interaction.user.id))
-                file=open(f"{BASE_DIR}Logs{S_SLASH}birthdays.txt",encoding="UTF-8").read()
-                count=file.count(author)
-                print (count)
-                if count != 0:
-                    await ctx.send("Error! You have already added your birthday to the file. Please ask an admin to remove it if you believe this is an error.")    
-                    return
-
-                f = open(f"{BASE_DIR}logs{S_SLASH}birthdays.txt", "a")
-                f.write(f"\n<@!{interaction.user.id}>'s birthday is on the {birthDate}")
-                f.close()
-                await ctx.send(f"\n{interaction.user}'s birthday has been set to `{birthDate}`. A custom message will be sent, enjoy!")
-        
-        except Exception:
-            await ctx.send("Error! Please ensure your command looks something like this:\n\n**.birthday set 25th June 2006**")
 
 #   Dir
 
-@client.command(help = "Specify the directory to display all items in it.", brief = "Shows all files in my PC...",pass_context=True, hidden=True)
+
+@client.command(help="Specify the directory to display all items in it.", brief="Shows all files in my PC...", pass_context=True, hidden=True)
 @commands.has_any_role('Admin', 'Mod', 'Prince')
 async def dir(ctx):
     if ctx.guild.id == 759861456300015657:
@@ -4480,6 +4446,7 @@ async def dir(ctx):
         print(f"\nCOMMAND RAN -> '.dir' ran by {interaction.user} in {ctx.guild.id} at {datetime.now()}")
 
 #   Roleperms command
+
 
 @client.command(help="Gets all roles with that permission.", brief="Gets all roles with that permission", pass_context=True)
 async def roleperms(ctx):
@@ -4502,6 +4469,7 @@ async def roleperms(ctx):
         await ctx.send(embed=embed)
 
 #   Ship
+
 
 @client.command(help="Ships things. Syntax: *.ship [person1] [person2]", brief="Ships x and y out of 100.", pass_context=True, hidden=True)
 async def ship(ctx):
@@ -4548,67 +4516,7 @@ async def broadcast(ctx, *, msg):
 
 #   ON ERROR
 
-
-@client.event
-async def on_slash_command_error(ctx, error):
-    await bot_runtime_events(1)
-    randomCry = random.randint(1, 7)
-    if randomCry == 1:
-        cry = '<:AmberCry:828577834146594856>'
-    if randomCry == 2:
-        cry = '<:BibiByeBye:828683852939395072>'
-    if randomCry == 3:
-        cry = '<:ColetteCry:828683829631516732>'
-    if randomCry == 4:
-        cry = '<:JessieCry:828683805861740654>'
-    if randomCry == 5:
-        cry = '<:SpikeCry:828683779206807622>'
-    if randomCry == 6:
-        cry = '<:SurgeCry:828683755694063667>'
-    if randomCry == 7:
-        cry = '<:TaraCry:828683724286853151>'                    
-    embed = discord.Embed(title=(f"{cry} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
-    await ctx.send(embed=embed)
-
-
-@client.event
-async def on_command_error(ctx, error):
-    print("error!")
-    await bot_runtime_events(1)
-    if "is not found" in str(error):
-        print(f"Command returned an error but will be returned. Server: {ctx.guild.name}, error message = {error}")
-        return
-    if "on cooldown" in str(error):
-        await ctx.send(f"{error}.")
-        return
-    if ctx.message.content.startswith(".."):
-        return
-    randomCry = random.randint(1, 7)
-    if randomCry == 1:
-        cry = '<:AmberCry:828577834146594856>'
-    if randomCry == 2:
-        cry = '<:BibiByeBye:828683852939395072>'
-    if randomCry == 3:
-        cry = '<:ColetteCry:828683829631516732>'
-    if randomCry == 4:
-        cry = '<:JessieCry:828683805861740654>'
-    if randomCry == 5:
-        cry = '<:SpikeCry:828683779206807622>'
-    if randomCry == 6:
-        cry = '<:SurgeCry:828683755694063667>'
-    if randomCry == 7:
-        cry = '<:TaraCry:828683724286853151>'                    
-    embed = discord.Embed(title=(f"{cry} An error occured"), description=f"**{str(error)}**\n\n*If this keeps occuring, please raise an issue [here](https://github.com/Draggie306/BaguetteBot/issues)*.", color=0x990000)
-    await ctx.send(embed=embed)
-    print(str(error))
-    f = open(GlobalLogDir, "a")
-    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.author} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
-    f.close()
-    f = open(f"{BASE_DIR}errors.txt", "a")#	Modified in repl.it
-    f.write(f"\nERROR: An error occured! Original command initialised by {ctx.user} at {datetime.now()}. ERROR MESSAGE: {str(error)}")
-    f.close()
-
-#   poggerspogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpogpog
+print("Done! Initialising Bot...")
 
 
 def main():
