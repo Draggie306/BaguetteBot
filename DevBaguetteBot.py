@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev.d" # use / in commit message
+BUILD = "dev.e" # use / in commit message
 BETA_BOT = True
 
 """
@@ -2407,6 +2407,19 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
         return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 
+@client.tree.command(name="clearqueue", description="[Audio] Clear the current queue!")
+async def clear_queue(interaction: discord.Interaction): # Not fully tested
+    await slash_log(interaction)
+    if not interaction.user.guild_permissions.manage_channels:
+        return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
+    vc: wavelink.Player = interaction.guild.voice_client
+    if not vc.queue:
+        return await interaction.response.send_message("Nothing is queued.")
+    else:
+        await vc.queue.clear()
+        return await interaction.response.send_message("Cleared the queued tracks.")
+
+
 @client.tree.command(name="filter", description="[Beta] Select and use special Voice Chat Sound Filters!")
 @app_commands.describe(filter="Enter the string of the filter to add", dev_mode="enable dev mode?")
 async def filter(interaction: discord.Interaction, filter: Optional[str] = None, dev_mode: Optional[bool] = False):
@@ -2421,6 +2434,8 @@ async def filter(interaction: discord.Interaction, filter: Optional[str] = None,
 async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
+    if vc.guild.id not in TESTER_GUILD_IDS:
+        return await interaction.response.send_message(f"{EMOJI_CROSS_ANIMATED} Sorry, but it looks like this server is not a Premium server. Please contact the developer if you believe this is an issue.")
     if not vc or not vc.is_playing():
         return await interaction.response.send_message("Nothing is playing.")
 
@@ -2490,13 +2505,6 @@ async def skip(interaction: discord.Interaction):
     if vc is not None:
         if not vc.queue.is_empty:
             await vc.stop()
-            """# Sort this out make sure it works
-            embed = discord.Embed(title="Playing new song", description=f"[{search.title}]({search.uri})")
-            embed.set_image(url=search.thumbnail)
-            embed.add_field(name="Author", value=search.author)
-            embed.add_field(name="Time left", value=await duration_to_time(int(search.duration)))
-            embed.add_field(name="Link", value=search.uri)
-            await interaction.response.send_message(embed=embed)"""
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
@@ -2506,6 +2514,7 @@ async def skip(interaction: discord.Interaction):
             await interaction.response.send_message("No songs remain in the queue. Stopped the player.")
     else:
         await interaction.response.send_message("I'm not in a Voice Channel.")
+
 
 print("Done!\nDefining function and constants...")
 
@@ -2980,6 +2989,8 @@ async def on_ready():
     epic_memes = client.get_channel(809112184902778890)
     public_memes = client.get_channel(930488945144397905)
     memes_channels = [epic_memes, public_memes]
+    ready_up_channel = client.get_channel(1099008145092788254)
+    await ready_up_channel.send(f"Bot is now online at {datetime.now()}")
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
 
     await asyncio.sleep(2)
@@ -3215,6 +3226,7 @@ async def on_member_join(member):
     memoryUsage = psutil.virtual_memory().percent
     await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
 
+
 @client.event
 async def on_member_remove(member):
     await bot_runtime_events(1)
@@ -3232,6 +3244,7 @@ async def on_member_remove(member):
     for guild in client.guilds:
         members += guild.member_count - 1
         await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
+
 
 @client.event
 async def on_raw_reaction_add(payload=None):
@@ -3317,6 +3330,7 @@ async def on_raw_reaction_add(payload=None):
     if payload.guild_id == 384403250172133387:#     Must, while reaction roles are not available for all servers.
         if payload.message_id == 907318418712170538:
             channel = client.get_channel(907318241498656850)
+
 
 @client.event
 async def on_reaction_remove(reaction, user):
@@ -3431,12 +3445,9 @@ async def on_typing(channel, user, when):
     await bot_runtime_events(1)
     now = datetime.now()
     tighem = now.strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        sendLogsDir = (f"{BASE_DIR}Servers{S_SLASH}{channel.guild.id}{S_SLASH}sendMessages.txt")
-    except Exception as e:
-        print(e)
+    if not channel.guild:
         await draggie.send(f"{user.mention} ({user}) is DMing me")
-        print(f"{user.name} is DMing")
+        print(f"[UserTypingDM]        {user.name} is DMing")
         return
     print(f"[UserTyping]        {user.name} started typing in '{channel.guild.name} - {channel.name}' at {tighem}/{when}")
 
