@@ -1,5 +1,5 @@
-DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "dev.f" # use / in commit message
+DRAGGIEBOT_VERSION = "v1.3.8"
+BUILD = "dev.a" # use / in commit message
 BETA_BOT = True
 
 """
@@ -27,7 +27,7 @@ import      matplotlib.pyplot as plt
 print("Defining main variables...")
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
-VOICE_VOLUME = 30
+VOICE_VOLUME = 65
 CROISSANTS = [796777705520758795, 821405856285196350, 588081261537394730]
 CROISSANT_NAMES = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
 TESTER_GUILD_IDS = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -2028,7 +2028,7 @@ async def seek(interaction: discord.Interaction, position: int):
         return await interaction.response.send_message("Nothing is playing.")
     await vc.seek(position * 1000)
     print(f"[SeekCommand]   Seeking to {position * 1000}ms")
-    return await generic_operation_complete_message(interaction, start_time, f"Seeked to {position*1000}ms.")
+    return await interaction.response.send_message(f"Seeked to {position*1000}ms.", ephemeral=True)
     # return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 
@@ -2150,7 +2150,8 @@ async def get_server_voice_volume(guild_id: int) -> int:
     Must include parameter of the guild id\n
     Returns an percentage as an integer. You can divide this by 100 if you want a float."""
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
-        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
+        os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences", exist_ok=True)
+        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as f:
             f.write(str(VOICE_VOLUME))
     with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
         volume = file.read()
@@ -2181,7 +2182,10 @@ async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = 
     try:
         next_track = player.player.queue._queue[0]
     except IndexError:
-        return await interaction.edit_original_response(content="Finished playing all audio!")
+        if player.player.loop or player.player.loop_all:
+            return await interaction.followup.send(content="Looping track!", ephemeral=True)
+        await interaction.delete_original_response()
+        return await interaction.followup.send(content="Finished playing all audio!")
     embed = discord.Embed(title="[on_wavelink_track_end] Edited Playing track", description=f"[{next_track.title}]({next_track.uri})")
 
     try:
@@ -2215,7 +2219,7 @@ async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = 
     view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.green))
     view.timeout = None
 
-    await player.player.guild_interaction.edit_original_response(embed=embed, view=view)
+    await interaction.edit_original_response(embed=embed, view=view)
 
 
 async def get_wavelink_queue_previous_item(player):
