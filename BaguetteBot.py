@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "" # use / in commit message
+BUILD = "a" # use / in commit message
 BETA_BOT = False
 
 """
@@ -27,7 +27,7 @@ import      matplotlib.pyplot as plt
 print("Defining main variables...")
 global VOICE_VOLUME, upvote, downvote, CROISSANTS, draggie, hasMembersforGlobalServer, nolwenniumUserDir, rolePrivate, hasPrivate, hasAdmin, bot_events
 bot_events = 0
-VOICE_VOLUME = 30
+VOICE_VOLUME = 65
 CROISSANTS = [796777705520758795, 821405856285196350, 588081261537394730]
 CROISSANT_NAMES = ["ETigger_4", "Josephy Spaghetti", "tigger_4"]
 TESTER_GUILD_IDS = [384403250172133387, 759861456300015657, 833773314756968489, 921088076011425892] # Server IDs where I'm an admin so can change stuff before it reaches other servers
@@ -2150,7 +2150,8 @@ async def get_server_voice_volume(guild_id: int) -> int:
     Must include parameter of the guild id\n
     Returns an percentage as an integer. You can divide this by 100 if you want a float."""
     if not os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt"):
-        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w') as f:
+        os.makedirs(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences", exist_ok=True)
+        with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'w+') as f:
             f.write(str(VOICE_VOLUME))
     with open(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Preferences{S_SLASH}Voice_Chat_Volume.txt", 'r') as file:
         volume = file.read()
