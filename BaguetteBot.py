@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.7"
-BUILD = "a" # use / in commit message
+BUILD = "b" # use / in commit message
 BETA_BOT = False
 
 """
@@ -3394,14 +3394,12 @@ async def on_raw_reaction_add(payload=None):
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
-                    await payload.member.add_roles(rolePrivate)
+                    #await payload.member.add_roles(rolePrivate)
                     await payload.member.add_roles(roleNew)
-                    await channel.send(f"Welcome, {payload.member.mention} to the private side! You have been verified! Maybe check out <#759861456761258045> now? Assign some roles in <#970339131500662835> such as your sixth form/college! Also, we have our own currency and shop system, so I'll leave that for you to find. Enjoy!")
-                    await asyncio.sleep(1)
-                    await payload.member.remove_roles(role_private_unverified)
-                    await payload.member.remove_roles(roleUnverified)
-                    await asyncio.sleep(8)
-                    await channel.purge(limit=1)
+                    #await channel.send(f"Welcome, {payload.member.mention} to the private side! You have been verified! Maybe check out <#759861456761258045> now? Assign some roles in <#970339131500662835> such as your sixth form/college! Also, we have our own currency and shop system, so I'll leave that for you to find. Enjoy!", delete_after=10)
+                    await channel.send(f"{payload.member.mention} your request to join the private side has been submitted.", delete_after=10)
+                    #await payload.member.remove_roles(role_private_unverified)
+                    #await payload.member.remove_roles(roleUnverified)
                     print(f"[ReactionRole]  And it's gone in {channel}")
 
             if payload.message_id == vaccinatedID:
