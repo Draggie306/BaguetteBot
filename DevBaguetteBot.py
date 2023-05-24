@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.8"
-BUILD = "dev.a" # use / in commit message
+BUILD = "dev.b" # use / in commit message
 BETA_BOT = True
 
 """
@@ -124,7 +124,7 @@ if NOLWENNIUM_DIR_CHECKER.is_file():
         BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot\\"
         BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot"
         S_SLASH = "\\"
-        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"    
+        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
     TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
@@ -1714,11 +1714,14 @@ async def terms(interaction: discord.Interaction):
     view.add_item(discord.ui.Button(label="iBaguette Privacy Policy", style=discord.ButtonStyle.link, url="https://privacy.ibaguette.com"))
     await interaction.response.send_message("Press the button below to see iBaguette Terms of Service and Privacy Policy.", view=view, ephemeral=True)
 
+
 @client.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CommandOnCooldown):
-        await interaction.response.send_message(error, ephemeral=True)
+        await interaction.response.send_message(f"There was a generic client tree error when running that command.\n{error}\n{traceback.format_exc()}", ephemeral=True)
     else:
+        await interaction.response.send_message(f"There was a generic client tree error when running that command.\n{error}", ephemeral=True)
+        print(traceback.format_exc())
         raise error
     print(f"[Tree/ERROR]      {error}")
 
@@ -1794,8 +1797,11 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
+            view.add_item(discord.ui.button(label="Next ▶️", style=discord.ButtonStyle.blurple))
+
             embed.set_footer(text=random_hint)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+            embed.set_footer(text=random_hint)
             return await interaction.followup.send(embed=embed)
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -1805,9 +1811,10 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             tracklen = len(search_video.tracks)
             remaining_tracks = len(vc.queue)
 
-            string_to_send = (f'Added {tracklen} YouTube videos from the paylist into the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration/1000))})') # wavelink >v2 now in millis
+            string_to_send = (f'Added {tracklen} YouTube videos from the playlist into the queue. There are now {remaining_tracks} tracks in the queue. (~{await duration_to_time(round(total_duration/1000))})') # wavelink >v2 now in millis
             embed = discord.Embed(title="Added Tracks!", description=string_to_send)
-            return await interaction.followup.send(embed=embed)
+            return await interaction.followup.send(embed=embed, ephemeral=True)
+            return await interaction.response.send_message(string_to_send, delete_after=1   )
 
         # End of playlist content #
 
@@ -1818,7 +1825,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             print("Playing youtube track")
             vc.play(search_video)
             # await vc.play(search_video.source)
-            await interaction.followup.send("Please use </play:1057428586761556090> to start playing sounds.")
+            await interaction.followup.send("Please use </play:1057428586761556090> to start playing sounds!", ephemeral=True)
 
         # If the bot isn't doing anything.
 
@@ -1829,15 +1836,36 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             if offset:
                 offset = ((int(offset)) * 1000)
                 await vc.seek(offset)
+
+            # See if the player is looping.
+
+            looping = ""
+            if vc.queue.loop:
+                looping = "Looping current"
+            if vc.queue.loop_all:
+                looping = "Looping queue"
+            else:
+                looping = "Disabled"
+
+            # Construct embed
+
             embed = discord.Embed(title="Now playing", description=f"[{search_video.title}]({search_video.uri})")
             try:
                 embed.set_image(url=search_video.thumbnail)
             except Exception:
                 embed.add_field(name="Thumbnail", value="<unable to get.>")
+
             embed.add_field(name="Creator", value=search_video.author)
             embed.add_field(name="Time Left", value=f"<t:{int(time.time()) + int(search_video.duration / 1000)}:R>")
             # embed.add_field(name="Time left", value=await duration_to_time(int(search_video.duration / 1000)))
-            embed.add_field(name="Queue Length", value=vc.queue.count)
+            embed.add_field(name="Looping", value=looping)
+            embed.add_field(name="Tracks Remaining", value=vc.queue.count)
+
+            embed.set_footer(text=random_hint)
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+
+            # Add the buttons
+
             view = discord.ui.View()
             view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Pause", style=discord.ButtonStyle.blurple))
@@ -1846,8 +1874,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="+10s", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Shuffle", style=discord.ButtonStyle.blurple))
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
-            embed.set_footer(text=random_hint)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+
             x = await interaction.followup.send(embed=embed, view=view)
             vc.play_controls_message = x
 
@@ -1972,13 +1999,13 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
 async def clear_queue(interaction: discord.Interaction): # Not fully tested
     await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_channels:
-        return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.")
+        return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.", ephemeral=True, delete_after=10)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc.queue:
-        return await interaction.response.send_message("Nothing is queued.")
+        return await interaction.response.send_message("Nothing is queued! Use </play:1057428586761556090> to queue a track.", ephemeral=True, delete_after=10)
     else:
         await vc.queue.clear()
-        return await interaction.response.send_message("Cleared the queued tracks.")
+        return await interaction.response.send_message("Cleared all queued tracks.", delete_after=15)
 
 
 @client.tree.command(name="filter", description="[Beta] Select and use special Voice Chat Sound Filters!")
@@ -1987,48 +2014,47 @@ async def filter(interaction: discord.Interaction, filter: Optional[str] = None,
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc or not vc.is_playing():
-        return await interaction.response.send_message("Nothing is playing.")
+        return await interaction.response.send_message("Nothing is playing! Use </play:1057428586761556090> to play a track.", ephemeral=True, delete_after=10)
 
 
 @client.tree.command(name="loop", description="Loop the current audio, or all the queue.")
-@app_commands.describe(all_queue="Want to loop the entire queue?")
-async def loop(interaction: discord.Interaction, all_queue: Optional[bool] = False):
+@app_commands.describe(queue="Want to loop the entire queue?")
+async def loop(interaction: discord.Interaction, queue: Optional[bool] = False):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if vc.guild.id not in TESTER_GUILD_IDS:
-        return await interaction.response.send_message(f"{EMOJI_CROSS_ANIMATED} Sorry, but it looks like this server is not a Premium server. Please contact the developer if you believe this is an issue.")
+        return await interaction.response.send_message(f"{EMOJI_CROSS_ANIMATED} Sorry, but it looks like this server is not a Premium server. Please contact the developer if you believe this is an issue.", delete_after=10)
     if not vc or not vc.is_playing():
-        return await interaction.response.send_message("Nothing is playing.")
+        return await interaction.response.send_message("Nothing is playing. Use </play:1057428586761556090> to play some stuff!", ephemeral=True)
 
-    if not all_queue:
+    if not queue:
         if vc.queue.loop:
             vc.queue.loop = False
-            return await interaction.response.send_message("Looping disabled.")
+            return await interaction.response.send_message("Looping disabled.", delete_after=10)
         else:
             vc.queue.loop = True
-            return await interaction.response.send_message("The current track has been set to loop.")
+            return await interaction.response.send_message("The current track has been set to loop.", delete_after=10)
 
-    if all_queue:
+    if queue:
         if vc.queue.loop_all:
             vc.queue.loop_all = False
-            return await interaction.response.send_message("Looping all disabled.")
+            return await interaction.response.send_message("Looping all disabled.", delete_after=10)
         else:
             vc.queue.loop_all = True
-            return await interaction.response.send_message("All tracks in the history queue have been set to loop.")
+            return await interaction.response.send_message("All tracks in the history queue have been set to loop.", delete_after=10)
 
 
 @client.tree.command(name="seek", description="Seeks to a position in the channel")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position: int):
     await slash_log(interaction)
-    start_time = time.perf_counter()
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc or not vc.is_playing():
-        return await interaction.response.send_message("Nothing is playing.")
+        return await interaction.response.send_message("Nothing is playing! Queue tracks with </play:1057428586761556090>", ephemeral=True)
     await vc.seek(position * 1000)
     print(f"[SeekCommand]   Seeking to {position * 1000}ms")
-    return await interaction.response.send_message(f"Seeked to {position*1000}ms.", ephemeral=True)
+    return await interaction.response.send_message(f"Seeked to {position*1000}ms.", delete_after=5)
     # return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 
@@ -2037,9 +2063,9 @@ async def shuffle(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
     if vc is None:
-        return await interaction.response.send_message("There is nothing to shuffle")
+        return await interaction.response.send_message("There is nothing to shuffle. Add a track to the queue with ", ephemeral=True)
     random.shuffle(vc.queue._queue)
-    await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)")
+    await interaction.response.send_message("The queue has been shuffled. Now you don't know what will be played next ;)", delete_after=15)
     print(vc.queue._queue)
 
 
@@ -2069,12 +2095,12 @@ async def skip(interaction: discord.Interaction):
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
-            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
+            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.", delete_after=15)
         else:
             await vc.stop()
-            await interaction.response.send_message("No songs remain in the queue. Stopped the player.")
+            await interaction.response.send_message("No songs remain in the queue. Stopped the player.", delete_after=10)
     else:
-        await interaction.response.send_message("I'm not in a Voice Channel.")
+        await interaction.response.send_message("I'm not in a Voice Channel.", ephemeral=True)
 
 
 @client.command(hidden=True)
@@ -2172,20 +2198,31 @@ async def on_wavelink_node_ready(node: wavelink.Node):
     print(f"Node: <{node}> is ready!")
 
 
-async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = None, reason: Optional[str] = None) -> discord.Embed:
+async def on_wavelink_track_end(vc: wavelink.Player, track: Optional[str] = None, reason: Optional[str] = None):
     if reason == "REPLACED":
         return
     if reason == "LOAD_FAILED":
         print("Load failed")
 
-    interaction = player.player.guild_interaction
-    try:
-        next_track = player.player.queue._queue[0]
-    except IndexError:
-        if player.player.loop or player.player.loop_all:
-            return await interaction.followup.send(content="Looping track!", ephemeral=True)
-        await interaction.delete_original_response()
+    interaction = vc.player.guild_interaction
+
+    if len(vc.player.queue._queue) == 0: # If there is no more tracks in the queue
+        if hasattr(vc.player, "loop"): # there might be looping in the queue
+            if vc.player.loop or vc.player.loop_all:
+                # return await interaction.followup.send(content="Looping track!", ephemeral=True)
+                print("Looping track!")
+        if hasattr(vc.player.queue, "loop"):
+            if vc.player.queue.loop or vc.player.queue.loop_all:
+                # return await interaction.followup.send(content="Looping track!", ephemeral=True)
+                print("Looping all tracks!")
+
+        if not vc.reason or vc.reason == "STOPPED":
+            return await interaction.followup.send(content="Finished playing all audio!", ephemeral=True)
+
+        # await interaction.delete_original_response()
         return await interaction.followup.send(content="Finished playing all audio!")
+
+    next_track = vc.player.queue._queue[0]
     embed = discord.Embed(title="[on_wavelink_track_end] Edited Playing track", description=f"[{next_track.title}]({next_track.uri})")
 
     try:
@@ -2197,17 +2234,41 @@ async def on_wavelink_track_end(player: wavelink.Player, track: Optional[str] = 
         print(e)
         embed.add_field(name="Thumbnail", value="<unable to get.>")
 
-    previous_item = await get_wavelink_queue_previous_item(player)
+    previous_item = await get_wavelink_queue_previous_item(vc)
     if hasattr(next_track, "artists"):
         artists_str = ', '.join(previous_item.artists)
     else:
         artists_str = next_track.author
 
+    # Check if the queue is looping
+
+    looping = ""
+    if hasattr(vc, "loop"):
+        if vc.queue.loop:
+            looping = "Looping current"
+        if vc.queue.loop_all:
+            looping = "Looping queue"
+        else:
+            looping = "Disabled"
+    else:
+        try:
+            if vc.player.queue.loop:
+                looping = "Looping current"
+            if vc.player.queue.loop_all:
+                looping = "Looping queue"
+            else:
+                looping = "Disabled"
+        except Exception as e:
+            print(e)
+            looping = "Unknown"
+
     embed.add_field(name="Creator", value=artists_str)
     embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + int(previous_item.duration / 1000)}:R>")
     # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
-    embed.add_field(name="Queue Length", value=await get_wavelink_queue_length(player))
-    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+    embed.add_field(name="Looping", value=looping)
+    embed.add_field(name="Tracks Remaining", value=await get_wavelink_queue_length(vc))
+    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+    embed.set_footer(text=random_hint)
 
     view = discord.ui.View()
     view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
@@ -2227,12 +2288,12 @@ async def get_wavelink_queue_previous_item(player):
     Returns the last track in the queue for simplicity\n
     Returns `None` if nothing there.
     """
-    try:
+    if hasattr(player, "queue"): # catches wavelink stopped events
         if len(player.queue._queue) == 0:
             return None
         else:
             return player.queue._queue[0]
-    except Exception:
+    else:
         if len(player.player.queue._queue) == 0:
             return None
         else:
@@ -2243,12 +2304,12 @@ async def get_wavelink_queue_length(player):
     """
     Returns the length of the queue for simplicity\n
     """
-    try:
+    if hasattr(player, "queue"):
         if len(player.queue._queue) == 0:
             return None
         else:
             return len(player.queue._queue)
-    except Exception as e:
+    else:
         if len(player.player.queue._queue) == 0:
             return None
         else:
@@ -2417,8 +2478,8 @@ class CoinsButtons2(discord.ui.Button):
 
 
 class PlayButton(discord.ui.Button):
-    def __init__(self, label: str, style: discord.ButtonStyle, disabled: Optional[bool] = False):
-        super().__init__(label=label, style=style, disabled=disabled)
+    def __init__(self, label: str, style: discord.ButtonStyle, disabled: Optional[bool] = False, emoji: Optional[discord.PartialEmoji] = None):
+        super().__init__(label=label, style=style, disabled=disabled, emoji=emoji)
 
     async def callback(self, interaction):
         view = discord.ui.View()
@@ -2608,12 +2669,27 @@ class PlayButton(discord.ui.Button):
             except Exception:
                 embed.add_field(name="Thumbnail", value="<unable to get from current interaction url>")
 
+            # Check if looping is enabled
+
+            looping = ""
+            if vc.queue.loop:
+                looping = "Looping current"
+            if vc.queue.loop_all:
+                looping = "Looping queue"
+            else:
+                looping = "Disabled"
+
+            # Construct embed
+
             embed.add_field(name="Creator", value=vc.current.author)
             embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + (int(vc.current.duration / 1000) - int(vc.last_position / 1000))}:R>")
             # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
-            embed.add_field(name="Queue Length", value=vc.queue.count)
+            embed.add_field(name="Looping", value=looping)
+            embed.add_field(name="Tracks Remaining", value=vc.queue.count)
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+            embed.set_footer(text=random_hint)
             # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
+
             await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
         else:
             print("Not doing anything - just skipped!")
@@ -3090,7 +3166,10 @@ async def on_ready():
     public_memes = client.get_channel(930488945144397905)
     memes_channels = [epic_memes, public_memes]
     ready_up_channel = client.get_channel(1099008145092788254)
-    await ready_up_channel.send(f"Bot is now online at {datetime.now()}")
+    if BETA_BOT:
+        await ready_up_channel.send(f"Beta Bot is now online at {datetime.now()}")
+    else:
+        await ready_up_channel.send(f"Bot is now online at {datetime.now()}")
     hasMembersforGlobalServer = discord.utils.get(guild.roles, name="Members")
 
     await asyncio.sleep(2)
@@ -3397,14 +3476,12 @@ async def on_raw_reaction_add(payload=None):
             if payload.message_id == msgID:#                VERIFICATION MESSAGE ONLY
                 if str(payload.emoji) == "✅":
                     channel = client.get_channel(835200388965728276)
-                    await payload.member.add_roles(rolePrivate)
+                    #await payload.member.add_roles(rolePrivate)
                     await payload.member.add_roles(roleNew)
-                    await channel.send(f"Welcome, {payload.member.mention} to the private side! You have been verified! Maybe check out <#759861456761258045> now? Assign some roles in <#970339131500662835> such as your sixth form/college! Also, we have our own currency and shop system, so I'll leave that for you to find. Enjoy!")
-                    await asyncio.sleep(1)
-                    await payload.member.remove_roles(role_private_unverified)
-                    await payload.member.remove_roles(roleUnverified)
-                    await asyncio.sleep(8)
-                    await channel.purge(limit=1)
+                    #await channel.send(f"Welcome, {payload.member.mention} to the private side! You have been verified! Maybe check out <#759861456761258045> now? Assign some roles in <#970339131500662835> such as your sixth form/college! Also, we have our own currency and shop system, so I'll leave that for you to find. Enjoy!", delete_after=10)
+                    await channel.send(f"{payload.member.mention} your request to join the private side has been submitted.", delete_after=10)
+                    #await payload.member.remove_roles(role_private_unverified)
+                    #await payload.member.remove_roles(roleUnverified)
                     print(f"[ReactionRole]  And it's gone in {channel}")
 
             if payload.message_id == vaccinatedID:
