@@ -1,6 +1,6 @@
-DRAGGIEBOT_VERSION = "v1.3.8"
-BUILD = "dev.b" # use / in commit message
-BETA_BOT = True
+DRAGGIEBOT_VERSION = "v1.3.9"
+BUILD = "" # use / in commit message
+BETA_BOT = False
 
 """
 Naming scheme:
@@ -48,7 +48,7 @@ DISCORD_EPOCH = 1420070400000
 YTAPI_STATUS = "Enabled: yt-dl"
 SCAPI_STATUS = "Disabled"
 AUDIO_SUBSYSTEM = "Wavelink"
-IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_id` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
+IDK_WHAT_U_MEAN = ("I don't know what you mean. Please use **buy/set/lookup** in the `operation` Choice. Make sure the `target_user` Choice is a valid user ID. The `mod_value` Choice does not need to have any conditional arguments if `operation` is `lookup`.")
 YDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist': 'True', 'youtube-skip-dash-manifest': 'True'}
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -124,7 +124,7 @@ if NOLWENNIUM_DIR_CHECKER.is_file():
         BASE_DIR = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot\\"
         BASE_DIR_MINUS_SLASH = "D:\\Draggie Programs\\BetaBaguetteBot\\draggiebot"
         S_SLASH = "\\"
-        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"
+        JSON_DIR = "D:\\Draggie Programs\\BaguetteBot\\draggiebot\\ExternalAssets\\JSONs\\"    
     TEMP_FOLDER = f"Z:{S_SLASH}"
     logger = logging.getLogger('discord')
     logger.setLevel(logging.DEBUG)
@@ -312,6 +312,17 @@ async def stats(interaction: discord.Interaction) -> None:
     with open(GlobalLogDir, "a", encoding="UTF-8") as f:
         f.write(f"\nSLASH COMMAND RAN -> '.stats' ran by {interaction.user.id} in {interaction.guild_id} at {datetime.now()}")
 
+
+@client.tree.command(name="invite", description="Get the invite link for the bot.")
+async def invite(interaction: discord.Interaction) -> None:
+    await slash_log(interaction)
+    invite_link = "https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands"
+    await interaction.response.send_message(f"You can invite me to your server with this link: {invite_link}. Enjoy all the features of BaguetteBot!\n\nIf you need help, join the support server: https://discord.gg/GfetCXH")
+
+
+# namecolour for nitro boosters
+# Now in BaguetteBrigadersHelper.py
+
 #   baguettes
 
 
@@ -439,12 +450,18 @@ async def meme_analysis(interaction: discord.Interaction):
         await interaction.edit_original_response(content=f"Error **{e}**: ```python\n{traceback.format_exc()}```")
 
 
-@client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!", )
-@app_commands.describe(operation="[Admin Only] set/add/lookup.", target_id="[Admin Only] Enter the user id for the operation to target", mod_value="[Admin Only] Use this as the value for the operation")
-async def coins(interaction: discord.Interaction, operation: Optional[str], target_id: Optional[str], mod_value: Optional[str]) -> None:
+@client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!")
+@app_commands.guild_only()
+@app_commands.describe(operation="[Admin Only] set/add/lookup.", target_user="[Admin Only] Enter the user id for the operation to target", amount="[Admin Only] Use this as the value for the operation")
+@app_commands.choices(operation=[
+    app_commands.Choice(name="Set", value="Set"),
+    app_commands.Choice(name="Add", value="Add"),
+    app_commands.Choice(name="Lookup", value="Lookup")
+])
+async def coins(interaction: discord.Interaction, operation: Optional[app_commands.Choice[str]] = None, target_user: Optional[discord.Member] = None, amount: Optional[int] = None) -> None:
     await slash_log(interaction)
     if interaction.guild and interaction.guild_id in TESTER_GUILD_IDS:
-        print(operation, target_id, mod_value)
+        print(operation, target_user, amount)
         member_role = discord.utils.get(interaction.guild.roles, id=806481292392267796)
         staff_role = discord.utils.get(interaction.guild.roles, id=963738031863525436)
         owner_role = discord.utils.get(interaction.guild.roles, id=759861763247570946)
@@ -480,16 +497,15 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                 canRunCommand = member_role
                 canRunCommand2 = discord.utils.find(lambda r: r.id == 759861763247570946, interaction.guild.roles)
                 if canRunCommand or canRunCommand2 in user.roles:
-                    try:
+                    if operation:
                         # List of stuff BEFORE showing the user their balance
-                        if not operation or not target_id or not mod_value:
+                        if not operation or not target_user:
                             return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                         word1 = operation
-                        userID = int(target_id)
-                        amount = int(mod_value)
+                        userID = int(target_user.id)
 
                         if interaction.user.guild_permissions.administrator is True:
-                            if word1.lower() == 'set':
+                            if word1.value == 'Set':
                                 if not amount or not userID:
                                     return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                                 users_coins = (f"{BASE_DIR}Servers{S_SLASH}{serverID}{S_SLASH}Coins{S_SLASH}{userID}.txt")
@@ -498,25 +514,26 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                                     f.write(str(amount))
                                 new_coins = await get_coins(interaction.guild_id, userID)
                                 return await interaction.response.send_message(f"Successfully set the user's coins from {old_coins} to **{new_coins}**.")
-
-                            if word1.lower() == 'add':
+                            elif word1.value == 'Add':
                                 if not amount or not userID:
                                     return await interaction.response.send_message(IDK_WHAT_U_MEAN)
                                 added_balance = update_coins(interaction.guild_id, userID, amount)
                                 return await interaction.response.send_message(f"Successfully added {amount} Coins to the user. They now have **{added_balance}**!")
-
-                            if word1.lower() == 'lookup':
+                            elif word1.value == 'Lookup':
                                 if not userID:
                                     return await interaction.response.send_message(IDK_WHAT_U_MEAN)
+                                users_coins = get_coins(interaction.guild_id, userID)
+                                if users_coins is None:
+                                    return await interaction.response.send_message(f"<@{userID}> has not started earning Coins yet.")
+                                return await interaction.response.send_message(f"<@{userID}> has **{users_coins}** Coins.")
 
-                                return await interaction.response.send_message(f"<@{userID}> has **{await get_coins(interaction.guild_id, userID)}** Coins.")
                             else:
                                 return await interaction.response.send_message(IDK_WHAT_U_MEAN)
 
                         else:
                             await interaction.response.send_message("You don't have full administrator privileges to run this command. Try `/coins` without any added options?")
 
-                    except Exception:#		AFTER the list of alternate options has been checked; the user just wants their balance.
+                    else: # If no operation is specified, show the user their balance
                         hasCitizen = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[0], interaction.guild.roles)
                         hasKnight = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[1], interaction.guild.roles)
                         hasBaron = discord.utils.find(lambda r: r.id == Roles.ROLES_LIST_ID[2], interaction.guild.roles)
@@ -544,9 +561,6 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             cry = '<:SurgeCry:828683755694063667>'
                         if randomCry == 7:
                             cry = '<:TaraCry:828683724286853151>'
-
-                        if serverID != 759861456300015657:
-                            await interaction.response.send_message("**WARNING! This server has not been optimised for this command, errors may be encountered.**")
 
                         next_available_role_cost = 0
                         roles_tier = -1
@@ -598,9 +612,9 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                             embed = discord.Embed(title="User Balance", description=(f"You have {coinBal} {EMOJI_COINS} coins and {nolwennium_bal} {EMOJI_NOLWENNIUM} Nolwennium available to spend."), colour=0xFFD700)
                             embed.add_field(
                                 name="Items curently available for you to buy:",
-                                value=f"**Citizen**: FREE {EMOJI_COINS}\n\nType `/buy item:citizen` to start ascending through purchasable roles!",
+                                value=f"**Citizen**: FREE {EMOJI_COINS}\n\nType </buy:1057428586610573359> `item:citizen` to start ascending through purchasable roles!",
                                 inline=False)
-                            embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (in all servers).'))
+                            embed.set_footer(text=(f'Type </buy:1057428586610573359> to buy your selected item! For example, </buy:1057428586610573359> `item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (in all servers).'))
                             await interaction.response.send_message(embed=embed)
                             return
 
@@ -619,7 +633,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
                         elif next_available_role_cost <= 0:
                             embed.add_field(name="Buy your roles!", value=f":warning: You can afford a new role. Once bought, this will say how\n many more {EMOJI_COINS} Coins are needed until the next role.")
 
-                        embed.set_footer(text=(f'Type `/buy item` to buy your selected item! For example, `/buy item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (saved across all servers).'))
+                        embed.set_footer(text=(f'Type </buy:1057428586610573359> `item` to buy your selected item! For example, </buy:1057428586610573359> `item:citizen`.\nYou can buy roles for Coins in this server, and use {NAME_NOLWENNIUM} to run bot commands (saved across all servers).'))
 
                         x = await get_user_settings(interaction.user.id)
 
@@ -647,9 +661,25 @@ async def coins(interaction: discord.Interaction, operation: Optional[str], targ
 
 #   buy
 
+
 @client.tree.command(name="buy", description="Shows your balance, and available to buy items.")
+@app_commands.guild_only()
+@app_commands.choices(item=[
+    app_commands.Choice(name="Citizen", value="Citizen"),
+    app_commands.Choice(name="Knight", value="Knight"),
+    app_commands.Choice(name="Baron", value="Baron"),
+    app_commands.Choice(name="Viscount", value="Viscount"),
+    app_commands.Choice(name="Earl", value="Earl"),
+    app_commands.Choice(name="Marquess", value="Marquess"),
+    app_commands.Choice(name="Duke", value="Duke"),
+    app_commands.Choice(name="Prince", value="Prince"),
+    app_commands.Choice(name="King", value="King") # ,
+    # app_commands.Choice(name="Emperor", value="Emperor"),
+    # app_commands.Choice(name="Legend", value="Legend"),
+    # app_commands.Choice(name="God", value="God"),
+])
 @app_commands.describe(item="Enter the item to buy here")
-async def buy(interaction: discord.Interaction, item: str):
+async def buy(interaction: discord.Interaction, item: app_commands.Choice[str]) -> None:
     await slash_log(interaction)
     if not interaction.guild:
         return await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
@@ -660,22 +690,22 @@ async def buy(interaction: discord.Interaction, item: str):
         can_access_shop_ui = False
         if owner in interaction.user.roles:
             print("Owner is in the roles list")
-            await interaction.response.send_message("You already have owner permissions, this overrides the shop's items")
+            await interaction.channel.send("> Note: you already have owner permissions, this overrides the shop's items, permissions, and perks")
             can_access_shop_ui = True
         if staff in interaction.user.roles:
             print("Staff is in the roles list")
-            await interaction.response.send_message("You already have staff permissions, this overrides the shop's items")
+            await interaction.channel.send("> Note: already have staff permissions, this overrides the shop's items, permissions, and perks")
             can_access_shop_ui = True
         if canRunCommand in interaction.user.roles:
             print("Member is in the list")
             can_access_shop_ui = True
         if can_access_shop_ui:
             member = await interaction.guild.fetch_member(interaction.user.id)
-            determiner = item.lower()
+            item_name = item.value.lower()
 
             coinBal = await get_coins(interaction.guild_id, interaction.user.id)
 
-            if determiner == 'citizen':
+            if item_name == 'citizen':
                 cost = 1
                 hasCitizen = discord.utils.find(lambda r: r.name == 'Citizen', interaction.guild.roles)
                 if hasCitizen in member.roles:
@@ -697,7 +727,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT KNIGHT
 
-            if determiner == 'knight':
+            if item_name == 'knight':
                 cost = 25
                 roleName = "Knight"
                 hasKnight = discord.utils.find(lambda r: r.name == roleName, interaction.guild.roles)
@@ -730,7 +760,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON BARON 
 
-            if determiner == 'baron':
+            if item_name == 'baron':
                 cost = 50
                 roleName = "Baron"
                 #   Check if the person already has the role.
@@ -768,7 +798,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT VISCOUNT 
 
-            if determiner == 'viscount':
+            if item_name == 'viscount':
                 cost = 100
                 roleName = "Viscount"
                 #   Check if the person already has the role.
@@ -805,7 +835,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL EARL
 
-            if determiner == 'earl':
+            if item_name == 'earl':
                 cost = 250
                 roleName = "Earl"
                 #   Check if the person already has the role.
@@ -846,7 +876,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS MARQUESS 
 
-            if determiner == 'marquess':
+            if item_name == 'marquess':
                 cost = 500
                 roleName = "Marquess"
                 #   Check if the person already has the role.
@@ -883,7 +913,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE DUKE 
 
-            if determiner == 'duke':
+            if item_name == 'duke':
                 cost = 1000
                 roleName = "Duke"
                 #   Check if the person already has the role.
@@ -920,7 +950,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE PRINCE 
 
-            if determiner == 'prince':
+            if item_name == 'prince':
                 cost = 2500
                 roleName = "Prince"
                 hasPrince = discord.utils.find(lambda r: r.name == roleName, interaction.guild.roles)
@@ -951,7 +981,7 @@ async def buy(interaction: discord.Interaction, item: str):
 
 #           KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING KING 
 
-            if determiner == 'king':
+            if item_name == 'king':
                 cost = 10000
                 roleName = "King"
                 hasKing = discord.utils.find(lambda r: r.name == roleName, interaction.guild.roles)
@@ -980,10 +1010,10 @@ async def buy(interaction: discord.Interaction, item: str):
                     await interaction.response.send_message("You must buy Prince before King.")
                 return
 
-            if determiner == 'admin':
+            if item_name == 'admin':
                 await error_code(interaction, 1)
             else:
-                await interaction.response.send_message(f"**{determiner}** isn't a valid item to buy. Try `Citizen/Knight/Baron/Viscount/Earl/Marquess/Duke/Prince/King/Admin`!")
+                await interaction.response.send_message(f"**{item_name}** isn't a valid item to buy. Try `Citizen/Knight/Baron/Viscount/Earl/Marquess/Duke/Prince/King/Admin`!")
         else:
             await error_code(interaction, 1)
     else:
@@ -2095,12 +2125,12 @@ async def skip(interaction: discord.Interaction):
             total_duration = 0
             for track in vc.queue:
                 total_duration += track.duration
-            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.", delete_after=15)
+            await interaction.response.send_message(f"Now playing: **{vc.queue[0]}**. There are {len(vc.queue)-1} songs left.")
         else:
             await vc.stop()
-            await interaction.response.send_message("No songs remain in the queue. Stopped the player.", delete_after=10)
+            await interaction.response.send_message("No songs remain in the queue. Stopped the player.")
     else:
-        await interaction.response.send_message("I'm not in a Voice Channel.", ephemeral=True)
+        await interaction.response.send_message("I'm not in a Voice Channel.")
 
 
 @client.command(hidden=True)
@@ -2947,6 +2977,8 @@ async def get_nolwennium(ctx):
 async def get_coins(server_id: int, user_id: int) -> int:
     """Gets a user's coins. The `server_id` and `user_id` as integers must be provided."""
     coin_dir = f"{BASE_DIR}Servers{S_SLASH}{server_id}{S_SLASH}Coins{S_SLASH}{user_id}.txt"
+    if not os.path.exists(coin_dir):
+        return None
     with open(coin_dir, 'r') as f:
         balance = int(f.read())
     print(f"[CoinsQuery]    Balance called for {user_id} in {server_id}. (Balance: {balance})")
@@ -3479,7 +3511,7 @@ async def on_raw_reaction_add(payload=None):
                     #await payload.member.add_roles(rolePrivate)
                     await payload.member.add_roles(roleNew)
                     #await channel.send(f"Welcome, {payload.member.mention} to the private side! You have been verified! Maybe check out <#759861456761258045> now? Assign some roles in <#970339131500662835> such as your sixth form/college! Also, we have our own currency and shop system, so I'll leave that for you to find. Enjoy!", delete_after=10)
-                    await channel.send(f"{payload.member.mention} your request to join the private side has been submitted.", delete_after=10)
+                    await channel.send(f"{payload.member.mention} your request to join the private side has been submitted! I wish you luck with your application. It is now being reviewed.", delete_after=10)
                     #await payload.member.remove_roles(role_private_unverified)
                     #await payload.member.remove_roles(roleUnverified)
                     print(f"[ReactionRole]  And it's gone in {channel}")
