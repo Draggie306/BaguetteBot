@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.8"
-BUILD = "a" # use / in commit message
+BUILD = "b" # use / in commit message
 BETA_BOT = False
 
 """
@@ -1786,8 +1786,6 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
     if dev_stuff:
         search = "https://www.youtube.com/watch?v=TseSndeG6pg"
 
-    random_hint = random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."])
-
     if interaction.user.voice is None:
         return await interaction.response.send_message("Not in voice channel")
     try:
@@ -1829,9 +1827,8 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             view.add_item(discord.ui.button(label="Next ▶️", style=discord.ButtonStyle.blurple))
 
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
-            embed.set_footer(text=random_hint)
             return await interaction.followup.send(embed=embed)
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -1891,7 +1888,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             embed.add_field(name="Looping", value=looping)
             embed.add_field(name="Tracks Remaining", value=vc.queue.count)
 
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
 
             # Add the buttons
@@ -2298,7 +2295,7 @@ async def on_wavelink_track_end(vc: wavelink.Player, track: Optional[str] = None
     embed.add_field(name="Looping", value=looping)
     embed.add_field(name="Tracks Remaining", value=await get_wavelink_queue_length(vc))
     embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
-    embed.set_footer(text=random_hint)
+    embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
 
     view = discord.ui.View()
     view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
@@ -2717,7 +2714,7 @@ class PlayButton(discord.ui.Button):
             embed.add_field(name="Looping", value=looping)
             embed.add_field(name="Tracks Remaining", value=vc.queue.count)
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
 
             await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
