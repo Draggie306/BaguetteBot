@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.8"
-BUILD = "b" # use / in commit message
+BUILD = "c" # use / in commit message
 BETA_BOT = False
 
 """
@@ -160,7 +160,8 @@ if running_locally:
     if BETA_BOT:
         subprocess.Popen(['java', '-jar', 'D:\\Downloads\\Lavalink (1).jar'])
     else:
-        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink-3.7.5.jar'])
+        subprocess.Popen(['java', '-jar', 'D:\\Draggie Programs\\BaguetteBot\\draggiebot\\GitHub\\BaguetteBot\\LavalinkOSHIv6-languagefix.jar'])
+        # pass
 
 process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
 git_head_hash = process.communicate()[0].strip()
@@ -178,7 +179,7 @@ client = commands.Bot(
     case_insensitive=True,
     intents=intents,
     description=f"BaguetteBot - version {DRAGGIEBOT_VERSION}{BUILD} - d.py {discord.__version__}",
-    help_command=commands.DefaultHelpCommand(no_category='Dot Commands')
+    help_command=commands.DefaultHelpCommand(no_category='Below is a list of legacy .<commands> - please use the new Slash Commands menu to see a description of all my commands!')
 )
 
 ###########################################################################################################################################################
@@ -188,12 +189,29 @@ client = commands.Bot(
 print("Done! Slash commands initialising...")
 
 
+@client.tree.command(name="help", description="Everything you need to know about BaguetteBot")
+async def help(interaction: discord.Interaction):
+    embed = discord.Embed(title="BaguetteBot Help", description="Everything you need to know about BaguetteBot", color=0x00acff)
+    embed.add_field(name="Commands", value="Preview my commands by typing in `/` and clicking the BaguetteBot icon", inline=False)
+    embed.add_field(name="Support", value="Join the support server [here](https://discord.gg/GfetCXH)", inline=False)
+    embed.add_field(name="Invite", value="Invite BaguetteBot to your server [here](https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands). Feel free to select the permissions you want BaguetteBot to have.", inline=False)
+    embed.add_field(name="Source Code", value="BaguetteBot is open source! You can find the source code [here](https://github.com/Draggie306/BaguetteBot/blob/main/BaguetteBot.py)", inline=False)
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="Commands List", url="https://github.com/Draggie306/BaguetteBot/blob/main/README.md", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Support", url="https://discord.gg/GfetCXH", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Invite", url="https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Source Code", url="https://github.com/Draggie306/BaguetteBot/blob/main/BaguetteBot.py", style=discord.ButtonStyle.link))
+    await interaction.response.send_message(embed=embed, view=view)
+
+
 @client.tree.command(name="devtest", description="Developer testing commands.")
 async def devtest(interaction: discord.Interaction):
     # Read data from JSON file
-    with open('Z:\\testfile.txt') as json_file:
-        data = json.load(json_file)
-
+    try:
+        with open('Z:\\testfile.txt') as json_file:
+            data = json.load(json_file)
+    except FileNotFoundError:
+        return await interaction.response.send_message("No developer test file found, cannot load data.", ephemeral=True)
     # Extract the data for each category
     dates = [d['date'] for d in data]
     messages_sent = [d['messages_sent'] for d in data]
@@ -329,7 +347,7 @@ async def invite(interaction: discord.Interaction) -> None:
 @client.tree.command(name="baguette", description="Sends a random baguette image.")
 async def baguette(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
-    await interaction.response.send_message("Use French Cuisine bot for this and much more! The commad is `/baguette`.\nAdd it! https://ibaguette.com/api/BotInvs/FrenchCuisine&permissions=V2")
+    return await interaction.response.send_message("Use French Cuisine bot for this and much more! The commad is `/baguette`.\nAdd it! https://ibaguette.com/api/BotInvs/FrenchCuisine&permissions=V2")
 
 
 @client.tree.command(name="snowflake", description="Convert a Discord snowflake into a DateTime object, accurate to the second.")
@@ -1026,7 +1044,7 @@ async def buy(interaction: discord.Interaction, item: app_commands.Choice[str]) 
             nolwennium_bal = f.read()
             f.close()
             nolly = f"{nolwennium_bal} {EMOJI_NOLWENNIUM}"
-        await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {EMOJI_NOLWENNIUM}")
+        await interaction.response.send_message(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/GfetCXH for updates on what this will do, and for the all-new currency system. You are eligible for {nolly} new currency points! {EMOJI_NOLWENNIUM}")
 
 
 #   setdelay
@@ -1600,15 +1618,14 @@ async def yn(interaction: discord.Interaction):
 #   brawlstars
 
 
-@client.tree.command(name="brawlstars", description="?")
-async def BrawlStars(interaction: discord.Interaction):
+@client.tree.command(name="brawl-stats", description="File reading test for BaguetteBot devs.")
+async def brawlstats(interaction: discord.Interaction):
     await slash_log(interaction)
-    if interaction.guild_id == 759861456300015657:
-        num_lines = sum(1 for line in open(f"C:{S_SLASH}Users{S_SLASH}Draggie{S_SLASH}iCloudDrive{S_SLASH}iCloud~is~workflow~my~workflows{S_SLASH}Brawl Stars Counter.txt"))
-        await interaction.response.send_message(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
-        f = open(GlobalLogDir, "a")
-        f.write(f"\nCOMMAND RAN -> '.lines' ran by {interaction.user} at {datetime.now()}")
-        f.close()
+    num_lines = sum(1 for line in open(f"C:{S_SLASH}Users{S_SLASH}Draggie{S_SLASH}iCloudDrive{S_SLASH}iCloud~is~workflow~my~workflows{S_SLASH}Brawl Stars Counter.txt"))
+    await interaction.response.send_message(f"I have opened Brawl Stars ***{num_lines}***  times since the 19th October 2020.")
+    f = open(GlobalLogDir, "a")
+    f.write(f"\nCOMMAND RAN -> '.lines' ran by {interaction.user} at {datetime.now()}")
+    f.close()
 
 #   vbuck calc
 
@@ -1828,7 +1845,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(discord.ui.button(label="Next ▶️", style=discord.ButtonStyle.blurple))
 
             embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url if interaction.guild.icon else None, url="https://discord.com/invite/F5Vu9PhXMr")
             return await interaction.followup.send(embed=embed)
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -1889,7 +1906,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             embed.add_field(name="Tracks Remaining", value=vc.queue.count)
 
             embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url if interaction.guild.icon else None, url="https://discord.com/invite/F5Vu9PhXMr")
 
             # Add the buttons
 
@@ -2028,6 +2045,8 @@ async def clear_queue(interaction: discord.Interaction): # Not fully tested
     if not interaction.user.guild_permissions.manage_channels:
         return await interaction.response.send_message("You are missing the required guild persmission: `manage_channels`.", ephemeral=True, delete_after=10)
     vc: wavelink.Player = interaction.guild.voice_client
+    if not vc:
+        return await interaction.response.send_message("I am not in a voice channel! Use </play:1057428586761556090> to play a track.", ephemeral=True, delete_after=10)
     if not vc.queue:
         return await interaction.response.send_message("Nothing is queued! Use </play:1057428586761556090> to queue a track.", ephemeral=True, delete_after=10)
     else:
@@ -2042,6 +2061,7 @@ async def filter(interaction: discord.Interaction, filter: Optional[str] = None,
     vc: wavelink.Player = interaction.guild.voice_client
     if not vc or not vc.is_playing():
         return await interaction.response.send_message("Nothing is playing! Use </play:1057428586761556090> to play a track.", ephemeral=True, delete_after=10)
+    await interaction.response.send_message("This command is currently work in progress and is scheduled to release in v1.4. Please check back later. You can check for updates on the support server: https://discord.gg/GfetCXH.", ephemeral=True, delete_after=10)
 
 
 @client.tree.command(name="loop", description="Loop the current audio, or all the queue.")
@@ -2049,6 +2069,8 @@ async def filter(interaction: discord.Interaction, filter: Optional[str] = None,
 async def loop(interaction: discord.Interaction, queue: Optional[bool] = False):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
+    if not vc or not vc.is_playing():
+        return await interaction.response.send_message("Nothing is playing! Use </play:1057428586761556090> to play a track.", ephemeral=True, delete_after=10)
     if vc.guild.id not in TESTER_GUILD_IDS:
         return await interaction.response.send_message(f"{EMOJI_CROSS_ANIMATED} Sorry, but it looks like this server is not a Premium server. Please contact the developer if you believe this is an issue.", delete_after=10)
     if not vc or not vc.is_playing():
@@ -2178,15 +2200,7 @@ async def purge(interaction: discord.Interaction, amount: int):
 @client.tree.command(name="uwu", description="UwU")
 @commands.has_any_role('Admin', 'Mod')
 async def uwu(interaction: discord.Interaction):
-    uwuwu = random.randint(1, 2)
-    if uwuwu == 1:
-        await interaction.response.send_message(file=discord.File(f"{BASE_DIR}Assets\\Commands\\I_regret_making_this.png", filename="UwU.png"))
-    if uwuwu == 2:
-        await interaction.response.send_message(file=discord.File(f"{BASE_DIR}Assets\\Commands\\canvas_1.png", filename="canvas_1.png"))
-    f = open(GlobalLogDir, "a")
-    f.write(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
-    f.close()
-    print(f"\nCOMMAND RAN -> '.uwu' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
+    return await interaction.response.send_message("UwU!\n*why was I asked to make this command*")
 
 
 ###########################################################################################################################################################
@@ -2294,7 +2308,7 @@ async def on_wavelink_track_end(vc: wavelink.Player, track: Optional[str] = None
     # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
     embed.add_field(name="Looping", value=looping)
     embed.add_field(name="Tracks Remaining", value=await get_wavelink_queue_length(vc))
-    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
+    embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url if interaction.guild.icon else None, url="https://discord.com/invite/F5Vu9PhXMr")
     embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
 
     view = discord.ui.View()
@@ -2652,9 +2666,9 @@ class PlayButton(discord.ui.Button):
                 view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
                 vc: wavelink.Player = interaction.guild.voice_client
                 if vc is None:
-                    return await interaction.response.send_message("There is nothing to shuffle")
+                    return await interaction.followup.send("There is nothing to shuffle")
                 random.shuffle(vc.queue._queue)
-                return await interaction.response.send_message(f"{EMOJI_TICK_ANIMATED} Shuffled the **{len(vc.queue)}** queued tracks.", delete_after=10)
+                return await interaction.followup.send(f"{EMOJI_TICK_ANIMATED} Shuffled the **{len(vc.queue)}** queued tracks.", ephemeral=True)
 
         # Button: Previous
 
@@ -2713,7 +2727,7 @@ class PlayButton(discord.ui.Button):
             # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
             embed.add_field(name="Looping", value=looping)
             embed.add_field(name="Tracks Remaining", value=vc.queue.count)
-            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
+            embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url if interaction.guild.icon else None, url="https://discord.com/invite/F5Vu9PhXMr")
             embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
 
@@ -2888,16 +2902,16 @@ async def slash_log(interaction):
     if not os.path.isfile(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{interaction.user.id}.json"):
         view = discord.ui.View()
         view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
-        view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
-        return await interaction.response.send_message("You must accept the Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
+        view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com/#discord-bots"))
+        return await interaction.response.send_message("You must accept the iBaguette Terms of Service and BaguetteBot supplemental Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
     else:
         with open(f"{BASE_DIR}Users\\JSONSettings{S_SLASH}{interaction.user.id}.json", 'r') as json_file:
             json_data = json.load(json_file)
             if not json_data['accepted_tos'] == 'true':
                 view = discord.ui.View()
                 view.add_item(AcceptToSButtons(label="Accept ToS", style=discord.ButtonStyle.success))
-                view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://ibaguette.com/terms"))
-                return await interaction.response.send_message("You must accept the Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
+                view.add_item(discord.ui.Button(label="View ToS", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com/#discord-bots"))
+                return await interaction.response.send_message("You must accept the iBaguette Terms of Service and BaguetteBot supplemental Terms of Service once before using a Slash Command.", view=view, ephemeral=True)
             else:
                 pass
     with open(GlobalLogDir, 'a', encoding="utf-8") as file:
@@ -3022,7 +3036,7 @@ async def bot_runtime_events(event_int):
 class error_messages:
     codes = [
         ["You do not have the facilities to use this, big man", "You don't have the correct permissions", "[Error 1] You do not have the required permissions", "You can't run this command."], 
-        ["A critical error occured and this command cannot continue", ""],
+        ["A critical error occured and this command cannot continue [this server is not compatible with this command]", ""],
         ["Critical error whilst in Voice Chat"]
     ]
 
@@ -3289,12 +3303,13 @@ async def on_voice_state_update(member, before, after):
                         await member.move_to(channel)
         if not os.path.isfile(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}voice_info.txt'):
             try:
-                os.mkdir(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice')
-            except Exception:
-                print("Area already exists.")
+                os.makedirs(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice', exist_ok=True)
+            except Exception as e:
+                print("[VoiceChatJoin]    Error creating voice folder: " + str(e))
             print(f"[VoiceChatJoin]    User {member.name} joined VC in {member.guild.id} ({member.guild.name}) at {datetime.now()} ")
-            x = open(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}voice_info.txt', 'w')
-            x.close()
+
+            with open(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}voice_info.txt', 'w') as f:
+                f.close() #  Create the file
     else:
         print(f"[VoiceChatLeave]    User {member.name} left VC in {member.guild.id} ({member.guild.name}) at {datetime.now()}")
         # Check if the member is the only one in the voice channel
@@ -3312,9 +3327,11 @@ async def on_voice_state_update(member, before, after):
         join_time = round(time.time())
         with open(f'{BASE_DIR}Servers{S_SLASH}{after.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt', 'w') as x:
             x.write(str(join_time))
+            print(f"[VoiceChatJoin]    Created a temporary voice file on joining a voice chat. ID: {new_user}")
     if not after.channel:
         await bot_runtime_events(1)
         leave_time = round(time.time())
+        print(f"[VoiceChatLeave]    Trying to read temporary voice file on leaving a voice chat. ID: {new_user}")
         with open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt', 'r') as x:
             start_time = int(x.read())
         os.remove(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Voice{S_SLASH}tempuserstate_{new_user}.txt')
@@ -3375,17 +3392,18 @@ async def on_voice_state_update(member, before, after):
         # Get total guild time spent in Voice Chat
         # Firstly, if there is not a record of voice chat time, create the file
         if not os.path.isfile(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt'):
-            x = open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w')
-            x.close()
+            os.makedirs(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}', exist_ok=True)
+            with open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'w') as x:
+                x.write("0")
 
         #   Then, open up the file for reading.
-        x = open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'r')
-        try:
-            #   Try and convert the value into an integer. If error, then the value would be zero.
-            preTime = int(x.read())
-        except Exception:
-            preTime = 0
-        x.close()
+        with open(f'{BASE_DIR}Servers{S_SLASH}{before.channel.guild.id}{S_SLASH}Logs{S_SLASH}TotalUserVoiceTime.txt', 'r') as x:
+            try:
+                #   Try and convert the value into an integer. If error, then the value would be zero.
+                preTime = int(x.read())
+            except Exception:
+                preTime = 0
+            x.close()
 
         #   Perform calculations on total time spent.
         total_guild_time_spent = preTime + time_spent
@@ -3658,11 +3676,11 @@ async def on_member_ban(guild, user):
 async def on_presence_update(before, after):
     if after.activity is not None:
         await bot_runtime_events(1)
-        print(f"[UserActivity]      {after.name} has been updated to \"{after.activity.name}\" in {after.guild.name} at {datetime.now()}")
+        # print(f"[UserActivity]      {after.name} has been updated to \"{after.activity.name}\" in {after.guild.name} at {datetime.now()}")
         # print(str(after.activities)) modified repl.it
     if before.status != after.status:
         await bot_runtime_events(1)
-        print(f"[UserPresence]      {after.name} has been updated to \"{after.status}\" in {after.guild.name} at {datetime.now()}")#    This is only used for debugging, and is not stored for more than 24 hours.
+        # print(f"[UserPresence]      {after.name} has been updated to \"{after.status}\" in {after.guild.name} at {datetime.now()}")#    This is only used for debugging, and is not stored for more than 24 hours.
         #   This data may be stored, anonymised (i.e dissociated from the user), for longer than this time
 
 
@@ -3728,9 +3746,12 @@ async def on_member_update(before, after):
             # await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
 
         settings = await get_user_settings(after.id)
-        if settings['get_dm_notification_for_role_addition'] == "true":
-            await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
-            print(f"[SendDirectMessage] {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+        if not settings:
+            pass
+        else:
+            if settings['get_dm_notification_for_role_addition'] == "true":
+                await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+                print(f"[SendDirectMessage] {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
@@ -4132,7 +4153,7 @@ async def currency(ctx):
         number = number + 1
 
     await ctx.send(f"Multiplier: 1.{number}x ({number}0%) bonus {nolwennium_bal}")
-    await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/baguette for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
+    await ctx.send(f"Gear up! This command will be unlocked for this server soon. Check discord.gg/GfetCXH for updates on what this will do, and for the all-new currency system. You are eligible for {nolwennium_bal} new currency points! {EMOJI_NOLWENNIUM}")
 
 
 #   offline status for replit
@@ -4334,9 +4355,9 @@ async def playdir(ctx):
             await playdir(ctx)
 
 
-@client.command(help="Sends what is written to the message log.", brief="Sends what is written to the message log in the channel.", pass_context=True)
+@client.command(help="Sends what is written to the message log.", brief="Sends what is written to the message log in the channel.", pass_context=True, hidden=True)
 async def message(ctx):
-    await ctx.send(f"\n'{ctx.message.content}' sent by {interaction.user} in [{ctx.message.guild.name} - #{ctx.channel.name}] at {datetime.now()}")
+    await ctx.send(f"\n'{ctx.message.content}' sent by {ctx.message.author} in [{ctx.message.guild.name} - #{ctx.channel.name}] at {datetime.now()}")
 
 #   Audio annoyance command
 
@@ -4348,8 +4369,10 @@ async def UseSlashCommandsInstead(ctx):
 #   download
 
 
-@client.command(help="Downloads a youtube video.", brief="Downloads an entire YouTube video", pass_context=True)
+@client.command(help="Downloads a youtube video.", brief="Downloads an entire YouTube video", pass_context=True, hidden=True)
 async def download(ctx, url: str):
+    if ctx.message.author.id != 382784106984898560:
+        return await ctx.send("You are not allowed to use this command.")
     async with ctx.typing():
         os.chdir("D:\\Draggie Programs\\BaguetteBot\\youtube-dl")
         text = ctx.message.content
@@ -4451,10 +4474,11 @@ async def links(interaction: discord.Interaction, url: str):
 #   change nickname
 
 
-@client.command(name="nickname", description="Changes nickname for mentioned user")
+@client.tree.command(name="nickname", description="Changes nickname for mentioned user")
 @commands.has_any_role('Admin', 'Mod')
 async def chnick(interaction: discord.Interaction, member: discord.Member, name: str):
-    await member.edit(nick=name, reason=f"Command ran by {interaction.user.name} at {datetime.now()} - the command was {interaction.message.content}.")
+    await member.edit(nick=name, reason=f"Command ran by {interaction.user.name} at {datetime.now()}")
+    await interaction.response.send_message(f"Changed {member.name}'s nickname to {name}")
 
     f = open(GlobalLogDir, "a")
     f.write(f"\nCOMMAND RAN -> '.chnick' ran by {interaction.user} in {interaction.guild_id} at {datetime.now()}")
@@ -4464,8 +4488,11 @@ async def chnick(interaction: discord.Interaction, member: discord.Member, name:
 #   brawl stars API
 
 
-@client.command(help="Use: .bs <PLAYER TAG>", brief="Interacts with the Brawl Stars API. Type '/help bs' for usage", pass_context=True, hidden=True)
-async def bs(ctx):
+@client.tree.command(name="brawlstars", description="Interacts with the Brawl Stars API.")
+@app_commands.describe(player_tag="The player tag of the player you want to get information about.", info="The information you want to get about the player. (brawlers, club, etc.)")
+async def brawlstars(interaction: discord.Interaction, player_tag: str, info: str):
+    if not interaction.message.author.id == 382784106984898560:
+        return await interaction.response.send_message("Sorry, but this command is currently only available to the bot developer(s) as it is work in progress. Please check the GitHub issue page for updates on this command, it should be available to everyone soon. Thanks for your patience!")
     async with ctx.typing():
         txt = ctx.message.content
         x = txt.split()
@@ -4528,7 +4555,7 @@ async def bs(ctx):
             if os.path.isfile(path):
                 f = open(path, "w+")
                 f.close()
-        
+
             f = open(path, "w", encoding="UTF-8")
             f.write((str (brawlerRequest.json())))
             f.close()
@@ -4561,12 +4588,16 @@ async def dir(ctx):
 @client.command(help="Gets all roles with that permission.", brief="Gets all roles with that permission", pass_context=True)
 async def roleperms(ctx):
     x = ctx.message.content.split()
-    permLookup = (str (x[1]).lower())
+    try:
+        permLookup = (str(x[1]).lower())
+    except IndexError:
+        await ctx.send("Please specify a permission to lookup. Check out permissions here to find a valid permission: https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags")
+        return
     rolesWithPerm = []
     roles = [r for r in ctx.guild.roles if any(p[1] and p[0] == f"{permLookup}" for p in r.permissions)]
     for name in roles:
         rolesWithPerm.append(name.mention)
-    
+
     rolesWithPerm = list(reversed(rolesWithPerm))
     total = len(rolesWithPerm)
     roleNum = len(ctx.guild.roles)
