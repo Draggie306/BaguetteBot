@@ -1,6 +1,6 @@
 DRAGGIEBOT_VERSION = "v1.3.9"
 BUILD = "" # use / in commit message
-BETA_BOT = False
+BETA_BOT = True
 
 """
 Naming scheme:
@@ -10,16 +10,13 @@ BETA_BOT: True if bot is in beta mode else False
 """
 
 print("Importing all modules...\n")
-import      discord, asyncio, os, time, random, sys, youtube_dl, requests, json, uuid, difflib, termcolor, psutil, secrets, logging, math, openai, subprocess, wavelink, traceback, schedule
+import      discord, os, time, random, sys, requests, json, psutil, logging, openai, subprocess, wavelink, traceback, asyncio, uuid
 import      yt_dlp as youtube_dl
-from        discord.ext import commands
-from        discord.errors import Forbidden#                                    CMD Prerequisite:   py -3 -m pip install -U discord.py
-from        dotenv import load_dotenv#                                          CMD Prerequisite:   py -3 -m pip install -U python-dotenv
-from        youtube_search import YoutubeSearch#                                PIP:                python -m ensurepip
-from        datetime import datetime, timedelta#                                UPDATE PIP:         python -m pip install --upgrade pip
-from        json import loads
-from        pathlib import Path
-from        discord import app_commands
+from        dotenv import load_dotenv
+from        discord.ext import commands#                                        CMD Prerequisite:   py -3 -m pip install -U discord.py
+from        datetime import datetime#                                           CMD Prerequisite:   py -3 -m pip install -U python-dotenv
+from        pathlib import Path#                                                UPDATE PIP:         python -m pip install --upgrade pip
+from        discord import app_commands#                                        PIP:                python -m ensurepip
 from        typing import Optional
 from        wavelink.ext import spotify
 import      matplotlib.pyplot as plt
@@ -160,7 +157,7 @@ if running_locally:
     if BETA_BOT:
         subprocess.Popen(['java', '-jar', 'D:\\Downloads\\Lavalink (1).jar'])
     else:
-        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink-3.7.5.jar'])
+        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\LavalinkOSHIv6-languagefix.jar'])
 
 process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
 git_head_hash = process.communicate()[0].strip()
@@ -186,6 +183,63 @@ client = commands.Bot(
 ###########################################################################################################################################################
 
 print("Done! Slash commands initialising...")
+
+
+@client.tree.command(name="help", description="Everything you need to know about BaguetteBot")
+async def help(interaction: discord.Interaction):
+    embed = discord.Embed(title="BaguetteBot Help", description="Everything you need to know about BaguetteBot", color=0x00acff)
+    embed.add_field(name="Commands", value="Preview my commands by typing in `/` and clicking the BaguetteBot icon", inline=False)
+    embed.add_field(name="Support", value="Join the support server [here](https://discord.gg/GfetCXH)", inline=False)
+    embed.add_field(name="Invite", value="Invite BaguetteBot to your server [here](https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands). Feel free to select the permissions you want BaguetteBot to have.", inline=False)
+    embed.add_field(name="Source Code", value="BaguetteBot is open source! You can find the source code [here](https://github.com/Draggie306/BaguetteBot/blob/main/BaguetteBot.py)", inline=False)
+    view = discord.ui.View()
+    view.add_item(discord.ui.Button(label="Commands List", url="https://github.com/Draggie306/BaguetteBot/blob/main/README.md", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Support", url="https://discord.gg/GfetCXH", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Invite", url="https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands", style=discord.ButtonStyle.link))
+    view.add_item(discord.ui.Button(label="Source Code", url="https://github.com/Draggie306/BaguetteBot/blob/main/BaguetteBot.py", style=discord.ButtonStyle.link))
+    await interaction.response.send_message(embed=embed, view=view)
+
+
+async def report(interaction: discord.Interaction, message: discord.Message):
+    report_channel = client.get_channel(957409071655419914)
+    embed = discord.Embed(title="Message Reported", description=f"Reported by {interaction.user.mention} in {interaction.channel.mention}:\n```{message.content}```({message.jump_url})", color=0x00ff00)
+    await report_channel.send(embed=embed)
+    await interaction.response.send_message("Message reported successfully.")
+
+report_context_menu = app_commands.ContextMenu(
+    name='Report Message',
+    callback=report,
+)
+client.tree.add_command(report_context_menu)
+
+
+async def warn(interaction: discord.Interaction, member: discord.Member):
+    if interaction.user.guild_permissions.kick_members:
+        # log the warn given to JSON database:
+        # it has "_count" and "reasons", "time" as keys.
+        reason = f"Warned from context menu at: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+        user_dir = f"database/warns/{member.id}.json"
+        if os.path.exists(user_dir):
+            with open(user_dir) as f:
+                data = json.load(f)
+        else:
+            data = {"_count": 0, "reasons": [], "time": []}
+        data["_count"] += 1
+        data["reasons"].append(reason)
+        data["time"].append(str(time.time()))
+        with open(user_dir, "w+") as f:
+            json.dump(data, f, indent=4)
+        # send the warn to the user.
+        await member.send(f"You have been warned in {interaction.guild.name} for the following reason:\n```{reason}```")
+        await interaction.response.send_message(f"User warned successfully for the following reason:\n```{reason}```")
+    else:
+        await interaction.response.send_message("You do not have permission to warn users.")
+
+warn_ctx_menu = app_commands.ContextMenu(
+    name='Quick Warn User',
+    callback=warn,
+)
+client.tree.add_command(warn_ctx_menu)
 
 
 @client.tree.command(name="devtest", description="Developer testing commands.")
@@ -246,7 +300,7 @@ async def sync(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("This is bot admin only.")
 
 
-@client.tree.command(name="stats", description="Just a few useful bot statistics.")
+@client.tree.command(name="stats", description="[Info] Just a few useful bot statistics.")
 async def stats(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     await bot_runtime_events(1)
@@ -313,7 +367,7 @@ async def stats(interaction: discord.Interaction) -> None:
         f.write(f"\nSLASH COMMAND RAN -> '.stats' ran by {interaction.user.id} in {interaction.guild_id} at {datetime.now()}")
 
 
-@client.tree.command(name="invite", description="Get the invite link for the bot.")
+@client.tree.command(name="invite", description="[Info] Get the invite link for the bot.")
 async def invite(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     invite_link = "https://discord.com/api/oauth2/authorize?client_id=792850689533542420&permissions=1477895842903&scope=bot%20applications.commands"
@@ -326,13 +380,13 @@ async def invite(interaction: discord.Interaction) -> None:
 #   baguettes
 
 
-@client.tree.command(name="baguette", description="Sends a random baguette image.")
+@client.tree.command(name="baguette", description="[Social] Sends a random baguette image.")
 async def baguette(interaction: discord.Interaction) -> None:
     await slash_log(interaction)
     await interaction.response.send_message("Use French Cuisine bot for this and much more! The commad is `/baguette`.\nAdd it! https://ibaguette.com/api/BotInvs/FrenchCuisine&permissions=V2")
 
 
-@client.tree.command(name="snowflake", description="Convert a Discord snowflake into a DateTime object, accurate to the second.")
+@client.tree.command(name="snowflake", description="[Utility] Convert a Discord snowflake into a DateTime object, accurate to the second.")
 @app_commands.describe(flake="Input the snowflake here, something like '382784106984898560'.")
 async def snowflake(interaction: discord.Interaction, flake: str) -> None:
     await slash_log(interaction)
@@ -348,7 +402,7 @@ async def snowflake(interaction: discord.Interaction, flake: str) -> None:
         await interaction.response.send_message("That isn't a valid integer to convert into a date.")
 
 
-@client.tree.command(name="meme-stats", description="Get some detailed analytics about the Baguette Brigaders Epic Memes Channel")
+@client.tree.command(name="meme-stats", description="[Social] Get some detailed analytics about the Baguette Brigaders Epic Memes Channel")
 async def meme_analysis(interaction: discord.Interaction):
     await interaction.response.send_message(f"*FETCHing Discord API Data. Please wait...* {EMOJI_LOADING}")
     try:
@@ -450,7 +504,7 @@ async def meme_analysis(interaction: discord.Interaction):
         await interaction.edit_original_response(content=f"Error **{e}**: ```python\n{traceback.format_exc()}```")
 
 
-@client.tree.command(name="coins", description="Shows coin balance. If above a threshold, shows items to buy!")
+@client.tree.command(name="coins", description="[Social] Shows coin balance. If above a threshold, shows items to buy!")
 @app_commands.guild_only()
 @app_commands.describe(operation="[Admin Only] set/add/lookup.", target_user="[Admin Only] Enter the user id for the operation to target", amount="[Admin Only] Use this as the value for the operation")
 @app_commands.choices(operation=[
@@ -662,7 +716,7 @@ async def coins(interaction: discord.Interaction, operation: Optional[app_comman
 #   buy
 
 
-@client.tree.command(name="buy", description="Shows your balance, and available to buy items.")
+@client.tree.command(name="buy", description="[Social] Shows your balance, and available to buy items.")
 @app_commands.guild_only()
 @app_commands.choices(item=[
     app_commands.Choice(name="Citizen", value="Citizen"),
@@ -1031,7 +1085,7 @@ async def buy(interaction: discord.Interaction, item: app_commands.Choice[str]) 
 
 #   setdelay
 
-@client.tree.command(name="slowmode", description="Sets the slowmode in a channel.")
+@client.tree.command(name="slowmode", description="[Utility] Sets the slowmode in a channel.")
 @app_commands.describe(seconds="Input seconds here.")
 async def setdelay(interaction: discord.Interaction, seconds: int):
     await slash_log(interaction)
@@ -1056,10 +1110,67 @@ async def setdelay(interaction: discord.Interaction, seconds: int):
     f.close()
     print(f"\nCOMMAND RAN -> '.setdelay {seconds}' ran by {interaction.user} in channel {interaction.channel.mention} at {datetime.now()}")
 
+
+# Clear roles
+
+@client.tree.command(name="clearroles", description="[Utility] Clears all roles from a user.")
+@app_commands.describe(user="User to clear roles from")
+async def clearroles(interaction: discord.Interaction, user: discord.Member):
+    await slash_log(interaction)
+    await interaction.response.defer()
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.followup.send("You must be a server administrator to use this command.")
+
+    await interaction.followup.send(f"Clearing roles from **{user.name}**...")
+
+    role_count = 0
+    errors = 0
+    for role in user.roles:
+        try:
+            await user.remove_roles(role)
+            role_count += 1
+        except Exception:
+            errors += 1
+            pass
+
+    await interaction.followup.send(f"Removed {role_count} roles from **{user.name}** with {errors} errors.")
+
+
+# Copy Roles from one user to another
+
+@client.tree.command(name="copyroles", description="[Utility] Copy roles from one user to another.")
+@app_commands.describe(user1="User to copy roles from", user2="User to copy roles to")
+async def copyroles(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
+    await slash_log(interaction)
+    await interaction.response.defer()
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.followup.send("You must be an administrator to use this command.")
+
+    if user1 == user2:
+        return await interaction.followup.send("You can't copy roles from a user to themselves!")
+
+    await interaction.followup.send(f"Copying roles from {user1.mention} to {user2.mention}...")
+
+    role_count = 0
+    errors = 0
+    for role in user1.roles:
+        try:
+            await user2.add_roles(role)
+            role_count += 1
+        except Exception as e:
+            # await interaction.followup.send(f"Failed to copy role `{role.name}` ({role.id}) from `{user1.name}` to `{user2.name}` due to error: {e}")
+            errors += 1
+            pass
+
+
+    embed = discord.Embed(title="Roles copied!", description=(f"{role_count} roles copied from `{user1.name}` to `{user2.name}`! There were {errors} errors."), colour=0x228B22)
+    await interaction.response.send_message(embed=embed)
+
+
 # EmojiArchiver
 
 
-@client.tree.command(name="emoji-backup", description="Backs up all your server emojis. This will be retrievable soon.")
+@client.tree.command(name="emoji-backup", description="[Utility] Backs up all your server emojis. This will be retrievable soon.")
 @app_commands.describe(guild_id="Enter server ID to grab emojis from")
 async def emojis(interaction: discord.Interaction, guild_id: str):
     await slash_log(interaction)
@@ -1148,7 +1259,7 @@ async def get_messages(interaction: discord.Interaction, id: str):
 #   log search
 
 
-@client.tree.command(name="logsearch", description="Search the message history for a term. Returns how many times it was sent.")
+@client.tree.command(name="logsearch", description="[Utility] Search the message history for a term. Returns how many times it was sent.")
 @app_commands.describe(term="String to search the log for")
 async def log(interaction: discord.Interaction, term: str):
     await slash_log(interaction)
@@ -1177,7 +1288,7 @@ async def log(interaction: discord.Interaction, term: str):
     f.close()
 
 
-@client.tree.command(name="volume", description="[Audio] Change the audio player's volume or lock it.")
+@client.tree.command(name="volume", description="[Voice] Change the audio player's volume or lock it.")
 @app_commands.describe(percentage=f"Enter the volume in percentage to play. The default is {VOICE_VOLUME}%. Values above 1000 don't work.", lock="[Manage Server] Would you this volume to be locked? ('True' be specified each time.)")
 async def volume(interaction: discord.Interaction, percentage: int, lock: bool = False):
     await slash_log(interaction)
@@ -1242,7 +1353,7 @@ async def volume(interaction: discord.Interaction, percentage: int, lock: bool =
     await interaction.response.send_message(str_to_send)
 
 
-@client.tree.command(name="gpt", description="Get GPT-3 to respond to your prompt.")
+@client.tree.command(name="gpt", description="[Social] Get GPT-3 to respond to your prompt.")
 @app_commands.describe(prompt="What do you want GPT3 to generate? 'Write a story about...', 'Summarise the relationship...'", model="1, 2, 3 or 4: 4 is the most capable but slowest.", limit="Max tokens to generate. Up to 4080 including the input.", dm="Do you want me to DM you the result? (Doesn't work for longer stuff)", temperature="[Advanced] 0-100. Controls randomness, zero = deterministic & repetitive.", top_p="0-100. Controls diversity, 50 = half the liklihood-weighted options considered.", frequency_penalty="0-200. Penalises repeated tokens. 200 = low chance to repeat lines.", presence_penalty="0-200. Penalises repeated tokens. 200 = high chance to talk about new topics")
 async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: int, dm: Optional[bool] = False, temperature: Optional[int] = None, top_p: Optional[int] = None, frequency_penalty: Optional[int] = None, presence_penalty: Optional[int]=None):
     # await ctx.send("Generating response... <a:loading:935623554215591936>")
@@ -1356,7 +1467,7 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
         await interaction.followup.send(response_content)
 
 
-@client.tree.command(name="stop", description="Stops everything in Voice Chat, clears the queue, disconnects.")
+@client.tree.command(name="stop", description="[Voice] Stops everything in Voice Chat, clears the queue, disconnects.")
 async def stop(interaction: discord.Interaction):
     await slash_log(interaction)
     if not interaction.user.guild_permissions.stream:
@@ -1379,7 +1490,7 @@ async def stop(interaction: discord.Interaction):
         return await interaction.response.send_message(f"There is no currently active voice client in the guild id {interaction.guild_id}")
 
 
-@client.tree.command(name="leave", description="Leaves the voice channel.")
+@client.tree.command(name="leave", description="[Voice] Leaves the voice channel.")
 async def leave(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -1391,7 +1502,7 @@ async def leave(interaction: discord.Interaction):
     await interaction.response.send_message(f"Left the voice channel {vc.channel}")
 
 
-@client.tree.command(name="bitrates", description="Edit all Voice Channel bitrates")
+@client.tree.command(name="bitrates", description="[Utility] Set all Voice Channel bitrates")
 @app_commands.describe(bitrate="Enter specific bitrate, in bytes/sec. Leave blank or 0 to default to max")
 async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
     await slash_log(interaction)
@@ -1432,7 +1543,7 @@ async def bitrates(interaction: discord.Interaction, bitrate: Optional[str]):
 #   Pause/resume audio
 
 
-@client.tree.command(name="pause", description="[Audio] Pauses or resumes audio being played")
+@client.tree.command(name="pause", description="[Voice] Pauses or resumes audio being played")
 async def pause(interaction: discord.Interaction):
     await slash_log(interaction)
     if not interaction.guild:
@@ -1452,7 +1563,7 @@ async def pause(interaction: discord.Interaction):
 #   Nolwennium mine
 
 
-@client.tree.command(name="mine", description="Mines some globalCurrency which can be used to do cool stuff!")
+@client.tree.command(name="mine", description="[Social] Mines some globalCurrency which can be used to do cool stuff!")
 @app_commands.checks.cooldown(1, 29, key=lambda i: (i.user.id))
 async def mine(interaction: discord.Interaction):
     await slash_log(interaction)
@@ -1585,7 +1696,7 @@ async def mine(interaction: discord.Interaction):
 #   yn
 
 
-@client.tree.command(name="yes-no", description="Randomly answers yes or no.")
+@client.tree.command(name="yes-no", description="[Social] Randomly answers yes or no.")
 async def yn(interaction: discord.Interaction):
     await slash_log(interaction)
     list_test = ["No!", "Of course not!", "Certainly not.", "Definitely not!", "Obviously not.", "Nah!", "Nope.", "Hell nah...",
@@ -1613,7 +1724,7 @@ async def BrawlStars(interaction: discord.Interaction):
 #   vbuck calc
 
 
-@client.tree.command(name="vbucks", description="Calculates GBP -> V-Bucks")
+@client.tree.command(name="vbucks", description="[Social] Calculates GBP -> V-Bucks")
 @app_commands.describe(amount="Enter the amount of £££ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
 async def vbucks(interaction: discord.Interaction, amount: str, tier: Optional[int]):
     await slash_log(interaction)
@@ -1653,7 +1764,7 @@ async def vbucks(interaction: discord.Interaction, amount: str, tier: Optional[i
 #   Vbucks USD
 
 
-@client.tree.command(name="vbucks-usd", description="Calculates USD -> V-Bucks")
+@client.tree.command(name="vbucks-usd", description="[Social] Calculates USD -> V-Bucks")
 @app_commands.describe(amount="Enter the amount of $$$ that should be converted into vbonks", tier="Enter the tier of purchase. 1 is the cheapest V-Bucks option, wile 4 is the most expensive")
 async def vbucks_usd(interaction: discord.Interaction, amount: str, tier: Optional[int]):
     await slash_log(interaction)
@@ -1691,7 +1802,7 @@ async def vbucks_usd(interaction: discord.Interaction, amount: str, tier: Option
         await interaction.response.send_message(f"${usd} may be between **{format(vAmount_LowerBounds, ',')}** and **{format(vAmount_UpperBounds, ',')}** V-Bucks depending on which V-Bucks package(s) you choose to buy")
 
 
-@client.tree.command(name="settings", description="Edit a ton of the bot's settings here. [Ephemeral]")
+@client.tree.command(name="settings", description="[Info] Edit a ton of the bot's settings here. [Ephemeral]")
 async def settings(interaction: discord.Interaction):
     await slash_log(interaction)
     user_settings_json_path = f"{BASE_DIR}Users{S_SLASH}JSONSettings{S_SLASH}{interaction.user.id}.json"
@@ -1737,7 +1848,7 @@ async def settings(interaction: discord.Interaction):
 #   vbuck calc
 
 
-@client.tree.command(name="terms", description="Views the iBaguette Terms of Service which governs this bot.")
+@client.tree.command(name="terms", description="[Info] Views the Terms of Service that governs this bot.")
 async def terms(interaction: discord.Interaction):
     view = discord.ui.View()
     view.add_item(discord.ui.Button(label="iBaguette Terms of Service", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com"))
@@ -1762,7 +1873,7 @@ async def dev_settings(interaction: discord.Interaction):
     await interaction.response.send_message("Done")
 
 
-@client.tree.command(name="join", description="Makes the bot join your voice channel")
+@client.tree.command(name="join", description="[Voice] Joins the Voice Channel you are in.")
 async def join(interaction: discord.Interaction):
     if not interaction.guild:
         return await interaction.response.send_message("You can't use this command in DMs.")
@@ -1775,7 +1886,7 @@ async def join(interaction: discord.Interaction):
         await interaction.response.send_message(f"Joined <#{channel.id}>")
 
 
-@client.tree.command(name="play", description="Plays/queues audio that you want in the current Voice Chat.")
+@client.tree.command(name="play", description="[Voice] Plays/queues audio that you want in the current Voice Chat.")
 @app_commands.describe(search="What YouTube video/Spotify track/playlist would you like to search for?", seek="Time in seconds you want to seek to?", dev_stuff="[DevMode] Load all types of Wavelink PlayableTrack args")
 async def play(interaction: discord.Interaction, search: str, seek: Optional[int], dev_stuff: Optional[bool] = False):
     await slash_log(interaction)
@@ -1785,8 +1896,6 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
     """
     if dev_stuff:
         search = "https://www.youtube.com/watch?v=TseSndeG6pg"
-
-    random_hint = random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."])
 
     if interaction.user.voice is None:
         return await interaction.response.send_message("Not in voice channel")
@@ -1829,9 +1938,8 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             view.add_item(PlayButton(label="Skip ▶️", style=discord.ButtonStyle.blurple))
             view.add_item(discord.ui.button(label="Next ▶️", style=discord.ButtonStyle.blurple))
 
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
-            embed.set_footer(text=random_hint)
             return await interaction.followup.send(embed=embed)
 
         if type == "yt_playlist": # YT playlists need special handling as there are multiple songs.
@@ -1889,9 +1997,9 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
             embed.add_field(name="Time Left", value=f"<t:{int(time.time()) + int(search_video.duration / 1000)}:R>")
             # embed.add_field(name="Time left", value=await duration_to_time(int(search_video.duration / 1000)))
             embed.add_field(name="Looping", value=looping)
-            embed.add_field(name="Tracks Remaining", value=vc.queue.count)
+            embed.add_field(name="Tracks Queued", value=vc.queue.count)
 
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
 
             # Add the buttons
@@ -2025,7 +2133,7 @@ async def play(interaction: discord.Interaction, search: str, seek: Optional[int
         return await interaction.followup.send(f"An error occurred! Sorry about that. Here is the message: ```py\n{traceback.format_exc()}\n```\n> **{e}**")
 
 
-@client.tree.command(name="clearqueue", description="[Audio] Clear the current queue!")
+@client.tree.command(name="clearqueue", description="[Voice] Clear the current queue!")
 async def clear_queue(interaction: discord.Interaction): # Not fully tested
     await slash_log(interaction)
     if not interaction.user.guild_permissions.manage_channels:
@@ -2038,7 +2146,7 @@ async def clear_queue(interaction: discord.Interaction): # Not fully tested
         return await interaction.response.send_message("Cleared all queued tracks.", delete_after=15)
 
 
-@client.tree.command(name="filter", description="[Beta] Select and use special Voice Chat Sound Filters!")
+@client.tree.command(name="filter", description="[Beta/Voice] Select and use special Voice Chat Sound Filters!")
 @app_commands.describe(filter="Enter the string of the filter to add", dev_mode="enable dev mode?")
 async def filter(interaction: discord.Interaction, filter: Optional[str] = None, dev_mode: Optional[bool] = False):
     await slash_log(interaction)
@@ -2047,7 +2155,7 @@ async def filter(interaction: discord.Interaction, filter: Optional[str] = None,
         return await interaction.response.send_message("Nothing is playing! Use </play:1057428586761556090> to play a track.", ephemeral=True, delete_after=10)
 
 
-@client.tree.command(name="loop", description="Loop the current audio, or all the queue.")
+@client.tree.command(name="loop", description="[Voice] Loop the current audio, or all the queue.")
 @app_commands.describe(queue="Want to loop the entire queue?")
 async def loop(interaction: discord.Interaction, queue: Optional[bool] = False):
     await slash_log(interaction)
@@ -2074,7 +2182,7 @@ async def loop(interaction: discord.Interaction, queue: Optional[bool] = False):
             return await interaction.response.send_message("All tracks in the history queue have been set to loop.", delete_after=10)
 
 
-@client.tree.command(name="seek", description="Seeks to a position in the channel")
+@client.tree.command(name="seek", description="[Voice] Seeks to a position in the channel.")
 @app_commands.describe(position="Enter the time in seconds to seek to")
 async def seek(interaction: discord.Interaction, position: int):
     await slash_log(interaction)
@@ -2088,7 +2196,7 @@ async def seek(interaction: discord.Interaction, position: int):
     # return await interaction.response.send_message(f"Seeked to {position*1000}ms.")
 
 
-@client.tree.command(name="shuffle", description="Shuffles the music queue")
+@client.tree.command(name="shuffle", description="[Voice] Shuffles queued tracks.")
 async def shuffle(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -2099,7 +2207,7 @@ async def shuffle(interaction: discord.Interaction):
     print(vc.queue._queue)
 
 
-@client.tree.command(name="queue", description="Get details about the queue") # migrated
+@client.tree.command(name="queue", description="[Voice] Get details about the queue.") # migrated
 async def queue(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -2115,7 +2223,7 @@ async def queue(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-@client.tree.command(name="skip", description="Skips the current track playing to the next in the queue.")
+@client.tree.command(name="skip", description="[Voice] Skips the current track playing.")
 async def skip(interaction: discord.Interaction):
     await slash_log(interaction)
     vc: wavelink.Player = interaction.guild.voice_client
@@ -2144,7 +2252,7 @@ async def create_voice_chat(ctx):
     await ctx.reply(f"Ok! I created the voice chat **{chat_name}** in category **{category.name}**. The bitrate was set to the server's max, at {round(ctx.guild.bitrate_limit/1000)}kbps.")
 
 
-@client.tree.command(name="purge", description="Purges a specified amount of messages")
+@client.tree.command(name="purge", description="[Utility] Purges a specified amount of messages")
 async def purge(interaction: discord.Interaction, amount: int):
     if interaction.user.id == 382784106984898560:
         current_time_for_deletes = time.time()
@@ -2296,9 +2404,9 @@ async def on_wavelink_track_end(vc: wavelink.Player, track: Optional[str] = None
     embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + int(previous_item.duration / 1000)}:R>")
     # embed.add_field(name="Time left", value=await duration_to_time(int((next_track.duration / 1000)))) # Wavelink >v2: Duration is now in millis
     embed.add_field(name="Looping", value=looping)
-    embed.add_field(name="Tracks Remaining", value=await get_wavelink_queue_length(vc))
+    embed.add_field(name="Tracks Queued", value=await get_wavelink_queue_length(vc))
     embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.com/invite/F5Vu9PhXMr")
-    embed.set_footer(text=random_hint)
+    embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
 
     view = discord.ui.View()
     view.add_item(PlayButton(label="◀️ Previous", style=discord.ButtonStyle.blurple))
@@ -2715,9 +2823,9 @@ class PlayButton(discord.ui.Button):
             embed.add_field(name="Real Time Left", value=f"<t:{int(time.time()) + (int(vc.current.duration / 1000) - int(vc.last_position / 1000))}:R>")
             # embed.add_field(name="Time left", value=await duration_to_time(int((vc.current.duration / 1000) - (vc.last_position / 1000)))) # Wavelink >v2: Duration is now in millis
             embed.add_field(name="Looping", value=looping)
-            embed.add_field(name="Tracks Remaining", value=vc.queue.count)
+            embed.add_field(name="Tracks Queued", value=vc.queue.count)
             embed.set_author(name=interaction.guild.name, icon_url=interaction.guild.icon.url, url="https://discord.gg/F5Vu9PhXMr")
-            embed.set_footer(text=random_hint)
+            embed.set_footer(text=random.choice(["You can play YouTube playlists, Spotify playlists and more!", "You can queue as many tracks as you want!", "You can seek through tracks before they play my using the `seek` parameter in the Slash Command.", "You can change and lock volumes by using /volume.", "Use the buttons to pause, start, seek and cycle through the queue."]))
             # view.add_item(PlayButton(label="info: unknown event", style=discord.ButtonStyle.red, disabled=True))
 
             await interaction.followup.edit_message(embed=embed, view=view, message_id=interaction.message.id)
@@ -3410,10 +3518,16 @@ async def on_voice_state_update(member, before, after):
 async def on_member_join(member):
     await bot_runtime_events(1)
     print(f"[MemberJoined]  on_member_join triggered: Member: {member.name} ({member.id}) in guild {member.guild.name} ({member.guild.id}).")
-    if member.guild.id == 759861456300015657:
-        # await member.send(f"Hello! Welcome to Baguette Brigaders. Whether you joined from the Vanity URL or a member invited you, welcome! Go to the rules channel for a free role!")
-        print("Not welcomed user")
-        # await draggie.send(f"Welcomed user {member}")
+    guild_id = member.guild.id
+    member_id = member.id
+
+    # If member's coin balance already exists in the server, remove it as they are rejoining.
+    if os.path.isfile(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Coins{S_SLASH}{member_id}.txt"):
+        os.remove(f"{BASE_DIR}Servers{S_SLASH}{guild_id}{S_SLASH}Coins{S_SLASH}{member_id}.txt")
+        print("[MemberJoined]  Member's coin balance already exists in the server, so it was removed.")
+    else:
+        print("[MemberJoined]  Member's coin balance does not exist in the server. They are joining for the first time.")
+
     servers = len(client.guilds)
     members = 0
     for guild in client.guilds:
@@ -3530,6 +3644,12 @@ async def on_raw_reaction_add(payload=None):
 async def on_reaction_remove(reaction, user):
     await bot_runtime_events(1)
     print(reaction, user)
+
+
+@client.event
+async def on_guild_join(guild):
+    print(f"[GuildJoin]   Joined guild {guild}")
+    await draggie.send(f"DEV MODE: joined guild {guild} ({guild.id})")
 
 
 @client.event
@@ -3731,9 +3851,10 @@ async def on_member_update(before, after):
             # await draggie.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')                        In Brigaders Helper
 
         settings = await get_user_settings(after.id)
-        if settings['get_dm_notification_for_role_addition'] == "true":
-            await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
-            print(f"[SendDirectMessage] {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+        if settings:
+            if settings['get_dm_notification_for_role_addition'] == "true":
+                await after.send(f'{after.mention}, you\'ve been given the role **"{new_role}"** in {after.guild.name}!')
+                print(f"[SendDirectMessage] {after.mention}, you\'ve been given the role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif len(after.roles) < len(before.roles):
         new_role = next(role for role in before.roles if role not in after.roles)
@@ -3744,9 +3865,10 @@ async def on_member_update(before, after):
         send = True
         print(f"[RoleRemove]    ROLES of {after} has been updated: REMOVED {new_role} - in [{after.guild.id} or {after.guild.name}] at {datetime.now()}")
         settings = await get_user_settings(after.id)
-        if settings['get_dm_notification_for_role_removal'] == "true":
-            await after.send(f'{after.mention}, you\'ve been removed from the role **"{new_role}"** in {after.guild.name}!')
-            print(f"[SendDirectMessage] {after.mention}, you\'ve been removed from the6 role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
+        if settings:
+            if settings['get_dm_notification_for_role_removal'] == "true":
+                await after.send(f'{after.mention}, you\'ve been removed from the role **"{new_role}"** in {after.guild.name}!')
+                print(f"[SendDirectMessage] {after.mention}, you\'ve been removed from the6 role **\"{new_role}\"** in {after.guild.name}! <<< to {after.name}")
 
     elif before.name != after.name:
         embed = discord.Embed(title="Changed name", colour=0x5865F2)
@@ -4404,7 +4526,7 @@ async def addroles(ctx):
 #   Bullet point: •
 
 
-@client.tree.command(name="links", description="Gets YouTube video and raw audio URL")
+@client.tree.command(name="links", description="[Social] Gets YouTube video and raw audio URL")
 async def links(interaction: discord.Interaction, url: str):
     with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
         try:
