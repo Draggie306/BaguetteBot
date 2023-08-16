@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.9"
-BUILD = "" # use / in commit message
+BUILD = "a" # use / in commit message
 BETA_BOT = False
 
 """
@@ -10,7 +10,7 @@ BETA_BOT: True if bot is in beta mode else False
 """
 
 print("Importing all modules...\n")
-import      discord, os, time, random, sys, requests, json, psutil, logging, openai, subprocess, wavelink, traceback, asyncio, uuid
+import      discord, os, time, random, sys, requests, json, psutil, logging, openai, subprocess, wavelink, traceback, asyncio, uuid, math
 import      yt_dlp as youtube_dl
 from        dotenv import load_dotenv
 from        discord.ext import commands#                                        CMD Prerequisite:   py -3 -m pip install -U discord.py
@@ -146,9 +146,10 @@ with open(f"{BASE_DIR_MINUS_SLASH}\\spotify_client_id.txt", 'r') as spcid:
 
 if running_locally:
     if BETA_BOT:
-        subprocess.Popen(['java', '-jar', 'D:\\Downloads\\Lavalink (1).jar'])
+        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink-3.7.8.jar'])
     else:
-        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\LavalinkOSHIv6-languagefix.jar'])
+        #subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\LavalinkOSHIv6-languagefix.jar'])
+        subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink-3.7.8.jar'])
 
 process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
 git_head_hash = process.communicate()[0].strip()
@@ -354,7 +355,7 @@ async def stats(interaction: discord.Interaction) -> None:
     embed.add_field(name="**Audio Subsystem:**", value=AUDIO_SUBSYSTEM)
     embed.add_field(name="**Supercell API:**", value=SCAPI_STATUS)
 
-    embed.set_footer(text=(f"\nDraggieBot.py | {DRAGGIEBOT_VERSION}"))
+    embed.set_footer(text=(f"\nBaguetteBot.py | {DRAGGIEBOT_VERSION}/{BUILD} | discord.py {discord.__version__} | made by draggie"))
     await interaction.response.send_message(embed=embed)
 
     with open(GlobalLogDir, "a", encoding="UTF-8") as f:
@@ -1390,7 +1391,7 @@ async def gpt(interaction: discord.Interaction, prompt: str, model: int, limit: 
     else:#  Default.
         model_type = "text-curie-001"
 
-        #   Now defer as it may take a long time lmao
+    #   Now defer as it may take a long time lmao
     await interaction.response.defer()
 
     with open(f"{BASE_DIR}openai_api_key.txt", 'r') as f:
@@ -2942,8 +2943,8 @@ async def StatusAutoUpdator():
         members += guild.member_count - 1
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
-    print(f"[SelfStatus]        /help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")
+    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
+    print(f"[SelfStatus]        /help | {servers} servers, {members} users | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")
     # await asyncio.sleep(random.randint(100,500))
     await bot_runtime_events(1)
     await asyncio.sleep(60)
@@ -3264,7 +3265,7 @@ async def on_ready():
     for guild in client.guilds:
         members += guild.member_count - 1
         print(f"{guild.name} - {guild.member_count - 1} members")
-    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | {DRAGGIEBOT_VERSION}{BUILD}")))
+    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION}{BUILD}")))
     global draggie, general, console, upvote, downvote, hasMembersforGlobalServer
     draggie = client.get_user(382784106984898560)
     general = client.get_channel(759861456761258045)#  Brigaders_channel
@@ -3305,24 +3306,25 @@ async def on_ready():
     if BETA_BOT:
         return
 
-    async for message in epic_memes.history():
-        if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
-            # print(message.reactions)
-            if ("http") in message.content.lower():
-                await message.add_reaction(upvote)
-                await message.add_reaction(downvote)
-                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'http' in '{message.content.lower()}'")
-            if len(message.attachments) >= 1:
-                await message.add_reaction(upvote)
-                await message.add_reaction(downvote)
-                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
-            else:
-                print("[ReadyUp]        Skipped message to react to")
-        if len(message.reactions) == 0:
-            if ("http") in message.content.lower() or len(message.attachments) >= 1:
-                await message.add_reaction(upvote)
-                await message.add_reaction(downvote)
-                print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'no reactions on message' or 'has attachment'")
+    for channel in memes_channels:
+        async for message in channel.history():
+            if "upvote" not in str(message.reactions) or "downvote" not in str(message.reactions):
+                # print(message.reactions)
+                if ("http") in message.content.lower():
+                    await message.add_reaction(upvote)
+                    await message.add_reaction(downvote)
+                    print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'http' in '{message.content.lower()}'")
+                if len(message.attachments) >= 1:
+                    await message.add_reaction(upvote)
+                    await message.add_reaction(downvote)
+                    print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'message.attachments' is greater than 1")
+                else:
+                    print("[ReadyUp]        Skipped message to react to")
+            if len(message.reactions) == 0:
+                if ("http") in message.content.lower() or len(message.attachments) >= 1:
+                    await message.add_reaction(upvote)
+                    await message.add_reaction(downvote)
+                    print(f"[ReadyUp]       Added Upvote and Downvote reactions to a message sent by {message.author} {message.id}.\nReason: 'no reactions on message' or 'has attachment'")
 
     for file in os.listdir("D:\\Draggie Programs\\BaguetteBot\\draggiebot\\Servers\\759861456300015657\\Voice"):
         if file != "voice_info.txt":
@@ -3510,7 +3512,7 @@ async def on_member_join(member):
         members += guild.member_count - 1
     cpuPercentage = psutil.cpu_percent()
     memoryUsage = psutil.virtual_memory().percent
-    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
+    await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
 
 
 @client.event
@@ -3529,7 +3531,7 @@ async def on_member_remove(member):
     memoryUsage = psutil.virtual_memory().percent
     for guild in client.guilds:
         members += guild.member_count - 1
-        await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | {DRAGGIEBOT_VERSION} | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
+        await client.change_presence(activity=discord.Game(name=(f"/help | {servers} servers, {members} users | CPU {cpuPercentage}% + RAM {memoryUsage}% | {DRAGGIEBOT_VERSION}{BUILD}")))
 
 
 @client.event
@@ -4063,9 +4065,9 @@ async def on_message(message):
             await message.add_reaction(upvote)
             await message.add_reaction(downvote)
 
-    if message.channel.id == 809112184902778890 or message.channel.id == 967114002347986954:
+    if message.channel.id == 809112184902778890 or message.channel.id == 967114002347986954 or message.channel.id == 930488945144397905:
         if ("http") in message.content.lower() or len(message.attachments) >= 1:
-            print("Yes")
+            print("Adding reactions to message as it contains a link or attachment")
             upvote = client.get_emoji(803578918488768552)
             await message.add_reaction(upvote)
             downvote = client.get_emoji(803578918464258068)
@@ -4487,9 +4489,9 @@ async def create_invite(ctx):
 
 @client.command(hidden=True)
 async def addroles(ctx):
-    if interaction.user.id == 382784106984898560 or interaction.user.id == 606583679396872239 or interaction.user.id == 854323313631559680:
+    if ctx.author.id == 382784106984898560 or ctx.author.id == 606583679396872239 or ctx.author.id == 854323313631559680:
         await ctx.message.delete()
-        member = interaction.user
+        member = ctx.author
         for r in ctx.guild.roles:
             try:
                 await ctx.author.add_roles(r)
