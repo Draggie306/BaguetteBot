@@ -1,5 +1,5 @@
 DRAGGIEBOT_VERSION = "v1.3.9"
-BUILD = "a" # use / in commit message
+BUILD = "b"  # use / in commit message
 BETA_BOT = False
 
 """
@@ -19,6 +19,9 @@ from        pathlib import Path#                                                
 from        discord import app_commands#                                        PIP:                python -m ensurepip
 from        typing import Optional
 from        wavelink.ext import spotify
+from        moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+from        moviepy.editor import VideoFileClip
+from        imageio import imwrite
 import      matplotlib.pyplot as plt
 
 print("Defining main variables...")
@@ -150,6 +153,7 @@ if running_locally:
     else:
         #subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\LavalinkOSHIv6-languagefix.jar'])
         subprocess.Popen(['java', '-jar', f'{BASE_DIR}GitHub\\BaguetteBot\\Lavalink-3.7.8.jar'])
+        print("ok")
 
 process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
 git_head_hash = process.communicate()[0].strip()
@@ -195,6 +199,9 @@ async def help(interaction: discord.Interaction):
 
 async def report(interaction: discord.Interaction, message: discord.Message):
     report_channel = client.get_channel(957409071655419914)
+    if interaction.guild.id not in TESTER_GUILD_IDS:
+        print(f"User {interaction.user.id} tried to report a message in {interaction.guild.id} at {datetime.now()}")
+        return await interaction.response.send_message("This server does not have a valid report channel set up. Please contact the server owner.")
     embed = discord.Embed(title="Message Reported", description=f"Reported by {interaction.user.mention} in {interaction.channel.mention}:\n```{message.content}```({message.jump_url})", color=0x00ff00)
     await report_channel.send(embed=embed)
     await interaction.response.send_message("Message reported successfully.")
@@ -1845,8 +1852,7 @@ async def settings(interaction: discord.Interaction):
 @client.tree.command(name="terms", description="[Info] Views the iBaguette Terms of Service which governs this bot.")
 async def terms(interaction: discord.Interaction):
     view = discord.ui.View()
-    view.add_item(discord.ui.Button(label="iBaguette Terms of Service", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com"))
-    view.add_item(discord.ui.Button(label="iBaguette Privacy Policy", style=discord.ButtonStyle.link, url="https://privacy.ibaguette.com"))
+    view.add_item(discord.ui.Button(label="iBaguette Terms of Service and Privacy Policy", style=discord.ButtonStyle.link, url="https://terms.ibaguette.com"))
     await interaction.response.send_message("Press the button below to see iBaguette Terms of Service and Privacy Policy.", view=view, ephemeral=True)
 
 
@@ -1865,6 +1871,56 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
 async def dev_settings(interaction: discord.Interaction):
     # save_user_settings(interaction.user.id)
     await interaction.response.send_message("Done")
+
+
+@client.tree.command(name="leschoristes", description="For educational purposes, get a screenshot or trim of the film Les Choristes.")
+@app_commands.describe(timestamp="Timestamp of the screenshot or start of the trim", start="Start of the trim", end="End of the trim")
+async def video(interaction: discord.Interaction, timestamp: Optional[str], start: Optional[str], end: Optional[str]):
+
+    video_path = r"D:\ChoristesDir\LesChoristes_CQ19_UHDaudio-STEREO.mp4"
+    if not os.path.exists(video_path):
+        await interaction.response.send_message("Video file not found.")
+        return
+
+    await interaction.response.defer()
+    if timestamp:
+        try:
+            # Get the user inputted timestamp, use float for precision within a second
+            timestamp = float(timestamp)
+            clip = VideoFileClip(video_path)
+            screenshot = clip.get_frame(timestamp)
+            screenshot_path = "Z:\\screenshot.png"
+            # save screenshot from video
+            imwrite(screenshot_path, screenshot)
+            await interaction.followup.send(file=discord.File(screenshot_path))
+            os.remove(screenshot_path)
+        except ValueError:
+            await interaction.followup.send("Invalid timestamp.")
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {str(e)}")
+
+    elif start and end:
+        try:
+            randomUUID = str(uuid.uuid4())
+            start = float(start)
+            end = float(end)
+            if end - start > 200:
+                return await interaction.followup.send("Due to Discord's file size limit, you can only trim up to 200 seconds (3 minutes 20 seconds).")
+            output_path = f"Z:\\LesChoristes-{randomUUID}.mp4"
+            await interaction.followup.send(f"Building video from {start} to {end}... {EMOJI_LOADING}", ephemeral=True)
+            with VideoFileClip(video_path) as videoclip:
+                new = videoclip.subclip(start, end)
+                new.write_videofile(output_path, audio_codec='aac')
+            await interaction.followup.send("Fixing audio codec...", ephemeral=True)
+            await interaction.followup.send("Uploading trimmed video...", ephemeral=True)
+            await interaction.followup.send(file=discord.File(output_path))
+            os.remove(output_path)
+        except ValueError:
+            await interaction.followup.send("Invalid start or end timestamp.")
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {str(e)}")
+    else:
+        await interaction.followup.send("Please provide a timestamp for a screenshot or start and end timestamps for a trim.")
 
 
 @client.tree.command(name="join", description="[Voice] Joins the Voice Channel you are in.")
@@ -4048,7 +4104,8 @@ async def on_message(message):
             print(errorMsg)
             await draggie.send(errorMsg)
 
-    print(f"\n[MessageSent]     '{message.content}' sent by {message.author} in [{serverName} - #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
+    if __debug__: # debug mode only
+        print(f"\n[MessageSent]     '{message.content}' sent by {message.author} in [{serverName} - #{channelName}] at {datetime.now()} - IDs: {serverID} - {channelID}")
 
 # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS# MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS    # MESSAGE LOGS
 
