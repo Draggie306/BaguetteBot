@@ -3329,7 +3329,7 @@ async def on_ready():
     client.config['ready_start_time'] = ready_start_time
     
     # Load cogs
-    cogs_to_load = ['cogs.info', 'cogs.admin', 'cogs.social', 'cogs.events']
+    cogs_to_load = ['cogs.info', 'cogs.admin', 'cogs.social', 'cogs.events', 'cogs.utility']
     for cog in cogs_to_load:
         try:
             await client.load_extension(cog)
