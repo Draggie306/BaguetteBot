@@ -174,6 +174,20 @@ client = commands.Bot(
     help_command=commands.DefaultHelpCommand(no_category='Below is a list of legacy .<commands> - please use the new Slash Commands menu to see a description of all my commands!')
 )
 
+# Configuration dictionary for cogs
+client.config = {
+    'DRAGGIEBOT_VERSION': DRAGGIEBOT_VERSION,
+    'BUILD': BUILD,
+    'BASE_DIR': BASE_DIR,
+    'S_SLASH': S_SLASH,
+    'GlobalLogDir': GlobalLogDir,
+    'start_time': start_time,
+    'bot_events': bot_events,
+    'YTAPI_STATUS': YTAPI_STATUS,
+    'AUDIO_SUBSYSTEM': AUDIO_SUBSYSTEM,
+    'SCAPI_STATUS': SCAPI_STATUS,
+}
+
 
 ###########################################################################################################################################################
 #   Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands Slash Commands
@@ -3310,6 +3324,19 @@ async def on_ready():
     print(f'\n\n\n\n[ReadyUp]       Logged in as {client.user} - {(datetime.now())}')
     global ready_start_time, rolePrivate, hasPrivate, hasAdmin
     ready_start_time = time.time()
+    
+    # Update config with ready_start_time
+    client.config['ready_start_time'] = ready_start_time
+    
+    # Load cogs
+    cogs_to_load = ['cogs.info', 'cogs.admin', 'cogs.social', 'cogs.events']
+    for cog in cogs_to_load:
+        try:
+            await client.load_extension(cog)
+            print(f"[CogLoader]     Loaded {cog}")
+        except Exception as e:
+            print(f"[CogLoader]     Failed to load {cog}: {e}")
+    
     await client.tree.sync()
     print("COG: Music loaded!")
     with open(GlobalLogDir, "a", encoding="utf-8") as f:
