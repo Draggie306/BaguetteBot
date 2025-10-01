@@ -43,6 +43,20 @@ If there's an issue with it in Discord or a blindingly obvious issue/error/typo 
 	- use the global currency to play a minigame and brag to others!
 - Fully supported, easy-to-use Slash Commands
 
+## 🏗️ Architecture
+
+BaguetteBot uses a modular cog-based architecture for better organization and maintainability:
+
+### Cogs Structure
+- **Info** (`cogs/info.py`) - Help, stats, invite, and information commands
+- **Admin** (`cogs/admin.py`) - Administrative and moderation commands
+- **Social** (`cogs/social.py`) - Social interaction and community features
+- **Utility** (`cogs/utility.py`) - Server management and utility tools
+- **Events** (`cogs/events.py`) - Event handlers for Discord events
+- **Utils** (`cogs/utils.py`) - Shared helper functions and utilities
+
+Each cog is self-contained with comprehensive documentation. See [cogs/README.md](cogs/README.md) for detailed information about each cog's commands and features.
+
 # How to use
 
 Read below for commands, server monitoring, griefing prevention and more
